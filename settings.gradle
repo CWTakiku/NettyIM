@@ -1,0 +1,3 @@
+rootProject.name='NettyIM'
+include ':app'
+include ':im_lib'

@@ -1,0 +1,63 @@
+apply plugin: 'com.android.library'
+apply plugin: 'com.google.protobuf'
+apply from: file('config.gradle')
+android {
+    compileSdkVersion cfgs.compileSdkVersion
+    buildToolsVersion cfgs.buildToolsVersion
+
+    defaultConfig {
+        minSdkVersion cfgs.minSdkVersion
+        targetSdkVersion cfgs.targetSdkVersion
+        versionCode cfgs.versionCode;
+        versionName cfgs.versionName
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        consumerProguardFiles 'consumer-rules.pro'
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+    sourceSets {
+        main {
+            proto {
+                srcDir 'src/main/proto'
+                include '**/*.proto'
+            }
+        }
+    }
+}
+protobuf {
+    protoc {
+        artifact = 'com.google.protobuf:protoc:3.0.0'
+    }
+    plugins {
+        javalite {
+            // The codegen for lite comes as a separate artifact
+            artifact = 'com.google.protobuf:protoc-gen-javalite:3.0.0'
+        }
+    }
+    generateProtoTasks {
+        all().each { task ->
+            task.plugins {
+                javalite {}
+            }
+        }
+    }
+  //  generatedFilesBaseDir = "/src/generated"
+}
+
+dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+
+    implementation "androidx.appcompat:appcompat:${cfgs.appcompatVersion}"
+    testImplementation "junit:junit:4.12"
+    androidTestImplementation 'androidx.test.ext:junit:1.1.1'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
+    implementation "com.google.protobuf:protobuf-lite:${cfgs.protobufVersion}"
+    compileOnly files('libs/netty-tcp-4.1.33-1.0.jar')
+
+}
