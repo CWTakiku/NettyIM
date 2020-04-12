@@ -5,5 +5,5 @@ package com.takiku.im_lib.authenticator;
  * Description:
  * Date:2020/4/9
  */
-public class Authenticator {
+public interface Authenticator {
 }

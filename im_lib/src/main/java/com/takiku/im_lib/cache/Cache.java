@@ -5,5 +5,6 @@ package com.takiku.im_lib.cache;
  * Description:
  * Date:2020/4/9
  */
-public class Cache {
+public interface Cache {
+
 }

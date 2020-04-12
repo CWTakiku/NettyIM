@@ -1,11 +1,25 @@
 syntax = "proto3";// 指定protobuf版本
 option java_package = "com.takiku.im_lib.protobuf";
-option java_outer_classname = "MessagePro";
+option java_outer_classname = "PackProtobuf";
 
+
+
+message Pack{
+    PackType packType=1;
+    oneof Pack{
+      Msg msg=2;
+      Reply reply=3;
+      Heart heart=4;
+    }
+}
+enum PackType{
+    MSG=0;
+    REPLY=1;
+    HEART=2;
+}
 message Msg{
-    Head head=1;
-    string body=2;
-    string auth=3;
+  Head head=1;
+  string body=2;
 }
 message Head {
     string msgId = 1;// 消息id
@@ -15,4 +29,11 @@ message Head {
     string toId = 5;// 消息接收者id
     int64 timestamp = 6;// 消息时间戳
     string extend = 7;// 扩展字段，以key/value形式存放的json
+    string auth=8;
+}
+message Reply{
+
+}
+message Heart{
+
 }
