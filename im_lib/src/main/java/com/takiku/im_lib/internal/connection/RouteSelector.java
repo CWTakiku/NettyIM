@@ -5,6 +5,7 @@ import com.takiku.im_lib.entity.Address;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.SocketException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -18,12 +19,19 @@ public class RouteSelector {
     private RouteDatabase routeDatabase;
     private final Address address;
     private int nextInetSocketAddressIndex;
-    private List<InetSocketAddress> inetSocketAddresses = Collections.emptyList();
+    private List<InetSocketAddress> inetSocketAddresses=new ArrayList<>();
 
 
     public RouteSelector(Address address, RouteDatabase routeDatabase) {
         this.routeDatabase=routeDatabase;
         this.address=address;
+        if (address.type()==Address.Type.HTTP){
+            this.lastInetSocketAddress=InetSocketAddress.createUnresolved(address.getUrl(),address.getPort());
+        }else if (address.type()==Address.Type.SOCKS){
+            this.lastInetSocketAddress=new InetSocketAddress(address.getUrl(),address.getPort());
+        }
+        inetSocketAddresses.add(lastInetSocketAddress);
+
     }
 
     public boolean hasNext() {

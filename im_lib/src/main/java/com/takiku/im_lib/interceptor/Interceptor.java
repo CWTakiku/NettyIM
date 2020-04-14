@@ -12,7 +12,7 @@ import java.util.concurrent.TimeUnit;
 
 public interface Interceptor {
 
-    Response intercept(Chain chain) throws IOException;
+    Response intercept(Chain chain) throws IOException, InterruptedException;
     interface Chain {
 
         @Nullable
@@ -28,7 +28,7 @@ public interface Interceptor {
 
         Request request();
 
-        Response proceed(Request request) throws IOException;
+        Response proceed(Request request) throws IOException, InterruptedException;
 
         Call call();
     }

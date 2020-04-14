@@ -9,26 +9,17 @@ public final class Request {
 
   public static final int PACK_MSG_TYPE=0;
   public static final int PACK_REPLY_TYPE=1;
+    public static final int PACK_HANDS_TYPE=3;
 
-  Address address;
-  AbstractPack body;
+ public Address address;
+ public   AbstractPack body;
   GeneratedMessageLite value;
 
-  public Address getAddress() {
-    return address;
+  Request(Builder builder) {
+     this.address=builder.address;
+     this.body=builder.body;
   }
 
-  public void setAddress(Address address) {
-    this.address = address;
-  }
-
-  public AbstractPack getBody() {
-    return body;
-  }
-
-  public void setBody(AbstractPack body) {
-    this.body = body;
-  }
 
   public GeneratedMessageLite getValue() {
     return value;
@@ -36,5 +27,31 @@ public final class Request {
 
   public void setValue(GeneratedMessageLite value) {
     this.value = value;
+  }
+
+  public static class Builder {
+    Address address;
+    AbstractPack body;
+
+
+    public Builder() {
+
+    }
+    Builder(Request request) {
+      this.address=request.address;
+      this.body = request.body;
+    }
+    public Builder setAddress(Address address){
+      this.address=address;
+      return this;
+    }
+    public Builder setBody(AbstractPack abstractPack){
+      this.body=abstractPack;
+      return this;
+    }
+    public Request build(){
+      if (address == null) throw new IllegalStateException("address == null");
+      return new Request(this);
+    }
   }
 }

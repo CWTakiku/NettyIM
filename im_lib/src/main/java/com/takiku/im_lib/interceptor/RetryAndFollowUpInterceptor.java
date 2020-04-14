@@ -34,7 +34,7 @@ public class RetryAndFollowUpInterceptor implements Interceptor {
     @Override
     public Response intercept(Chain chain) throws IOException {
         Request request = chain.request();
-        streamAllocation = new StreamAllocation(client.connectionPool(), request.getAddress(), callStackTrace);
+        streamAllocation = new StreamAllocation(client.connectionPool(), request.address,client.customChannelHandlerLinkedHashMap(), callStackTrace);
         int followUpCount = 0;
         int resendCount=0;
         while (true){
@@ -64,6 +64,9 @@ public class RetryAndFollowUpInterceptor implements Interceptor {
                 if (++resendCount<client.resendCount())
                     continue;
                 continue;
+            } catch (InterruptedException e) {
+                System.out.println(" InterruptedException ");
+                e.printStackTrace();
             } finally {
                 // We're throwing an unchecked exception. Release any resources.
                 if (releaseConnection) {   //未捕获到，释放资源
@@ -85,7 +88,9 @@ public class RetryAndFollowUpInterceptor implements Interceptor {
     }
 
     private Request followUpRequest(Response response) {
-
+          if (response!=null){
+              return null;
+          }
       return   response.request;
     }
 
@@ -103,7 +108,7 @@ public class RetryAndFollowUpInterceptor implements Interceptor {
         if (client.resendCount()<=0) return false;
 
         // We can't send the request body again.
-        if (requestSendStarted && userRequest.getBody() instanceof UnrepeatableRequestBody) return false;
+        if (requestSendStarted && userRequest.body instanceof UnrepeatableRequestBody) return false;
 
         // This exception is fatal.
         if (!isRecoverable(e, requestSendStarted)) return false;
@@ -145,5 +150,8 @@ public class RetryAndFollowUpInterceptor implements Interceptor {
         // proxy and would manifest as a standard IOException. Unless it is one we know we should not
         // retry, we return true and try a new route.
         return true;
+    }
+    public boolean isCanceled() {
+        return canceled;
     }
 }

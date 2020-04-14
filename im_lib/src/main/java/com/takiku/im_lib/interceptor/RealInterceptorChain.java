@@ -2,16 +2,16 @@ package com.takiku.im_lib.interceptor;
 
 import androidx.annotation.Nullable;
 
-import com.takiku.im_lib.Codec.Codec;
 import com.takiku.im_lib.call.Call;
 import com.takiku.im_lib.call.Request;
 import com.takiku.im_lib.dispatcher.Connection;
 import com.takiku.im_lib.internal.connection.RealConnection;
 import com.takiku.im_lib.internal.connection.StreamAllocation;
 import com.takiku.im_lib.entity.base.Response;
+import com.takiku.im_lib.internal.connection.TcpStream;
+import com.takiku.im_lib.listener.EventListener;
 
 import java.io.IOException;
-import java.util.EventListener;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -19,24 +19,29 @@ public class RealInterceptorChain implements Interceptor.Chain {
     private final Request request;
     private final List<Interceptor> interceptors;
     private final int index;
-    private final Codec codec;
+    private final TcpStream tcpStream;
     private final StreamAllocation streamAllocation;
     private final RealConnection connection;
+    private final EventListener eventListener;
     private final int connectTimeout;
     private final int sendTimeout;
+    private final Call call;
+    private int calls;
     public RealInterceptorChain(List<Interceptor> interceptors,
                                 StreamAllocation streamAllocation,
-                                Codec codec, RealConnection realConnection,
+                                TcpStream tcpStream, RealConnection realConnection,
                                 int index, Request request, Call call, EventListener eventListener,
                                 int connectTimeout,int sendTimeout){
         this.request=request;
         this.index=index;
         this.interceptors=interceptors;
-        this.codec=codec;
+        this.tcpStream=tcpStream;
         this.streamAllocation=streamAllocation;
         this.connection=realConnection;
         this.connectTimeout=connectTimeout;
         this.sendTimeout=sendTimeout;
+        this.eventListener = eventListener;
+        this.call = call;
     }
 
     @Nullable
@@ -71,21 +76,36 @@ public class RealInterceptorChain implements Interceptor.Chain {
     }
 
     @Override
-    public Response proceed(Request request) throws IOException {
-        return proceed(request, streamAllocation, codec, connection);
+    public Response proceed(Request request) throws IOException, InterruptedException {
+        return proceed(request, streamAllocation, tcpStream, connection);
     }
 
     @Override
     public Call call() {
-        return null;
+        return call;
     }
 
-    public Response proceed(Request request, StreamAllocation streamAllocation, Codec codec,
-                            RealConnection connection) throws IOException {
-
+    public Response proceed(Request request, StreamAllocation streamAllocation, TcpStream tcpStream,
+                            RealConnection connection) throws IOException, InterruptedException {
+        if (index >= interceptors.size()) throw new AssertionError();
+        calls++;
+        // Call the next interceptor in the chain.
+        RealInterceptorChain next = new RealInterceptorChain(
+                interceptors, streamAllocation, tcpStream, connection, index + 1, request,call,eventListener,connectTimeout,sendTimeout);
+        Interceptor interceptor = interceptors.get(index);
+        Response response = interceptor.intercept(next);
+        return response;
     }
 
     public StreamAllocation streamAllocation() {
       return streamAllocation;
+    }
+
+    public TcpStream tcpStream(){
+        return tcpStream;
+    }
+
+    public EventListener eventListener() {
+        return eventListener;
     }
 }

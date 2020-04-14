@@ -12,4 +12,7 @@ public class Response {
     public void setRequest(Request request) {
         this.request = request;
     }
+
+
+
 }

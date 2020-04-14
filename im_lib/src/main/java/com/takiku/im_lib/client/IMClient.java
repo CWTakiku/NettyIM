@@ -2,29 +2,36 @@ package com.takiku.im_lib.client;
 
 import androidx.annotation.Nullable;
 
+import com.takiku.im_lib.Codec.Codec;
 import com.takiku.im_lib.authenticator.Authenticator;
 import com.takiku.im_lib.cache.Cache;
 import com.takiku.im_lib.authenticator.Authenticator;
 import com.takiku.im_lib.cache.Cache;
+import com.takiku.im_lib.call.Call;
+import com.takiku.im_lib.call.RealCall;
+import com.takiku.im_lib.call.Request;
 import com.takiku.im_lib.dispatcher.Dispatcher;
 import com.takiku.im_lib.entity.Address;
 import com.takiku.im_lib.interceptor.Interceptor;
+import com.takiku.im_lib.internal.DefaultCodec;
 import com.takiku.im_lib.internal.Internal;
 import com.takiku.im_lib.internal.connection.ConnectionPool;
 import com.takiku.im_lib.internal.connection.RealConnection;
 import com.takiku.im_lib.internal.connection.Route;
 import com.takiku.im_lib.internal.connection.RouteDatabase;
 import com.takiku.im_lib.internal.connection.StreamAllocation;
+import com.takiku.im_lib.internal.handler.InternalChannelHandler;
 import com.takiku.im_lib.listener.EventListener;
-import com.takiku.im_lib.protobuf.MessagePro;
 import com.takiku.im_lib.protobuf.PackProtobuf;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
@@ -59,7 +66,7 @@ public class IMClient {
 
             @Override
             public com.google.protobuf.Internal.EnumLite HeartPack() {
-                return PackProtobuf.PackType.HEART;
+                return PackProtobuf.Pack.PackType.HEART;
             }
         };
     }
@@ -75,6 +82,13 @@ public class IMClient {
      EventListener.Factory eventListenerFactory;
      ConnectionPool connectionPool;
      Bootstrap bootstrap;
+     Codec codec;
+     LinkedHashMap<String , ChannelHandler> customChannelHandlerLinkedHashMap;
+     com.google.protobuf.Internal.EnumLite loginAuth;
+     com.google.protobuf.Internal.EnumLite commonReply;
+     InternalChannelHandler authChannelHandler;
+     InternalChannelHandler heartChannelHandler;
+     InternalChannelHandler messageChannelHandler;
 
     public IMClient(){this(new Builder());}
 
@@ -90,6 +104,14 @@ public class IMClient {
        this.eventListenerFactory=builder.eventListenerFactory;
        this.connectionRetryEnabled=builder.connectionRetryEnabled;
        this.bootstrap=builder.bootstrap;
+       this.codec=builder.codec;
+       this.customChannelHandlerLinkedHashMap=builder.customChannelHandlerLinkedHashMap;
+       this.loginAuth=builder.loginAuth;
+       this.authChannelHandler=builder.authChannelHandler;
+       this.messageChannelHandler=builder.messageChannelHandler;
+       this.heartChannelHandler=builder.heartChannelHandler;
+       this.commonReply=builder.commonReply;
+
 
 
     }
@@ -107,6 +129,43 @@ public class IMClient {
 
     public Bootstrap bootstrap(){return bootstrap;}
 
+    public Codec codec(){return codec;}
+
+    public int connectTimeout(){
+        return connectTimeout;
+    }
+     public Call newCall(Request request) {
+        return new RealCall(this, request);
+    }
+
+    public com.google.protobuf.Internal.EnumLite loginAuth(){
+        return loginAuth;
+    }
+
+    public com.google.protobuf.Internal.EnumLite commonReply(){
+        return commonReply;
+    }
+
+    public  LinkedHashMap<String , ChannelHandler> customChannelHandlerLinkedHashMap(){
+        return customChannelHandlerLinkedHashMap;
+    }
+
+    public InternalChannelHandler messageChannelHandler(){
+        return messageChannelHandler;
+    }
+
+    public InternalChannelHandler authChannelHandler(){
+        return authChannelHandler;
+    }
+
+    public InternalChannelHandler heartChannelHandler(){
+        return heartChannelHandler;
+    }
+
+    public EventListener.Factory eventListenerFactory() {
+        return eventListenerFactory;
+    }
+
     public static final class Builder{
      Dispatcher dispatcher;
      final List<Interceptor> interceptors = new ArrayList<>();
@@ -123,19 +182,26 @@ public class IMClient {
      Authenticator authenticator;
      List<Address> addressList;
      Bootstrap bootstrap;
+     Codec codec;
+     LinkedHashMap<String , ChannelHandler> customChannelHandlerLinkedHashMap;
+     com.google.protobuf.Internal.EnumLite loginAuth;
+     InternalChannelHandler authChannelHandler;
+     InternalChannelHandler heartChannelHandler;
+     InternalChannelHandler messageChannelHandler;
+     com.google.protobuf.Internal.EnumLite commonReply;
 
-
-
-     Builder(){
+     public Builder(){
          dispatcher=new Dispatcher();
          heartIntervalForeground=3*1000;
          heartIntervalBackground=30*1000;
          resendInterval=0;
          resendCount=3;
+         connectTimeout=10*1000;
          connectionRetryEnabled=true;
          addressList=new ArrayList<>();
          this.connectionPool=new ConnectionPool();
          eventListenerFactory = EventListener.factory(EventListener.NONE);
+         codec=new DefaultCodec();
      }
 
         public Builder setAuthenticator(Authenticator authenticator) {

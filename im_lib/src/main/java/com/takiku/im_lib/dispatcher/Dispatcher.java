@@ -61,4 +61,15 @@ public class Dispatcher {
         }
         return executorService;
     }
+
+
+        public synchronized void enqueue(RealCall.AsyncCall call) {
+            if (runningAsyncCalls.size() < maxRequests) {
+                runningAsyncCalls.add(call);
+                executorService().execute(call);
+            } else {
+                readyAsyncCalls.add(call);
+            }
+        }
+
 }

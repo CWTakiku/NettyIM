@@ -9,6 +9,7 @@ import com.takiku.im_lib.interceptor.ConnectInterceptor;
 import com.takiku.im_lib.interceptor.Interceptor;
 import com.takiku.im_lib.interceptor.RealInterceptorChain;
 import com.takiku.im_lib.interceptor.RetryAndFollowUpInterceptor;
+import com.takiku.im_lib.listener.EventListener;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -18,11 +19,13 @@ public class RealCall implements Call {
     final IMClient client;
     final Request originalRequest;
     final RetryAndFollowUpInterceptor retryAndFollowUpInterceptor;
+    private EventListener eventListener;
     private boolean executed;
-    RealCall(IMClient client,Request originalRequest){
+    public RealCall(IMClient client, Request originalRequest){
      this.client=client;
      this.originalRequest=originalRequest;
-        this.retryAndFollowUpInterceptor = new RetryAndFollowUpInterceptor(client);
+     this.retryAndFollowUpInterceptor = new RetryAndFollowUpInterceptor(client);
+     eventListener=client.eventListenerFactory().create(this);
     }
 
     @Override
@@ -36,11 +39,17 @@ public class RealCall implements Call {
             if (executed) throw new IllegalStateException("Already Executed");
             executed = true;
         }
+        client.dispatcher().enqueue(new AsyncCall(responseCallback));
     }
-
+    static RealCall newRealCall(IMClient client, Request originalRequest) {
+        // Safely publish the Call instance to the EventListener.
+        RealCall call = new RealCall(client, originalRequest);
+        call.eventListener = client.eventListenerFactory().create(call);
+        return call;
+    }
     @Override
     public Call clone() {
-        return null;
+        return RealCall.newRealCall(client, originalRequest);
     }
    public final class AsyncCall extends NamedRunnable {
         private final Callback responseCallback;
@@ -49,7 +58,7 @@ public class RealCall implements Call {
             super("IMClient %s",redactedUrl());
             this.responseCallback=responseCallback;
         }
-        String host(){return originalRequest.url;}
+        String host(){return originalRequest.address.getUrl();}
 
         Request request(){return originalRequest;}
 
@@ -62,35 +71,48 @@ public class RealCall implements Call {
             boolean signalledCallback = false;
          try{
              Response response = getResponseWithInterceptorChain();
+             if (retryAndFollowUpInterceptor.isCanceled()){
+                 signalledCallback = true;
+                 responseCallback.onFailure(RealCall.this, new IOException("Canceled"));
+             }else {
+                 signalledCallback = true;
+                 responseCallback.onResponse(RealCall.this, response);
+             }
+         }catch ( InterruptedException e){
+
          }catch (IOException e){
              if (signalledCallback) {
                  // Do not signal the callback twice!
-                // Platform.get().log(INFO, "Callback failure for " + toLoggableString(), e);
+                 // Platform.get().log(INFO, "Callback failure for " + toLoggableString(), e);
              } else {
                  responseCallback.onFailure(RealCall.this, e);
              }
-         }finally {
+         }
+         finally {
           client.dispatcher().finished(this);
          }
         }
     }
     String redactedUrl() {
-        return originalRequest.url;
+        return originalRequest.address.getUrl();
     }
 
-    Response getResponseWithInterceptorChain() throws IOException {
+    Response getResponseWithInterceptorChain() throws IOException, InterruptedException {
         // Build a full stack of interceptors.
         List<Interceptor> interceptors = new ArrayList<>();
-        interceptors.addAll(client.interceptors());
+        if (client.interceptors()!=null&&client.interceptors().size()>0){
+            interceptors.addAll(client.interceptors());
+        }
         interceptors.add(retryAndFollowUpInterceptor);
-        interceptors.add(new BridgeInterceptor());
-        interceptors.add(new CacheInterceptor());
+        interceptors.add(new BridgeInterceptor(client));
+       // interceptors.add(new CacheInterceptor());
         interceptors.add(new ConnectInterceptor(client));
         interceptors.add(new CallServerInterceptor());
 
 
         Interceptor.Chain chain = new RealInterceptorChain(
-                interceptors, null, null, null, 0, originalRequest);
+                interceptors, null, null, null, 0, originalRequest,this, eventListener,client.connectTimeout(),
+                client.resendCount());
         return chain.proceed(originalRequest);
     }
 }

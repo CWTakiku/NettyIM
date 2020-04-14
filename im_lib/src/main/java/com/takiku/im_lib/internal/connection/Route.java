@@ -13,11 +13,6 @@ public class Route {
         }
         this.inetSocketAddress=inetSocketAddress;
         this.address = address;
-        if (address.type()==Address.Type.HTTP){
-            this.inetSocketAddress=InetSocketAddress.createUnresolved(address.getUrl(),address.getPort());
-        }else if (address.type()==Address.Type.SOCKS){
-            this.inetSocketAddress=new InetSocketAddress(address.getUrl(),address.getPort());
-        }
     }
     public Address address() {
         return address;

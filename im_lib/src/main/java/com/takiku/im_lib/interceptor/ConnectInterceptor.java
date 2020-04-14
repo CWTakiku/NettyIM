@@ -5,6 +5,7 @@ import com.takiku.im_lib.call.Request;
 import com.takiku.im_lib.client.IMClient;
 import com.takiku.im_lib.entity.base.Response;
 import com.takiku.im_lib.internal.connection.StreamAllocation;
+import com.takiku.im_lib.internal.connection.TcpStream;
 
 import java.io.IOException;
 
@@ -15,11 +16,11 @@ public class ConnectInterceptor implements Interceptor {
         this.client=imClient;
     }
     @Override
-    public Response intercept(Chain chain) throws IOException {
+    public Response intercept(Chain chain) throws IOException, InterruptedException {
         RealInterceptorChain realChain = (RealInterceptorChain) chain;
         Request request = realChain.request();
         StreamAllocation streamAllocation = realChain.streamAllocation();
-        Codec resultCodec= streamAllocation.newStream(client, chain);
-        return null;
+        TcpStream tcpStream= streamAllocation.newStream(client, chain);
+        return realChain.proceed(request,streamAllocation,tcpStream,streamAllocation.connection());
     }
 }

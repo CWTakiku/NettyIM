@@ -5,17 +5,26 @@ option java_outer_classname = "PackProtobuf";
 
 
 message Pack{
-    PackType packType=1;
-    oneof Pack{
-      Msg msg=2;
-      Reply reply=3;
-      Heart heart=4;
-    }
-}
 enum PackType{
     MSG=0;
     REPLY=1;
     HEART=2;
+    SHAKEHANDS=3;
+
+}
+    PackType packType=1;
+    oneof body{
+      Msg msg=2;
+      Reply reply=3;
+      Heart heart=4;
+      ShakeHands shakeHands=5;
+    }
+}
+
+message ShakeHands{
+string msgId=1;
+string userId=2;
+string token=3;
 }
 message Msg{
   Head head=1;

@@ -5,8 +5,12 @@ import com.takiku.im_lib.client.IMClient;
 import com.takiku.im_lib.entity.Address;
 import com.takiku.im_lib.interceptor.Interceptor;
 import com.takiku.im_lib.internal.Internal;
+import com.takiku.im_lib.internal.handler.MessageHandler;
 
 import java.io.IOException;
+import java.util.LinkedHashMap;
+
+import io.netty.channel.ChannelHandler;
 
 public class StreamAllocation {
 
@@ -16,11 +20,13 @@ public class StreamAllocation {
     private final RouteSelector routeSelector; //路由选择器
     private Route route;
     private ConnectionPool connectionPool;
-    public StreamAllocation(ConnectionPool connectionPool, Address address, Object callStackTrace){
+    private LinkedHashMap<String, ChannelHandler> channelHandlerMap;
+    public StreamAllocation(ConnectionPool connectionPool, Address address,LinkedHashMap<String, ChannelHandler>  channelHandlerMap, Object callStackTrace){
       this.address = address;
       this.connectionPool=connectionPool;
       this.callStackTrace=callStackTrace;
       this.routeSelector=new RouteSelector(address, routeDatabase());
+      this.channelHandlerMap=channelHandlerMap;
     }
 
     private RouteDatabase routeDatabase() {
@@ -48,7 +54,7 @@ public class StreamAllocation {
         return route!=null||routeSelector.hasNext();
     }
 
-    public Codec newStream(IMClient client, Interceptor.Chain chain) throws IOException {
+    public TcpStream newStream(IMClient client, Interceptor.Chain chain) throws IOException, InterruptedException {
         Route selectedRoute=null;
         int connectTimeout = chain.connectTimeoutMillis();
         int sendTimeout = chain.sendTimeoutMillis();
@@ -59,17 +65,21 @@ public class StreamAllocation {
                     if (selectedRoute == null) {
                             selectedRoute = routeSelector.next();
                     }
-                    connectionPool
                     connection= new RealConnection(connectionPool, selectedRoute);
-                    connection.
+                    connection.ChannelInitializerHandler(client.codec(),client.loginAuth(),client.commonReply(),client.authChannelHandler(),client.heartChannelHandler(),
+                            client.messageChannelHandler(),client.customChannelHandlerLinkedHashMap());
+                    connection.connect(connectTimeout);
+                    TcpStream tcpStream=connection.newStream(client,this);
+                    return tcpStream;
                 }
             }else {
-
+                return connection.newStream(client,this);
             }
         }
-
+        return null;
     }
     public synchronized RealConnection connection() {
         return connection;
     }
+
 }

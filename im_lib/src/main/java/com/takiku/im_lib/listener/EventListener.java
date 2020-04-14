@@ -41,4 +41,8 @@ public abstract class EventListener {
     }
     public void callStart(Call call) {
     }
+    public void sendMsgStart(Call call) {
+    }
+    public void sendMsgEnd(Call call) {
+    }
 }

@@ -15,7 +15,7 @@ public class CacheInterceptor implements Interceptor {
     }
 
     @Override
-    public Response intercept(Chain chain) throws IOException {
-        return null;
+    public Response intercept(Chain chain) throws IOException, InterruptedException {
+        return chain.proceed(chain.request());
     }
 }

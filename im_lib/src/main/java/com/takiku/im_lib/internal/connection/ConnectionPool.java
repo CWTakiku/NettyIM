@@ -30,7 +30,7 @@ import io.netty.handler.codec.LengthFieldPrepender;
  */
 public final class ConnectionPool {
 
-    private Bootstrap bootstrap;
+
 
     private static final ExecutorService bossPool = Executors.newFixedThreadPool(1);
     private static final ExecutorService workPool = Executors.newFixedThreadPool(1);;// 工作线程组，负责心跳
@@ -40,18 +40,13 @@ public final class ConnectionPool {
 
 
     public ConnectionPool(){
-        EventLoopGroup loopGroup = new NioEventLoopGroup(4);
-        bootstrap = new Bootstrap();
-        bootstrap.group(loopGroup).channel(NioSocketChannel.class);
-        // 设置该选项以后，如果在两小时内没有数据的通信时，TCP会自动发送一个活动探测数据报文
-        bootstrap.option(ChannelOption.SO_KEEPALIVE, true);
-        // 设置禁用nagle算法
-        bootstrap.option(ChannelOption.TCP_NODELAY, true);
+
     }
     public void setConnectTimeout(int connectTimeout){
         // 设置连接超时时长
-        bootstrap.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, connectTimeout);
+       // bootstrap.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, connectTimeout);
     }
+
 
     public void deduplicate(StreamAllocation streamAllocation){
         realConnection=null;
@@ -63,28 +58,7 @@ public final class ConnectionPool {
         assert (Thread.holdsLock(this));
         realConnection=connection;
     }
-    public void ChannelInitializerHandler(Codec codec,com.google.protobuf.Internal.EnumLite heartResponseHandler){
-         bootstrap.handler(new ChannelInitializer<Channel>() {
-             @Override
-             protected void initChannel(Channel channel ) throws Exception {
-                 ChannelPipeline pipeline = channel.pipeline();
-                 //解决tcp拆包、粘包
-                 pipeline.addLast("frameEncoder", new LengthFieldPrepender(2));
-                 pipeline.addLast("frameDecoder", new LengthFieldBasedFrameDecoder(65535,
-                         0, 2, 0, 2));
-                 //编解码支持
-                 pipeline.addLast(codec.EnCoder().getClass().getSimpleName(),codec.EnCoder());
-                 pipeline.addLast(codec.DeCoder().getClass().getSimpleName(),codec.DeCoder());
 
-                 pipeline.addLast(HeartbeatRespHandler.class.getSimpleName(),new HeartbeatRespHandler(heartResponseHandler));
-                 pipeline.addLast()
-
-
-
-
-             }
-         });
-    }
 
     /**
      * 执行boss任务

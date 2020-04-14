@@ -7,10 +7,11 @@ package com.takiku.im_lib.entity.base;
  */
 public abstract class AbstractPack<T extends AbstractBody> {
 
-    public static final  int MSG_TYPE=0;
-    public static final  int MSG_REPLY_TYPE=1;
-    public static final  int MSG_HEART_TYPE=2;
 
+
+    public AbstractPack(int packType){
+        this.packType=packType;
+    }
 
     private int packType;
     private T abstractMessage;
@@ -19,9 +20,6 @@ public abstract class AbstractPack<T extends AbstractBody> {
         return packType;
     }
 
-    public void setPackType(int packType) {
-        this.packType = packType;
-    }
 
     public T getAbstractMessage() {
         return abstractMessage;

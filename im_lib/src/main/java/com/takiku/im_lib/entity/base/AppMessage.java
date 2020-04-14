@@ -1,6 +1,7 @@
 package com.takiku.im_lib.entity.base;
 
 
+import com.takiku.im_lib.call.Request;
 import com.takiku.im_lib.protobuf.PackProtobuf;
 import com.takiku.im_lib.util.StringUtil;
 
@@ -8,6 +9,7 @@ public  class AppMessage extends AbstractPack<AppBody> {
     private Head head;  // 消息头
     private String body;// 消息体
     public AppMessage(Builder builder){
+        super(Request.PACK_MSG_TYPE);
         this.head=builder.head;
         this.body=builder.body;
     }
@@ -69,12 +71,6 @@ public  class AppMessage extends AbstractPack<AppBody> {
             return new AppMessage(this);
         }
 
-    }
-
-
-    @Override
-    public void setPackType(int packType) {
-        super.setPackType(packType);
     }
 
     public PackProtobuf.Msg build() {

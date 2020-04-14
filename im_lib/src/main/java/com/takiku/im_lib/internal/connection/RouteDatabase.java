@@ -5,11 +5,12 @@ import java.util.Set;
 
 /**
  * author:chengwl
- * Description: 路由库
+ * Description:
  * Date:2020/4/10
  */
 public class RouteDatabase {
     private final Set<Route> failedRoutes = new LinkedHashSet<>();
+
 
     /** Records a failure connecting to {@code failedRoute}. */
     public synchronized void failed(Route failedRoute) {
