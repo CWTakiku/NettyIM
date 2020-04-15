@@ -56,7 +56,7 @@ public class Dispatcher {
     }
     public synchronized ExecutorService executorService() {
         if (executorService == null) {
-            executorService = new ThreadPoolExecutor(0, Integer.MAX_VALUE, 60, TimeUnit.SECONDS,
+            executorService = new ThreadPoolExecutor(1, Integer.MAX_VALUE, 60, TimeUnit.SECONDS,
                     new SynchronousQueue<Runnable>(), Util.threadFactory("IMClient Dispatcher", false));
         }
         return executorService;

@@ -10,7 +10,7 @@ ext {
 
             appcompatVersion                     : "1.1.0",
 
-            protobufVersion                      : "3.5.0",
+            protobufVersion                      : "3.11.4",
 
     ]
 }

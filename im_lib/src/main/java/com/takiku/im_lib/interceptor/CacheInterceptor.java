@@ -1,9 +1,8 @@
 package com.takiku.im_lib.interceptor;
 
-import android.telecom.StatusHints;
-
 import com.takiku.im_lib.cache.Cache;
 import com.takiku.im_lib.entity.base.Response;
+import com.takiku.im_lib.exception.AuthException;
 
 import java.io.IOException;
 
@@ -15,7 +14,7 @@ public class CacheInterceptor implements Interceptor {
     }
 
     @Override
-    public Response intercept(Chain chain) throws IOException, InterruptedException {
+    public Response intercept(Chain chain) throws IOException, InterruptedException, AuthException {
         return chain.proceed(chain.request());
     }
 }

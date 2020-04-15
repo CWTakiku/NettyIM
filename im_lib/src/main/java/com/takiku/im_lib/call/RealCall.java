@@ -2,8 +2,8 @@ package com.takiku.im_lib.call;
 
 import com.takiku.im_lib.client.IMClient;
 import com.takiku.im_lib.entity.base.Response;
+import com.takiku.im_lib.exception.AuthException;
 import com.takiku.im_lib.interceptor.BridgeInterceptor;
-import com.takiku.im_lib.interceptor.CacheInterceptor;
 import com.takiku.im_lib.interceptor.CallServerInterceptor;
 import com.takiku.im_lib.interceptor.ConnectInterceptor;
 import com.takiku.im_lib.interceptor.Interceptor;
@@ -87,8 +87,9 @@ public class RealCall implements Call {
              } else {
                  responseCallback.onFailure(RealCall.this, e);
              }
-         }
-         finally {
+         } catch (AuthException e) {
+          //   e.printStackTrace();
+         } finally {
           client.dispatcher().finished(this);
          }
         }
@@ -97,7 +98,7 @@ public class RealCall implements Call {
         return originalRequest.address.getUrl();
     }
 
-    Response getResponseWithInterceptorChain() throws IOException, InterruptedException {
+    Response getResponseWithInterceptorChain() throws IOException, InterruptedException, AuthException {
         // Build a full stack of interceptors.
         List<Interceptor> interceptors = new ArrayList<>();
         if (client.interceptors()!=null&&client.interceptors().size()>0){
@@ -112,7 +113,7 @@ public class RealCall implements Call {
 
         Interceptor.Chain chain = new RealInterceptorChain(
                 interceptors, null, null, null, 0, originalRequest,this, eventListener,client.connectTimeout(),
-                client.resendCount());
+                client.sendTimeout());
         return chain.proceed(originalRequest);
     }
 }

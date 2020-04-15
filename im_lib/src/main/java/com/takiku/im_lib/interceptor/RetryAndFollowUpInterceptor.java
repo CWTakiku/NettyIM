@@ -2,6 +2,7 @@ package com.takiku.im_lib.interceptor;
 
 import com.takiku.im_lib.call.Request;
 import com.takiku.im_lib.client.IMClient;
+import com.takiku.im_lib.exception.AuthException;
 import com.takiku.im_lib.exception.RouteException;
 import com.takiku.im_lib.internal.connection.StreamAllocation;
 import com.takiku.im_lib.entity.UnrepeatableRequestBody;
@@ -67,7 +68,9 @@ public class RetryAndFollowUpInterceptor implements Interceptor {
             } catch (InterruptedException e) {
                 System.out.println(" InterruptedException ");
                 e.printStackTrace();
-            } finally {
+            } catch (AuthException e)  {
+                e.printStackTrace();
+            }finally {
                 // We're throwing an unchecked exception. Release any resources.
                 if (releaseConnection) {   //未捕获到，释放资源
                     streamAllocation.streamFailed(null);

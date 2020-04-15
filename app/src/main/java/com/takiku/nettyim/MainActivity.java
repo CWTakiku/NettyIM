@@ -12,6 +12,9 @@ import com.takiku.im_lib.entity.Address;
 import com.takiku.im_lib.entity.base.AppMessage;
 import com.takiku.im_lib.entity.base.Response;
 import com.takiku.im_lib.entity.base.ShakeHandsMessage;
+import com.takiku.im_lib.internal.handler.DefaultShakeHandsHandler;
+import com.takiku.im_lib.internal.handler.ShakeHandsHandler;
+import com.takiku.im_lib.protobuf.PackProtobuf;
 
 import java.io.IOException;
 
@@ -23,15 +26,25 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         ShakeHandsMessage shakeHandsMessage =new ShakeHandsMessage();
-        shakeHandsMessage.setToken("123");
-        shakeHandsMessage.setUserId("2344");
+        shakeHandsMessage.setToken("yourtoken");
+        shakeHandsMessage.setUserId("youruserId");
         shakeHandsMessage.setMsgId("12345678");
 
         AppMessage appMessage=new AppMessage.Builder().build();
 
+        PackProtobuf.ShakeHands shakeHands=shakeHandsMessage.build();
+       PackProtobuf.Pack pack=  PackProtobuf.Pack.newBuilder()
+                .setPackType(PackProtobuf.Pack.PackType.SHAKEHANDS)
+                .setShakeHands(shakeHands)
+                .build();
 
-       IMClient imClient=new IMClient.Builder().build();
-        Request request=new Request.Builder().setAddress(new Address("192.168.69.32",8765,Address.Type.SOCKS)).setBody(shakeHandsMessage).build();
+       IMClient imClient=new IMClient.Builder()
+               .setShakeHands(pack, new DefaultShakeHandsHandler())
+               .build();
+        Request request=new Request.Builder()
+                .setAddress(new Address("192.168.69.32",8765,Address.Type.SOCKS))
+                .setBody(shakeHandsMessage)
+                .build();
        Call call= imClient.newCall(request);
        call.enqueue(new Callback() {
            @Override

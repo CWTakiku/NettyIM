@@ -1,11 +1,10 @@
 package com.takiku.im_lib.internal.connection;
 
-import com.takiku.im_lib.Codec.Codec;
 import com.takiku.im_lib.client.IMClient;
 import com.takiku.im_lib.entity.Address;
+import com.takiku.im_lib.exception.AuthException;
 import com.takiku.im_lib.interceptor.Interceptor;
 import com.takiku.im_lib.internal.Internal;
-import com.takiku.im_lib.internal.handler.MessageHandler;
 
 import java.io.IOException;
 import java.util.LinkedHashMap;
@@ -54,7 +53,7 @@ public class StreamAllocation {
         return route!=null||routeSelector.hasNext();
     }
 
-    public TcpStream newStream(IMClient client, Interceptor.Chain chain) throws IOException, InterruptedException {
+    public TcpStream newStream(IMClient client, Interceptor.Chain chain) throws IOException, InterruptedException,AuthException  {
         Route selectedRoute=null;
         int connectTimeout = chain.connectTimeoutMillis();
         int sendTimeout = chain.sendTimeoutMillis();
@@ -66,8 +65,11 @@ public class StreamAllocation {
                             selectedRoute = routeSelector.next();
                     }
                     connection= new RealConnection(connectionPool, selectedRoute);
-                    connection.ChannelInitializerHandler(client.codec(),client.loginAuth(),client.commonReply(),client.authChannelHandler(),client.heartChannelHandler(),
-                            client.messageChannelHandler(),client.customChannelHandlerLinkedHashMap());
+
+                    connection.ChannelInitializerHandler(client.codec(),client.loginAuth(),client.commonReply(),client.shakeHandsHandler(),client.heartChannelHandler(),
+                               client.messageChannelHandler(),client.customChannelHandlerLinkedHashMap());
+
+
                     connection.connect(connectTimeout);
                     TcpStream tcpStream=connection.newStream(client,this);
                     return tcpStream;

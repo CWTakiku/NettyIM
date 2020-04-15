@@ -1,6 +1,7 @@
 package com.takiku.im_lib.util;
 
 import android.os.CountDownTimer;
+import android.os.Looper;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -31,7 +32,10 @@ public class CountDownTimerManger {
         if (freeCountDownTimerQueue.size()>0){
             return freeCountDownTimerQueue.poll();
         }else {
+            Looper.prepare();
            Timer timer=new Timer(millisInFuture,countDownInterval);
+
+
            return timer;
         }
     }

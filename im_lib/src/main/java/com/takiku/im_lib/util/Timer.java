@@ -1,6 +1,7 @@
 package com.takiku.im_lib.util;
 
 import android.os.CountDownTimer;
+import android.os.Looper;
 
 public class Timer extends CountDownTimer {
 
@@ -38,5 +39,9 @@ public class Timer extends CountDownTimer {
         public void startCountDown(countDownListener countDownListener){
             this.countDownListener=countDownListener;
             start();
+            Looper.loop();
+        }
+        public void release(){
+            Looper.myLooper().quit();
         }
 }

@@ -5,6 +5,7 @@ import com.takiku.im_lib.client.IMClient;
 import com.takiku.im_lib.entity.base.AppMessage;
 import com.takiku.im_lib.entity.base.Response;
 import com.takiku.im_lib.entity.base.ShakeHandsMessage;
+import com.takiku.im_lib.exception.AuthException;
 import com.takiku.im_lib.protobuf.PackProtobuf;
 
 import java.io.IOException;
@@ -20,7 +21,7 @@ public class BridgeInterceptor implements Interceptor {
     }
 
     @Override
-    public Response intercept(Chain chain) throws IOException, InterruptedException {
+    public Response intercept(Chain chain) throws IOException, InterruptedException, AuthException {
         Request request=chain.request();
         if (request.body.getPackType()==Request.PACK_MSG_TYPE){
             AppMessage appMessage= (AppMessage) request.body;

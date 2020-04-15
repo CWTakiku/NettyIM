@@ -1,6 +1,9 @@
 package com.takiku.im_lib.interceptor;
 
 
+import android.os.Handler;
+import android.os.Looper;
+
 import com.takiku.im_lib.call.Request;
 import com.takiku.im_lib.entity.base.Response;
 import com.takiku.im_lib.internal.connection.RealConnection;
@@ -24,32 +27,30 @@ public class CallServerInterceptor implements Interceptor {
         long sentRequestMillis = System.currentTimeMillis();
         boolean sendFinish=false;
         final Response[] response = {null};
-        final boolean[] result = {false};
-        while (!result[0]){
-            if (!sendFinish){
+
+        tcpStream.writeRequest(request);
+        realChain.eventListener().sendMsgEnd(realChain.call());
                 Timer timer= CountDownTimerManger.getInstance().getFreeCountDownTimer(realChain.sendTimeoutMillis(),100);
                 timer.startCountDown(new Timer.countDownListener() {
                     @Override
                     public void onTick(long millisUntilFinished) {
+                        System.out.println("onTick "+millisUntilFinished);
                         response[0] =tcpStream.readResponse(request);
                         if (response[0] !=null){
                             timer.cancel();
                             CountDownTimerManger.getInstance().putCountDownTimer(timer);
-                           result[0] =true;
+
                         }
                     }
 
                     @Override
                     public void onFinish() {
-                        result[0] =true;
+                        timer.cancel();
+                        timer.release();
                         CountDownTimerManger.getInstance().putCountDownTimer(timer);
+
                     }
                 });
-                tcpStream.writeRequest(request);
-                realChain.eventListener().sendMsgEnd(realChain.call());
-            }
-            sendFinish=true;
-        }
 
         if (response[0] !=null){
             response[0].setRequest(request);

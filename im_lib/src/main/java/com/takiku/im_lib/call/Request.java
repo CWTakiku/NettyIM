@@ -1,6 +1,7 @@
 package com.takiku.im_lib.call;
 
 import com.google.protobuf.GeneratedMessageLite;
+import com.google.protobuf.GeneratedMessageV3;
 import com.takiku.im_lib.entity.Address;
 import com.takiku.im_lib.entity.base.AbstractBody;
 import com.takiku.im_lib.entity.base.AbstractPack;
@@ -13,23 +14,22 @@ public final class Request {
 
  public Address address;
  public   AbstractPack body;
-  GeneratedMessageLite value;
+ com.google.protobuf.GeneratedMessageV3 value;
 
   Request(Builder builder) {
      this.address=builder.address;
      this.body=builder.body;
   }
 
+    public GeneratedMessageV3 getValue() {
+        return value;
+    }
 
-  public GeneratedMessageLite getValue() {
-    return value;
-  }
+    public void setValue(GeneratedMessageV3 value) {
+        this.value = value;
+    }
 
-  public void setValue(GeneratedMessageLite value) {
-    this.value = value;
-  }
-
-  public static class Builder {
+    public static class Builder {
     Address address;
     AbstractPack body;
 

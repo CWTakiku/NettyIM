@@ -3,7 +3,6 @@ option java_package = "com.takiku.im_lib.protobuf";
 option java_outer_classname = "PackProtobuf";
 
 
-
 message Pack{
 enum PackType{
     MSG=0;
@@ -25,6 +24,7 @@ message ShakeHands{
 string msgId=1;
 string userId=2;
 string token=3;
+int32 statusReport=4;
 }
 message Msg{
   Head head=1;
@@ -41,8 +41,10 @@ message Head {
     string auth=8;
 }
 message Reply{
-
+  int32 replyType=1;
+  string msgId=2;
+  int32 statusReport=3;
 }
 message Heart{
-
+  string userId=1;
 }

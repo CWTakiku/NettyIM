@@ -7,10 +7,13 @@ import com.takiku.im_lib.Codec.Codec;
 import com.takiku.im_lib.client.IMClient;
 import com.takiku.im_lib.dispatcher.Connection;
 import com.takiku.im_lib.dispatcher.Handshake;
+import com.takiku.im_lib.exception.AuthError;
+import com.takiku.im_lib.exception.AuthException;
 import com.takiku.im_lib.internal.handler.InternalChannelHandler;
 import com.takiku.im_lib.internal.handler.HeartbeatRespHandler;
 import com.takiku.im_lib.internal.handler.LoginAuthHandler;
 import com.takiku.im_lib.internal.handler.MessageHandler;
+import com.takiku.im_lib.internal.handler.ShakeHandsHandler;
 import com.takiku.im_lib.util.LRUMap;
 
 import java.util.LinkedHashMap;
@@ -18,7 +21,6 @@ import java.util.LinkedHashMap;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
@@ -54,10 +56,10 @@ public class RealConnection  implements Connection {
         // 设置禁用nagle算法
         bootstrap.option(ChannelOption.TCP_NODELAY, true);
     }
-    public void ChannelInitializerHandler(final Codec codec, final com.google.protobuf.Internal.EnumLite loginAuth,final com.google.protobuf.Internal.EnumLite commonReply,
-                                          final InternalChannelHandler loginAuthInternalChannelHandler, final InternalChannelHandler heartInternalChannelHandler,
+    public void ChannelInitializerHandler(final Codec codec, final com.google.protobuf.GeneratedMessageV3 shakeHands, final com.google.protobuf.Internal.EnumLite commonReply,
+                                          final ShakeHandsHandler shakeHandsHandler, final InternalChannelHandler heartInternalChannelHandler,
                                           final InternalChannelHandler messageInternalChannelHandler,
-                                          final LinkedHashMap<String, ChannelHandler> handlers){
+                                          final LinkedHashMap<String, ChannelHandler> handlers) throws AuthException {
         bootstrap.handler(new ChannelInitializer<Channel>() {
             @Override
             protected void initChannel(Channel channel ) throws Exception {
@@ -70,7 +72,7 @@ public class RealConnection  implements Connection {
                 pipeline.addLast(codec.EnCoder().getClass().getSimpleName(),codec.EnCoder());
                 pipeline.addLast(codec.DeCoder().getClass().getSimpleName(),codec.DeCoder());
 
-                pipeline.addLast(LoginAuthHandler.class.getSimpleName(),new LoginAuthHandler(loginAuth, loginAuthInternalChannelHandler));
+                pipeline.addLast(LoginAuthHandler.class.getSimpleName(),new LoginAuthHandler(shakeHands, shakeHandsHandler));
                 pipeline.addLast(HeartbeatRespHandler.class.getSimpleName(),new HeartbeatRespHandler(heartInternalChannelHandler));
                 if (handlers!=null){
                     for (String key : handlers.keySet()) {

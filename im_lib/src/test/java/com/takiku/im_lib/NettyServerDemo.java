@@ -1,6 +1,7 @@
 package com.takiku.im_lib;
 
 
+import com.takiku.im_lib.call.Request;
 import com.takiku.im_lib.protobuf.PackProtobuf;
 
 import org.junit.Test;
@@ -128,6 +129,37 @@ class ServerHandler extends ChannelInboundHandlerAdapter {
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         PackProtobuf.Pack pack = (PackProtobuf.Pack) msg;
+        PackProtobuf.Pack replyPack=null;
+        switch (pack.getPackType()){
+            case SHAKEHANDS:
+                PackProtobuf.ShakeHands shakeHands=pack.getShakeHands();
+                String userId=shakeHands.getUserId();
+                String token=shakeHands.getToken();
+                String msgId=shakeHands.getMsgId();
+                if (token.equals("your token")&&userId.equals("your userId")){ //连接认证成功
+
+                    replyPack= PackProtobuf.Pack.newBuilder()
+                            .setPackType(PackProtobuf.Pack.PackType.SHAKEHANDS)
+                            .setShakeHands(shakeHands.toBuilder().setStatusReport(1))
+                            .build();
+                    ChannelContainer.getInstance().saveChannel(new NettyChannel(userId, ctx.channel()));
+                }else {
+                    replyPack= PackProtobuf.Pack.newBuilder()
+                            .setPackType(PackProtobuf.Pack.PackType.SHAKEHANDS)
+                            .setShakeHands(shakeHands.toBuilder().setStatusReport(0))
+                            .build();
+                    ctx.channel().writeAndFlush(replyPack);
+                    ChannelContainer.getInstance().removeChannelIfConnectNoActive(ctx.channel());
+
+                    return;
+                }
+                if (replyPack!=null){
+                    ChannelContainer.getInstance().getActiveChannelByUserId(userId).getChannel().writeAndFlush(replyPack);
+                }
+                break;
+        }
+
+
 //        System.out.println("收到来自客户端的消息：" + message);
 //        int msgType = message.getHead().getMsgType();
 //        switch (msgType) {

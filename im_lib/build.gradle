@@ -1,5 +1,4 @@
 apply plugin: 'com.android.library'
-apply plugin: 'com.google.protobuf'
 apply from: file('config.gradle')
 android {
     compileSdkVersion cfgs.compileSdkVersion
@@ -21,46 +20,13 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
-    sourceSets {
-        main {
-            proto {
-                srcDir 'src/main/proto'
-                include '**/*.proto'
-            }
-        }
-    }
+
     compileOptions {
         sourceCompatibility = 1.8
         targetCompatibility = 1.8
     }
 }
-protobuf {
-    protoc {
-        artifact = 'com.google.protobuf:protoc:3.8.0'
-    }
-    plugins {
-        javalite {
-            // The codegen for lite comes as a separate artifact
-            artifact = 'com.google.protobuf:protoc-gen-javalite:3.0.0'
-        }
-        grpc{
-            artifact = 'io.grpc:protoc-gen-grpc-java:1.0.0-pre2'
-        }
-    }
-    generateProtoTasks {
-        all().each { task ->
-            task.builtins {
-                remove java
-            }
-            task.plugins {
-                javalite {}
-                grpc { // Options added to --grpc_out
-                    option 'lite' }
-            }
-        }
-    }
-  //  generatedFilesBaseDir = "/src/generated"
-}
+
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
