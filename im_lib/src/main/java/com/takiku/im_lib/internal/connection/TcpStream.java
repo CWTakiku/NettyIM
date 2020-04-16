@@ -1,7 +1,6 @@
 package com.takiku.im_lib.internal.connection;
 
-import com.google.protobuf.GeneratedMessageLite;
-import com.takiku.im_lib.call.Request;
+import com.takiku.im_lib.entity.base.Request;
 import com.takiku.im_lib.entity.base.Response;
 
 import java.io.IOException;

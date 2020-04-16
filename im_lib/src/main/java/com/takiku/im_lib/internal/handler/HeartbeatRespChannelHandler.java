@@ -8,11 +8,11 @@ import io.netty.channel.ChannelInboundHandlerAdapter;
  * Description: 接受心跳包回应
  * Date:2020/4/12
  */
-public class HeartbeatRespHandler extends ChannelInboundHandlerAdapter {
+public class HeartbeatRespChannelHandler extends ChannelInboundHandlerAdapter {
 
     private InternalChannelHandler internalChannelHandler;
 
-    public HeartbeatRespHandler(InternalChannelHandler internalChannelHandler){
+    public HeartbeatRespChannelHandler(InternalChannelHandler internalChannelHandler){
       this.internalChannelHandler = internalChannelHandler;
     }
 

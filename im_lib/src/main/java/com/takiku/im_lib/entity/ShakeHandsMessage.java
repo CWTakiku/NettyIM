@@ -1,6 +1,7 @@
-package com.takiku.im_lib.entity.base;
+package com.takiku.im_lib.entity;
 
-import com.takiku.im_lib.call.Request;
+import com.takiku.im_lib.entity.base.AbstractPack;
+import com.takiku.im_lib.entity.base.Request;
 import com.takiku.im_lib.protobuf.PackProtobuf;
 
 public class ShakeHandsMessage extends AbstractPack {

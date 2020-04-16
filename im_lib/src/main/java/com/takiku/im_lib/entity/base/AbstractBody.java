@@ -6,5 +6,5 @@ package com.takiku.im_lib.entity.base;
  * Date:2020/4/11
  */
 public abstract class AbstractBody {
-  abstract   int messageType();
+  protected abstract   int messageType();
 }

@@ -1,4 +1,4 @@
-package com.takiku.im_lib.entity;
+package com.takiku.im_lib.entity.base;
 
 import java.net.Proxy;
 import java.net.SocketAddress;

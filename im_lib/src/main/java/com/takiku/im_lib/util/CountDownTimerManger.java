@@ -32,9 +32,10 @@ public class CountDownTimerManger {
         if (freeCountDownTimerQueue.size()>0){
             return freeCountDownTimerQueue.poll();
         }else {
-            Looper.prepare();
+            if (Looper.myLooper()==null){
+                Looper.prepare();
+            }
            Timer timer=new Timer(millisInFuture,countDownInterval);
-
 
            return timer;
         }

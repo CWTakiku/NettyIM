@@ -1,6 +1,6 @@
 package com.takiku.im_lib.interceptor;
 
-import com.takiku.im_lib.call.Request;
+import com.takiku.im_lib.entity.base.Request;
 import com.takiku.im_lib.client.IMClient;
 import com.takiku.im_lib.exception.AuthException;
 import com.takiku.im_lib.exception.RouteException;
@@ -18,12 +18,17 @@ import java.security.cert.CertificateException;
 import javax.net.ssl.SSLHandshakeException;
 import javax.net.ssl.SSLPeerUnverifiedException;
 
+import io.netty.channel.ConnectTimeoutException;
+
+import static com.takiku.im_lib.entity.base.Response.CONNECT_FAILED;
+
 public class RetryAndFollowUpInterceptor implements Interceptor {
 
     private final IMClient client;
     private StreamAllocation streamAllocation;
     private Object callStackTrace;
     private static final int MAX_FOLLOW_UPS = 20;
+    private static final int MAX_CONNECT_RETRY=3;
     private volatile boolean canceled;
     public void setCallStackTrace(Object callStackTrace) {
         this.callStackTrace = callStackTrace;
@@ -35,9 +40,10 @@ public class RetryAndFollowUpInterceptor implements Interceptor {
     @Override
     public Response intercept(Chain chain) throws IOException {
         Request request = chain.request();
-        streamAllocation = new StreamAllocation(client.connectionPool(), request.address,client.customChannelHandlerLinkedHashMap(), callStackTrace);
+        streamAllocation = new StreamAllocation(client.connectionPool(),client.addressList(),client.customChannelHandlerLinkedHashMap(), callStackTrace);
         int followUpCount = 0;
         int resendCount=0;
+        int connect_retry=0;
         while (true){
             if (canceled) {
                 streamAllocation.release();
@@ -54,20 +60,37 @@ public class RetryAndFollowUpInterceptor implements Interceptor {
                     throw e.getLastConnectException();
                 }
                 releaseConnection = false;
-                if (++resendCount<client.resendCount()) //未达到重复次数上线继续重试
-                continue;
+
+            }catch (ConnectTimeoutException e){
+                if (client.connectionRetryEnabled()){
+                    if (++connect_retry>MAX_CONNECT_RETRY){
+                    Request  connectRequest=followUpRequest(followUpCount,request);
+                     if (connectRequest!=null){
+                         releaseConnection=false;
+                         continue;
+                     }else {
+                         e.printStackTrace();
+                         return new Response.Builder().setCode(CONNECT_FAILED).build();
+                     }
+                    }else {
+                        System.out.println("连接重试");
+                        releaseConnection=false;
+                        continue;
+                    }
+                }
             } catch (IOException e) {
                 // An attempt to communicate with a server failed. The request may have been sent.
                 //先判断当前请求是否已经发送了
                 boolean requestSendStarted = !(e instanceof ConnectionShutdownException);
                 if (!recover(e, requestSendStarted, request)) throw e;
                 releaseConnection = false;
-                if (++resendCount<client.resendCount())
-                    continue;
-                continue;
+
             } catch (InterruptedException e) {
+
                 System.out.println(" InterruptedException ");
                 e.printStackTrace();
+
+                continue;
             } catch (AuthException e)  {
                 e.printStackTrace();
             }finally {
@@ -77,24 +100,30 @@ public class RetryAndFollowUpInterceptor implements Interceptor {
                     streamAllocation.release();
                 }
             }
-
-            Request followUp = followUpRequest(response);
-            if (followUp==null){
+            if (isOk(response)){
                 return response;
             }
-            if (++followUpCount >MAX_FOLLOW_UPS) {
-                streamAllocation.release();
-                throw new ProtocolException("Too many follow-up requests: " + followUpCount);
-            }
+            if (++resendCount<client.resendCount()) //未达到重复次数上线继续重试
+                continue;
 
         }
     }
 
-    private Request followUpRequest(Response response) {
-          if (response!=null){
-              return null;
-          }
-      return   response.request;
+    private boolean isOk(Response response) {
+        if (response!=null&&response.code==Response.SUCCESS){
+            return true;
+        }else {
+            return false;
+        }
+    }
+
+    private Request followUpRequest(int followUpCount,Request request) throws IOException {
+        if (!streamAllocation.hasMoreRoutes()) return null;
+        if (++followUpCount >MAX_FOLLOW_UPS) { //重定向次数太多了，放弃这个连接
+           return null;
+        }
+         streamAllocation.nextRoute();
+      return   request;
     }
 
     /**
@@ -117,7 +146,7 @@ public class RetryAndFollowUpInterceptor implements Interceptor {
         if (!isRecoverable(e, requestSendStarted)) return false;
 
         // No more routes to attempt.
-        if (!streamAllocation.hasMoreRoutes()) return false;
+
 
         // For failure recovery, use the same route selector with a new connection.
         return true;
@@ -135,19 +164,7 @@ public class RetryAndFollowUpInterceptor implements Interceptor {
             return e instanceof SocketTimeoutException && !requestSendStarted;
         }
 
-        // Look for known client-side or negotiation errors that are unlikely to be fixed by trying
-        // again with a different route.
-        if (e instanceof SSLHandshakeException) {
-            // If the problem was a CertificateException from the X509TrustManager,
-            // do not retry.
-            if (e.getCause() instanceof CertificateException) {
-                return false;
-            }
-        }
-        if (e instanceof SSLPeerUnverifiedException) {
-            // e.g. a certificate pinning error.
-            return false;
-        }
+
 
         // An example of one we might want to retry with a different route is a problem connecting to a
         // proxy and would manifest as a standard IOException. Unless it is one we know we should not

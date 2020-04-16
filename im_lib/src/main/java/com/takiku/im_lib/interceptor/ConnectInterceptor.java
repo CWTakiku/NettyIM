@@ -1,6 +1,6 @@
 package com.takiku.im_lib.interceptor;
 
-import com.takiku.im_lib.call.Request;
+import com.takiku.im_lib.entity.base.Request;
 import com.takiku.im_lib.client.IMClient;
 import com.takiku.im_lib.entity.base.Response;
 import com.takiku.im_lib.exception.AuthException;

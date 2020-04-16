@@ -5,13 +5,14 @@ import androidx.annotation.Nullable;
 import com.takiku.im_lib.Codec.Codec;
 import com.takiku.im_lib.authenticator.Authenticator;
 import com.takiku.im_lib.cache.Cache;
-import com.takiku.im_lib.authenticator.Authenticator;
-import com.takiku.im_lib.cache.Cache;
 import com.takiku.im_lib.call.Call;
+import com.takiku.im_lib.call.Callback;
 import com.takiku.im_lib.call.RealCall;
-import com.takiku.im_lib.call.Request;
+import com.takiku.im_lib.entity.base.ConnectPack;
+import com.takiku.im_lib.entity.base.Request;
 import com.takiku.im_lib.dispatcher.Dispatcher;
-import com.takiku.im_lib.entity.Address;
+import com.takiku.im_lib.entity.base.Address;
+import com.takiku.im_lib.entity.base.Response;
 import com.takiku.im_lib.interceptor.Interceptor;
 import com.takiku.im_lib.internal.DefaultCodec;
 import com.takiku.im_lib.internal.Internal;
@@ -21,22 +22,18 @@ import com.takiku.im_lib.internal.connection.Route;
 import com.takiku.im_lib.internal.connection.RouteDatabase;
 import com.takiku.im_lib.internal.connection.StreamAllocation;
 import com.takiku.im_lib.internal.handler.InternalChannelHandler;
+import com.takiku.im_lib.internal.handler.MessageHandler;
 import com.takiku.im_lib.internal.handler.ShakeHandsHandler;
 import com.takiku.im_lib.listener.EventListener;
-import com.takiku.im_lib.protobuf.PackProtobuf;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import io.netty.bootstrap.Bootstrap;
-import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandler;
-import io.netty.channel.ChannelOption;
-import io.netty.channel.EventLoopGroup;
-import io.netty.channel.nio.NioEventLoopGroup;
-import io.netty.channel.socket.nio.NioSocketChannel;
 
 public class IMClient {
 
@@ -46,8 +43,8 @@ public class IMClient {
         Internal.instance = new Internal(){
 
             @Override
-            public RealConnection get(ConnectionPool pool, Address address, StreamAllocation streamAllocation, Route route) {
-                return pool.get(address, streamAllocation, route);
+            public RealConnection get(ConnectionPool pool, Address address, StreamAllocation streamAllocation) {
+                return pool.get(address, streamAllocation);
             }
 
             @Override
@@ -65,10 +62,6 @@ public class IMClient {
                 return connectionPool.routeDatabase;
             }
 
-            @Override
-            public com.google.protobuf.Internal.EnumLite HeartPack() {
-                return PackProtobuf.Pack.PackType.HEART;
-            }
         };
     }
 
@@ -81,16 +74,18 @@ public class IMClient {
      int resendInterval;// 重发间隔
      int heartIntervalForeground;
      int heartIntervalBackground;
+     boolean isBackground;//是否处于后台
      EventListener.Factory eventListenerFactory;
      ConnectionPool connectionPool;
      Bootstrap bootstrap;
      Codec codec;
      LinkedHashMap<String , ChannelHandler> customChannelHandlerLinkedHashMap;
-     com.google.protobuf.GeneratedMessageV3 loginAuth;
-     com.google.protobuf.Internal.EnumLite commonReply;
-    ShakeHandsHandler shakeHandsHandler;
+     com.google.protobuf.GeneratedMessageV3 loginAuthMsg;
+    com.google.protobuf.GeneratedMessageV3 heartBeatMsg;
+     ShakeHandsHandler shakeHandsHandler;
      InternalChannelHandler heartChannelHandler;
-     InternalChannelHandler messageChannelHandler;
+     MessageHandler messageHandler;
+     List<Address> addressList;
 
     public IMClient(){this(new Builder());}
 
@@ -108,16 +103,35 @@ public class IMClient {
        this.bootstrap=builder.bootstrap;
        this.codec=builder.codec;
        this.customChannelHandlerLinkedHashMap=builder.customChannelHandlerLinkedHashMap;
-       this.loginAuth=builder.loginAuth;
+       this.loginAuthMsg=builder.loginAuthMsg;
+       this.heartBeatMsg=builder.heartBeatMsg;
        this.shakeHandsHandler=builder.shakeHandsHandler;
-       this.messageChannelHandler=builder.messageChannelHandler;
+       this.messageHandler=builder.messageHandler;
        this.heartChannelHandler=builder.heartChannelHandler;
-       this.commonReply=builder.commonReply;
        this.sendTimeout=builder.sendTimeout;
-
+       this.addressList=builder.addressList;
+       this.isBackground=builder.isBackground;
+       startConnect();
 
 
     }
+
+    private void startConnect() {
+        checkAddressList(addressList);
+      Call call= newCall( new Request.Builder().setBody(new ConnectPack()).build());
+      call.enqueue(new Callback() {
+          @Override
+          public void onFailure(Call call, IOException e) {
+
+          }
+
+          @Override
+          public void onResponse(Call call, Response response) throws IOException {
+
+          }
+      });
+    }
+
     public Dispatcher dispatcher() {
         return dispatcher;
     }
@@ -140,24 +154,28 @@ public class IMClient {
 
     public int sendTimeout(){return sendTimeout;}
 
+    public List<Address> addressList(){ return addressList; }
+
      public Call newCall(Request request) {
         return new RealCall(this, request);
     }
 
-    public com.google.protobuf.GeneratedMessageV3 loginAuth(){
-        return loginAuth;
+    public com.google.protobuf.GeneratedMessageV3 loginAuthMsg(){ return loginAuthMsg; }
+
+    public com.google.protobuf.GeneratedMessageV3 heartBeatMsg(){ return heartBeatMsg; }
+
+    public int heartInterval(){
+        if (isBackground){
+        return heartIntervalBackground;
+        } else {
+            return heartIntervalForeground;
+        }
     }
 
-    public com.google.protobuf.Internal.EnumLite commonReply(){
-        return commonReply;
-    }
+    public  LinkedHashMap<String , ChannelHandler> customChannelHandlerLinkedHashMap(){ return customChannelHandlerLinkedHashMap; }
 
-    public  LinkedHashMap<String , ChannelHandler> customChannelHandlerLinkedHashMap(){
-        return customChannelHandlerLinkedHashMap;
-    }
-
-    public InternalChannelHandler messageChannelHandler(){
-        return messageChannelHandler;
+    public MessageHandler messageHandler(){
+        return messageHandler;
     }
 
     public ShakeHandsHandler shakeHandsHandler(){
@@ -171,6 +189,7 @@ public class IMClient {
     public EventListener.Factory eventListenerFactory() {
         return eventListenerFactory;
     }
+    public boolean connectionRetryEnabled(){return connectionRetryEnabled;}
 
     public static final class Builder{
      Dispatcher dispatcher;
@@ -182,6 +201,7 @@ public class IMClient {
      boolean connectionRetryEnabled;//是否连接失败、连接重试
      int heartIntervalForeground;
      int heartIntervalBackground;
+     boolean isBackground;
      EventListener.Factory eventListenerFactory;
      ConnectionPool connectionPool;
      @Nullable Cache cache;
@@ -190,16 +210,17 @@ public class IMClient {
      Bootstrap bootstrap;
      Codec codec;
      LinkedHashMap<String , ChannelHandler> customChannelHandlerLinkedHashMap;
-     com.google.protobuf.GeneratedMessageV3 loginAuth;
+     com.google.protobuf.GeneratedMessageV3 loginAuthMsg;
+     com.google.protobuf.GeneratedMessageV3 heartBeatMsg;
      ShakeHandsHandler shakeHandsHandler;
      InternalChannelHandler heartChannelHandler;
-     InternalChannelHandler messageChannelHandler;
-     com.google.protobuf.Internal.EnumLite commonReply;
+     MessageHandler messageHandler;
 
      public Builder(){
          dispatcher=new Dispatcher();
          heartIntervalForeground=3*1000;
          heartIntervalBackground=30*1000;
+         isBackground=true;
          resendInterval=0;
          resendCount=3;
          sendTimeout=5*1000;
@@ -218,7 +239,6 @@ public class IMClient {
 
         public Builder setConnectTimeout(long timeout, TimeUnit unit) {
             this.connectTimeout =  checkDuration("timeout", timeout, unit);
-             connectionPool.setConnectTimeout(connectTimeout);
             return this;
         }
 
@@ -279,10 +299,19 @@ public class IMClient {
            this.bootstrap=bootstrap;
            return this;
         }
+        public Builder setBackground(boolean isBackground){
+         this.isBackground=isBackground;
+         return this;
+        }
 
         public Builder setShakeHands(com.google.protobuf.GeneratedMessageV3 shakeHands,ShakeHandsHandler shakeHandler){
-         this.loginAuth=shakeHands;
+         this.loginAuthMsg=shakeHands;
          this.shakeHandsHandler=shakeHandler;
+         return this;
+        }
+
+        public Builder setHeartBeatMsg(com.google.protobuf.GeneratedMessageV3 heartBeatMsg){
+         this.heartBeatMsg=heartBeatMsg;
          return this;
         }
 
@@ -296,5 +325,10 @@ public class IMClient {
         if (millis > Integer.MAX_VALUE) throw new IllegalArgumentException(name + " too large.");
         if (millis == 0 && duration > 0) throw new IllegalArgumentException(name + " too small.");
         return (int) millis;
+    }
+    private static void checkAddressList(List<Address> addressList){
+        if (addressList==null||addressList.size()<1){
+            throw new IllegalStateException("address == null");
+        }
     }
 }

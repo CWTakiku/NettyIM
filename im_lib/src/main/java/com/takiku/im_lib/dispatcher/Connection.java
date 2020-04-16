@@ -7,7 +7,7 @@ import io.netty.channel.Channel;
 
 
 public interface Connection {
-    Route route();
+
     Channel channel();
     Handshake handshake();
 }

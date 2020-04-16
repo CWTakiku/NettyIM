@@ -1,42 +1,9 @@
 package com.takiku.im_lib.internal.handler;
 
-import com.takiku.im_lib.protobuf.PackProtobuf;
+public interface MessageHandler {
 
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelInboundHandlerAdapter;
+    boolean isResponse(Object msg); //是否是响应消息
+    boolean isMessage(Object msg);//是否是其他用户发送过来的消息
+    void receiveMessage(Object msg);//接收其他用法发过来的消息
 
-public class MessageHandler extends ChannelInboundHandlerAdapter {
-
-    InternalChannelHandler internalChannelHandler;
-    com.google.protobuf.Internal.EnumLite commonReply;
-    onResponseListener listener;
-    public MessageHandler(InternalChannelHandler internalChannelHandler,com.google.protobuf.Internal.EnumLite commonReply,
-                          onResponseListener listener ){
-        this.internalChannelHandler = internalChannelHandler;
-        this.commonReply=commonReply;
-    }
-
-    @Override
-    public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-        PackProtobuf.Pack pack= (PackProtobuf.Pack) msg;
-        if (pack.getPackType()==commonReply){
-            listener.onResponse(msg);
-        }
-        internalChannelHandler.channelRead(ctx,msg);
-
-    }
-
-    @Override
-    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-       System.out.println(cause.getMessage());
-
-    }
-
-    @Override
-    public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-        super.channelInactive(ctx);
-    }
-  public   interface onResponseListener{
-      void   onResponse(Object msg);
-    }
 }

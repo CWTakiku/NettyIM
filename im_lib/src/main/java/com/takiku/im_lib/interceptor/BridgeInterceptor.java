@@ -1,10 +1,10 @@
 package com.takiku.im_lib.interceptor;
 
-import com.takiku.im_lib.call.Request;
+import com.takiku.im_lib.entity.base.Request;
 import com.takiku.im_lib.client.IMClient;
-import com.takiku.im_lib.entity.base.AppMessage;
+import com.takiku.im_lib.entity.AppMessage;
 import com.takiku.im_lib.entity.base.Response;
-import com.takiku.im_lib.entity.base.ShakeHandsMessage;
+import com.takiku.im_lib.entity.ShakeHandsMessage;
 import com.takiku.im_lib.exception.AuthException;
 import com.takiku.im_lib.protobuf.PackProtobuf;
 
@@ -37,6 +37,8 @@ public class BridgeInterceptor implements Interceptor {
                     .setPackType(PackProtobuf.Pack.PackType.SHAKEHANDS)
                     .setShakeHands(shakeHands)
                     .build());
+        }else if (request.body.getPackType()==Request.PACK_CONNECT_TYPE){
+
         }
         Response response=chain.proceed(request);
         return response;

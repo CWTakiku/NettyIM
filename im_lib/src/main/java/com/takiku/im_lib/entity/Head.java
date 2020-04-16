@@ -1,4 +1,4 @@
-package com.takiku.im_lib.entity.base;
+package com.takiku.im_lib.entity;
 
 
 public class Head {

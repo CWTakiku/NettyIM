@@ -2,6 +2,7 @@ package com.takiku.im_lib.util;
 
 import android.os.CountDownTimer;
 import android.os.Looper;
+import android.os.MessageQueue;
 
 public class Timer extends CountDownTimer {
 

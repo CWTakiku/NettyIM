@@ -1,35 +1,43 @@
 package com.takiku.im_lib.internal.connection;
 
 import com.takiku.im_lib.client.IMClient;
-import com.takiku.im_lib.entity.Address;
+import com.takiku.im_lib.entity.base.Address;
 import com.takiku.im_lib.exception.AuthException;
 import com.takiku.im_lib.interceptor.Interceptor;
 import com.takiku.im_lib.internal.Internal;
+import com.takiku.im_lib.internal.handler.HeartbeatChannelHandler;
+import com.takiku.im_lib.internal.handler.HeartbeatRespChannelHandler;
+import com.takiku.im_lib.internal.handler.LoginAuthChannelHandler;
+import com.takiku.im_lib.internal.handler.MessageChannelHandler;
 
 import java.io.IOException;
 import java.util.LinkedHashMap;
+import java.util.List;
 
+import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandler;
 
 public class StreamAllocation {
 
-    private final Address address;
+    private final List<Address> addressList;
     private final Object callStackTrace;
     private RealConnection connection;
     private final RouteSelector routeSelector; //路由选择器
     private Route route;
+    private boolean released;
+    private boolean canceled;
     private ConnectionPool connectionPool;
     private LinkedHashMap<String, ChannelHandler> channelHandlerMap;
-    public StreamAllocation(ConnectionPool connectionPool, Address address,LinkedHashMap<String, ChannelHandler>  channelHandlerMap, Object callStackTrace){
-      this.address = address;
+    public StreamAllocation(ConnectionPool connectionPool, List<Address> addressList, LinkedHashMap<String, ChannelHandler>  channelHandlerMap, Object callStackTrace){
+      this.addressList = addressList;
       this.connectionPool=connectionPool;
       this.callStackTrace=callStackTrace;
-      this.routeSelector=new RouteSelector(address, routeDatabase());
+      this.routeSelector=new RouteSelector(addressList);
       this.channelHandlerMap=channelHandlerMap;
     }
 
-    private RouteDatabase routeDatabase() {
-       return connectionPool.routeDatabase;
+    public void nextRoute() throws IOException {
+        routeSelector.nextInetSocketAddress();
     }
 
     public void release() {
@@ -37,8 +45,13 @@ public class StreamAllocation {
     }
 
     private void closeQuietly(RealConnection connection) {
-
+        released=true;
+        if (connection!=null&&connection.channel()!=null){
+           connection.release();
+           connection=null;
+        }
     }
+
 
     public void acquire(RealConnection connection) {
         if (this.connection != null) throw new IllegalStateException();
@@ -54,31 +67,27 @@ public class StreamAllocation {
     }
 
     public TcpStream newStream(IMClient client, Interceptor.Chain chain) throws IOException, InterruptedException,AuthException  {
-        Route selectedRoute=null;
         int connectTimeout = chain.connectTimeoutMillis();
-        int sendTimeout = chain.sendTimeoutMillis();
+        int heartbeatInterval= client.heartInterval();
+        Address address=chain.request().address;
         synchronized (connectionPool) {
-            if (this.connection==null){
-                Internal.instance.get(connectionPool, address, this, null);
-                if (connection==null){
-                    if (selectedRoute == null) {
-                            selectedRoute = routeSelector.next();
-                    }
-                    connection= new RealConnection(connectionPool, selectedRoute);
+            if (released){  throw new IllegalStateException("released");}
 
-                    connection.ChannelInitializerHandler(client.codec(),client.loginAuth(),client.commonReply(),client.shakeHandsHandler(),client.heartChannelHandler(),
-                               client.messageChannelHandler(),client.customChannelHandlerLinkedHashMap());
+            if (this.connection==null||!this.connection.isHealth()){
+                Internal.instance.get(connectionPool, address, this);
 
+                    connection= new RealConnection(connectionPool, routeSelector.lastInetSocketAddress());
 
+                    connection.ChannelInitializerHandler(client.codec(),client.loginAuthMsg(),client.heartBeatMsg(),
+                            client.shakeHandsHandler(),client.heartChannelHandler(),
+                               client.messageHandler(),client.customChannelHandlerLinkedHashMap());
                     connection.connect(connectTimeout);
-                    TcpStream tcpStream=connection.newStream(client,this);
+                    TcpStream tcpStream=connection.newStream(client,this,client.heartInterval());
                     return tcpStream;
-                }
             }else {
-                return connection.newStream(client,this);
+                return connection.newStream(client,this,heartbeatInterval);
             }
         }
-        return null;
     }
     public synchronized RealConnection connection() {
         return connection;

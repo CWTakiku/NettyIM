@@ -1,10 +1,8 @@
 package com.takiku.im_lib.internal.connection;
 
-import com.google.protobuf.GeneratedMessageLite;
-import com.takiku.im_lib.call.Request;
+import com.takiku.im_lib.entity.base.Request;
 import com.takiku.im_lib.client.IMClient;
 import com.takiku.im_lib.entity.base.Response;
-import com.takiku.im_lib.protobuf.PackProtobuf;
 import com.takiku.im_lib.util.LRUMap;
 
 import java.io.IOException;
@@ -36,12 +34,13 @@ public class Stream implements TcpStream {
 
     @Override
     public void writeRequest(Request request) throws IOException {
+        if (channel!=null&&channel.isActive())
         channel.writeAndFlush(request.getValue());
     }
 
     @Override
     public Response readResponse(Request request) {
-        LRUMap<Integer,com.google.protobuf.Internal.EnumLite> liteLRUMap= streamAllocation.connection().lruMap();
+        LRUMap<Integer,Object> liteLRUMap= streamAllocation.connection().lruMap();
 
         return null;
     }

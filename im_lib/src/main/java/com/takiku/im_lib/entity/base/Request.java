@@ -1,19 +1,16 @@
-package com.takiku.im_lib.call;
+package com.takiku.im_lib.entity.base;
 
-import com.google.protobuf.GeneratedMessageLite;
 import com.google.protobuf.GeneratedMessageV3;
-import com.takiku.im_lib.entity.Address;
-import com.takiku.im_lib.entity.base.AbstractBody;
-import com.takiku.im_lib.entity.base.AbstractPack;
 
 public final class Request {
 
   public static final int PACK_MSG_TYPE=0;
   public static final int PACK_REPLY_TYPE=1;
-    public static final int PACK_HANDS_TYPE=3;
+  public static final int PACK_HANDS_TYPE=3;
+  public static final int PACK_CONNECT_TYPE=4;
 
  public Address address;
- public   AbstractPack body;
+ public  AbstractPack body;
  com.google.protobuf.GeneratedMessageV3 value;
 
   Request(Builder builder) {
@@ -50,7 +47,6 @@ public final class Request {
       return this;
     }
     public Request build(){
-      if (address == null) throw new IllegalStateException("address == null");
       return new Request(this);
     }
   }

@@ -1,6 +1,7 @@
 package com.takiku.im_lib.call;
 
 import com.takiku.im_lib.client.IMClient;
+import com.takiku.im_lib.entity.base.Request;
 import com.takiku.im_lib.entity.base.Response;
 import com.takiku.im_lib.exception.AuthException;
 import com.takiku.im_lib.interceptor.BridgeInterceptor;
@@ -55,7 +56,7 @@ public class RealCall implements Call {
         private final Callback responseCallback;
 
         AsyncCall(Callback responseCallback) {
-            super("IMClient %s",redactedUrl());
+            super("IMClient requestType %d",redactedRequest());
             this.responseCallback=responseCallback;
         }
         String host(){return originalRequest.address.getUrl();}
@@ -94,8 +95,8 @@ public class RealCall implements Call {
          }
         }
     }
-    String redactedUrl() {
-        return originalRequest.address.getUrl();
+    int redactedRequest() {
+        return originalRequest.body.getPackType();
     }
 
     Response getResponseWithInterceptorChain() throws IOException, InterruptedException, AuthException {

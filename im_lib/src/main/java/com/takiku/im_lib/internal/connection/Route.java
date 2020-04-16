@@ -1,6 +1,6 @@
 package com.takiku.im_lib.internal.connection;
 
-import com.takiku.im_lib.entity.Address;
+import com.takiku.im_lib.entity.base.Address;
 
 import java.net.InetSocketAddress;
 

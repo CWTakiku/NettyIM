@@ -1,7 +1,6 @@
 package com.takiku.im_lib;
 
 
-import com.takiku.im_lib.call.Request;
 import com.takiku.im_lib.protobuf.PackProtobuf;
 
 import org.junit.Test;
@@ -136,6 +135,7 @@ class ServerHandler extends ChannelInboundHandlerAdapter {
                 String userId=shakeHands.getUserId();
                 String token=shakeHands.getToken();
                 String msgId=shakeHands.getMsgId();
+                System.out.println("收到连接认证消息，该用户的id: "+userId+" 该用户的token: "+token );
                 if (token.equals("your token")&&userId.equals("your userId")){ //连接认证成功
 
                     replyPack= PackProtobuf.Pack.newBuilder()
@@ -157,6 +157,13 @@ class ServerHandler extends ChannelInboundHandlerAdapter {
                     ChannelContainer.getInstance().getActiveChannelByUserId(userId).getChannel().writeAndFlush(replyPack);
                 }
                 break;
+            case HEART:
+                PackProtobuf.Heart heart=pack.getHeart();
+                System.out.println("收到客户端心跳消息,该用户id："+heart.getUserId());
+                break;
+            case MSG:
+                PackProtobuf.Msg message=pack.getMsg();
+                System.out.println("收到客户端发送过来的消息:"+message.toString());
         }
 
 
