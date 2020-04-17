@@ -3,13 +3,10 @@ package com.takiku.im_lib.interceptor;
 
 import com.takiku.im_lib.entity.base.Request;
 import com.takiku.im_lib.entity.base.Response;
-import com.takiku.im_lib.exception.RouteException;
 import com.takiku.im_lib.internal.connection.RealConnection;
 import com.takiku.im_lib.internal.connection.StreamAllocation;
 import com.takiku.im_lib.internal.connection.TcpStream;
-import com.takiku.im_lib.util.CountDownTimerManger;
 import com.takiku.im_lib.util.TimeoutTracker;
-import com.takiku.im_lib.util.Timer;
 
 import java.io.IOException;
 
@@ -29,20 +26,21 @@ public class CallServerInterceptor implements Interceptor {
         boolean sendFinish=false;
         Response response=null;
 
-        if (request.body.getPackType()==Request.PACK_CONNECT_TYPE){
+        if (request.body==null){
             return new Response.Builder().setRequest(request).build();
         }
-        System.out.println("thread name "+Thread.currentThread().getId());
+
         tcpStream.writeRequest(request);
         realChain.eventListener().sendMsgEnd(realChain.call());
         TimeoutTracker timer=new TimeoutTracker(realChain.sendTimeoutMillis());
         timer.startTrack();
         while (!timer.checkTimeout()){
             response  =tcpStream.readResponse(request);
+            if (response!=null){
+                break;
+            }
         }
-        if (response!=null){
-            response.request=request;
-        }else {
+       if (response==null){
            // throw new  RouteException()
             return new Response.Builder().setCode(NO_RESPONSE).setRequest(request).build();
         }

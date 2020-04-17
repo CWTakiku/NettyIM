@@ -11,7 +11,7 @@ import com.takiku.im_lib.protobuf.PackProtobuf;
 import java.io.IOException;
 
 /**
- * 默认组装拦截器
+ * 默认装配拦截器拦截器
  */
 public class BridgeInterceptor implements Interceptor {
 
@@ -23,23 +23,7 @@ public class BridgeInterceptor implements Interceptor {
     @Override
     public Response intercept(Chain chain) throws IOException, InterruptedException, AuthException {
         Request request=chain.request();
-        if (request.body.getPackType()==Request.PACK_MSG_TYPE){
-            AppMessage appMessage= (AppMessage) request.body;
-            PackProtobuf.Msg msg=appMessage.build();
-          request.setValue(PackProtobuf.Pack.newBuilder()
-                  .setPackType(PackProtobuf.Pack.PackType.MSG)
-                  .setMsg(msg)
-                  .build());  ;
-        }else if (request.body.getPackType()==Request.PACK_HANDS_TYPE){
-            ShakeHandsMessage shakeHandsMessage= (ShakeHandsMessage) request.body;
-            PackProtobuf.ShakeHands shakeHands=shakeHandsMessage.build();
-            request.setValue(PackProtobuf.Pack.newBuilder()
-                    .setPackType(PackProtobuf.Pack.PackType.SHAKEHANDS)
-                    .setShakeHands(shakeHands)
-                    .build());
-        }else if (request.body.getPackType()==Request.PACK_CONNECT_TYPE){
 
-        }
         Response response=chain.proceed(request);
         return response;
     }

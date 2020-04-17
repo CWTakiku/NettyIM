@@ -2,27 +2,24 @@ package com.takiku.im_lib.client;
 
 import androidx.annotation.Nullable;
 
-import com.takiku.im_lib.Codec.Codec;
+import com.takiku.im_lib.codec.Codec;
 import com.takiku.im_lib.authenticator.Authenticator;
 import com.takiku.im_lib.cache.Cache;
 import com.takiku.im_lib.call.Call;
 import com.takiku.im_lib.call.Callback;
 import com.takiku.im_lib.call.RealCall;
-import com.takiku.im_lib.entity.base.ConnectPack;
 import com.takiku.im_lib.entity.base.Request;
 import com.takiku.im_lib.dispatcher.Dispatcher;
 import com.takiku.im_lib.entity.base.Address;
 import com.takiku.im_lib.entity.base.Response;
 import com.takiku.im_lib.interceptor.Interceptor;
-import com.takiku.im_lib.internal.DefaultCodec;
+import com.takiku.im_lib.codec.DefaultCodec;
 import com.takiku.im_lib.internal.Internal;
 import com.takiku.im_lib.internal.connection.ConnectionPool;
 import com.takiku.im_lib.internal.connection.RealConnection;
-import com.takiku.im_lib.internal.connection.Route;
-import com.takiku.im_lib.internal.connection.RouteDatabase;
 import com.takiku.im_lib.internal.connection.StreamAllocation;
 import com.takiku.im_lib.internal.handler.InternalChannelHandler;
-import com.takiku.im_lib.internal.handler.MessageHandler;
+import com.takiku.im_lib.internal.handler.MessageRespHandler;
 import com.takiku.im_lib.internal.handler.ShakeHandsHandler;
 import com.takiku.im_lib.listener.EventListener;
 
@@ -57,10 +54,7 @@ public class IMClient {
                 pool.put(connection);
             }
 
-            @Override
-            public RouteDatabase routeDatabase(ConnectionPool connectionPool) {
-                return connectionPool.routeDatabase;
-            }
+
 
         };
     }
@@ -81,10 +75,10 @@ public class IMClient {
      Codec codec;
      LinkedHashMap<String , ChannelHandler> customChannelHandlerLinkedHashMap;
      com.google.protobuf.GeneratedMessageV3 loginAuthMsg;
-    com.google.protobuf.GeneratedMessageV3 heartBeatMsg;
+     com.google.protobuf.GeneratedMessageV3 heartBeatMsg;
      ShakeHandsHandler shakeHandsHandler;
      InternalChannelHandler heartChannelHandler;
-     MessageHandler messageHandler;
+     MessageRespHandler messageRespHandler;
      List<Address> addressList;
 
     public IMClient(){this(new Builder());}
@@ -106,19 +100,16 @@ public class IMClient {
        this.loginAuthMsg=builder.loginAuthMsg;
        this.heartBeatMsg=builder.heartBeatMsg;
        this.shakeHandsHandler=builder.shakeHandsHandler;
-       this.messageHandler=builder.messageHandler;
+       this.messageRespHandler =builder.messageRespHandler;
        this.heartChannelHandler=builder.heartChannelHandler;
        this.sendTimeout=builder.sendTimeout;
        this.addressList=builder.addressList;
        this.isBackground=builder.isBackground;
-       startConnect();
-
-
     }
 
-    private void startConnect() {
+    public void startConnect() {
         checkAddressList(addressList);
-      Call call= newCall( new Request.Builder().setBody(new ConnectPack()).build());
+      Call call= newCall( new Request.Builder().setBody(null).build());
       call.enqueue(new Callback() {
           @Override
           public void onFailure(Call call, IOException e) {
@@ -174,8 +165,8 @@ public class IMClient {
 
     public  LinkedHashMap<String , ChannelHandler> customChannelHandlerLinkedHashMap(){ return customChannelHandlerLinkedHashMap; }
 
-    public MessageHandler messageHandler(){
-        return messageHandler;
+    public MessageRespHandler messageHandler(){
+        return messageRespHandler;
     }
 
     public ShakeHandsHandler shakeHandsHandler(){
@@ -214,7 +205,7 @@ public class IMClient {
      com.google.protobuf.GeneratedMessageV3 heartBeatMsg;
      ShakeHandsHandler shakeHandsHandler;
      InternalChannelHandler heartChannelHandler;
-     MessageHandler messageHandler;
+     MessageRespHandler messageRespHandler;
 
      public Builder(){
          dispatcher=new Dispatcher();
@@ -307,6 +298,10 @@ public class IMClient {
         public Builder setShakeHands(com.google.protobuf.GeneratedMessageV3 shakeHands,ShakeHandsHandler shakeHandler){
          this.loginAuthMsg=shakeHands;
          this.shakeHandsHandler=shakeHandler;
+         return this;
+        }
+        public Builder setMessageRespHandler(MessageRespHandler messageRespHandler){
+         this.messageRespHandler = messageRespHandler;
          return this;
         }
 

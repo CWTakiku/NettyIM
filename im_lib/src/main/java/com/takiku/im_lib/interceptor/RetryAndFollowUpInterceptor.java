@@ -5,7 +5,7 @@ import com.takiku.im_lib.client.IMClient;
 import com.takiku.im_lib.exception.AuthException;
 import com.takiku.im_lib.exception.RouteException;
 import com.takiku.im_lib.internal.connection.StreamAllocation;
-import com.takiku.im_lib.entity.UnrepeatableRequestBody;
+
 import com.takiku.im_lib.entity.base.Response;
 import com.takiku.im_lib.exception.ConnectionShutdownException;
 
@@ -13,10 +13,7 @@ import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.net.ProtocolException;
 import java.net.SocketTimeoutException;
-import java.security.cert.CertificateException;
 
-import javax.net.ssl.SSLHandshakeException;
-import javax.net.ssl.SSLPeerUnverifiedException;
 
 import io.netty.channel.ConnectTimeoutException;
 
@@ -67,13 +64,14 @@ public class RetryAndFollowUpInterceptor implements Interceptor {
                     Request  connectRequest=followUpRequest(followUpCount,request);
                      if (connectRequest!=null){
                          releaseConnection=false;
+                         connect_retry=0;
                          continue;
                      }else {
                          e.printStackTrace();
                          return new Response.Builder().setCode(CONNECT_FAILED).build();
                      }
                     }else {
-                        System.out.println("连接重试");
+                        System.out.println("连接重试 "+streamAllocation.currentInetSocketAddress().toString());
                         releaseConnection=false;
                         continue;
                     }
@@ -100,11 +98,15 @@ public class RetryAndFollowUpInterceptor implements Interceptor {
                     streamAllocation.release();
                 }
             }
-            if (isOk(response)){
+            if (isOk(response)){ //拿到正确response直接返回
                 return response;
             }
-            if (++resendCount<client.resendCount()) //未达到重复次数上线继续重试
-                continue;
+           if (!request.sendRetry){ //如果当前request不需要失败重发，直接返回失败结果
+               return response;
+            }
+            if (++resendCount>client.resendCount()){//已经达到重复次数无需继续重试
+                return response;
+            }
 
         }
     }
@@ -140,7 +142,7 @@ public class RetryAndFollowUpInterceptor implements Interceptor {
         if (client.resendCount()<=0) return false;
 
         // We can't send the request body again.
-        if (requestSendStarted && userRequest.body instanceof UnrepeatableRequestBody) return false;
+        if (requestSendStarted && !userRequest.sendRetry) return false;
 
         // This exception is fatal.
         if (!isRecoverable(e, requestSendStarted)) return false;

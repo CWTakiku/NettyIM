@@ -1,5 +1,7 @@
 package com.takiku.im_lib.entity.base;
 
+import android.telecom.StatusHints;
+
 import com.google.protobuf.GeneratedMessageV3;
 
 public final class Request {
@@ -9,26 +11,21 @@ public final class Request {
   public static final int PACK_HANDS_TYPE=3;
   public static final int PACK_CONNECT_TYPE=4;
 
+ public String requestTag;
  public Address address;
- public  AbstractPack body;
- com.google.protobuf.GeneratedMessageV3 value;
+ public boolean sendRetry=true;//失败是否重试
+ public com.google.protobuf.GeneratedMessageV3 body;
 
   Request(Builder builder) {
      this.address=builder.address;
      this.body=builder.body;
+     this.requestTag=builder.requestTag;
   }
-
-    public GeneratedMessageV3 getValue() {
-        return value;
-    }
-
-    public void setValue(GeneratedMessageV3 value) {
-        this.value = value;
-    }
-
     public static class Builder {
     Address address;
-    AbstractPack body;
+    com.google.protobuf.GeneratedMessageV3 body;
+    String requestTag;
+    boolean sendRetry=true;
 
 
     public Builder() {
@@ -37,14 +34,24 @@ public final class Request {
     Builder(Request request) {
       this.address=request.address;
       this.body = request.body;
+      this.requestTag=request.requestTag;
+      this.sendRetry= request.sendRetry;
     }
     public Builder setAddress(Address address){
       this.address=address;
       return this;
     }
-    public Builder setBody(AbstractPack abstractPack){
-      this.body=abstractPack;
+    public Builder setBody(com.google.protobuf.GeneratedMessageV3 body){
+      this.body=body;
       return this;
+    }
+    public Builder setRequestTag(String tag){
+        this.requestTag=tag;
+        return this;
+    }
+    public Builder setSendRetry(boolean sendRetry){
+        this.sendRetry=sendRetry;
+        return this;
     }
     public Request build(){
       return new Request(this);

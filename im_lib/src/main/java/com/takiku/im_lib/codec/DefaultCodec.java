@@ -1,7 +1,7 @@
-package com.takiku.im_lib.internal;
+package com.takiku.im_lib.codec;
 
 import com.google.protobuf.MessageLiteOrBuilder;
-import com.takiku.im_lib.Codec.Codec;
+import com.takiku.im_lib.codec.Codec;
 import com.takiku.im_lib.protobuf.PackProtobuf;
 
 import io.netty.buffer.ByteBuf;

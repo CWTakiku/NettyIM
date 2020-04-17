@@ -1,5 +1,6 @@
 package com.takiku.im_lib.internal.connection;
 
+import com.google.protobuf.GeneratedMessageV3;
 import com.takiku.im_lib.entity.base.Request;
 import com.takiku.im_lib.client.IMClient;
 import com.takiku.im_lib.entity.base.Response;
@@ -34,13 +35,20 @@ public class Stream implements TcpStream {
 
     @Override
     public void writeRequest(Request request) throws IOException {
-        if (channel!=null&&channel.isActive())
-        channel.writeAndFlush(request.getValue());
+        if (channel!=null&&channel.isActive()){
+            System.out.println(" requestTag: "+request.requestTag+" request body: "+request.body.toString());
+            channel.writeAndFlush(request.body);
+        }
+
     }
 
     @Override
     public Response readResponse(Request request) {
-        LRUMap<Integer,Object> liteLRUMap= streamAllocation.connection().lruMap();
+        LRUMap<String,Object> lruMap= streamAllocation.connection().lruMap();
+        if (lruMap.containsKey(request.requestTag)){
+            Object object=lruMap.get(request.requestTag);
+           return new Response.Builder().setCode(Response.SUCCESS).setRequest(request).setResponse((GeneratedMessageV3) object).build();
+        }
 
         return null;
     }

@@ -7,7 +7,8 @@ import com.takiku.im_lib.protobuf.PackProtobuf;
 import com.takiku.im_lib.util.StringUtil;
 
 public  class AppMessage extends AbstractPack {
-
+    public static final int MSG_REPLY_TYPE=1001;
+    public static final int MSG_SENDED=1;
 
     private Head head;  // 消息头
     private String body;// 消息体
@@ -69,6 +70,10 @@ public  class AppMessage extends AbstractPack {
             head.setMsgContentType(msgContentType);
             return this;
         }
+        public Builder setBody(String body){
+            this.body=body;
+            return this;
+        }
 
         public AppMessage build(){
             return new AppMessage(this);
@@ -76,7 +81,7 @@ public  class AppMessage extends AbstractPack {
 
     }
 
-    public PackProtobuf.Msg build() {
+    public PackProtobuf.Msg buildProto() {
         PackProtobuf.Msg.Builder builder = PackProtobuf.Msg.newBuilder();
         PackProtobuf.Head.Builder headBuilder = PackProtobuf.Head.newBuilder();
         headBuilder.setMsgType(getHead().getMsgType());

@@ -4,8 +4,6 @@ import com.takiku.im_lib.client.IMClient;
 import com.takiku.im_lib.entity.base.Address;
 import com.takiku.im_lib.internal.connection.ConnectionPool;
 import com.takiku.im_lib.internal.connection.RealConnection;
-import com.takiku.im_lib.internal.connection.Route;
-import com.takiku.im_lib.internal.connection.RouteDatabase;
 import com.takiku.im_lib.internal.connection.StreamAllocation;
 
 public abstract class Internal {
@@ -24,7 +22,7 @@ public abstract class Internal {
 
   public abstract void put(ConnectionPool pool, RealConnection connection);
 
-  public abstract RouteDatabase routeDatabase(ConnectionPool connectionPool);
+
 
 
 }

@@ -25,6 +25,11 @@ import io.netty.handler.codec.LengthFieldPrepender;
 import io.netty.handler.codec.protobuf.ProtobufDecoder;
 import io.netty.handler.codec.protobuf.ProtobufEncoder;
 
+import static com.takiku.im_lib.entity.AppMessage.MSG_REPLY_TYPE;
+import static com.takiku.im_lib.entity.AppMessage.MSG_SENDED;
+import static com.takiku.im_lib.entity.ShakeHandsMessage.AUTH_FAILED;
+import static com.takiku.im_lib.entity.ShakeHandsMessage.AUTH_SUCCESS;
+
 /**
  * <p>@ProjectName:     BoChat</p>
  * <p>@ClassName:       NettyServerDemo.java</p>
@@ -37,6 +42,10 @@ import io.netty.handler.codec.protobuf.ProtobufEncoder;
  * <p>@email:           chenshichao@outlook.com</p>
  */
 public class NettyServerDemo {
+
+
+
+
 
     @Test
     public  void Server() {
@@ -140,13 +149,13 @@ class ServerHandler extends ChannelInboundHandlerAdapter {
 
                     replyPack= PackProtobuf.Pack.newBuilder()
                             .setPackType(PackProtobuf.Pack.PackType.SHAKEHANDS)
-                            .setShakeHands(shakeHands.toBuilder().setStatusReport(1))
+                            .setShakeHands(shakeHands.toBuilder().setStatusReport(AUTH_SUCCESS))
                             .build();
                     ChannelContainer.getInstance().saveChannel(new NettyChannel(userId, ctx.channel()));
                 }else {
                     replyPack= PackProtobuf.Pack.newBuilder()
                             .setPackType(PackProtobuf.Pack.PackType.SHAKEHANDS)
-                            .setShakeHands(shakeHands.toBuilder().setStatusReport(0))
+                            .setShakeHands(shakeHands.toBuilder().setStatusReport(AUTH_FAILED))
                             .build();
                     ctx.channel().writeAndFlush(replyPack);
                     ChannelContainer.getInstance().removeChannelIfConnectNoActive(ctx.channel());
@@ -164,6 +173,15 @@ class ServerHandler extends ChannelInboundHandlerAdapter {
             case MSG:
                 PackProtobuf.Msg message=pack.getMsg();
                 System.out.println("收到客户端发送过来的消息:"+message.toString());
+                PackProtobuf.Reply reply=PackProtobuf.Reply.newBuilder().setReplyType(MSG_REPLY_TYPE)
+                        .setMsgId(message.getHead().getMsgId())
+                        .setStatusReport(MSG_SENDED) //已发送状态回执
+                        .build();
+                replyPack=PackProtobuf.Pack.newBuilder()
+                        .setPackType(PackProtobuf.Pack.PackType.REPLY)
+                        .setReply(reply).build();
+                ChannelContainer.getInstance().getActiveChannelByUserId(message.getHead().getFromId()).getChannel().writeAndFlush(replyPack);
+
         }
 
 

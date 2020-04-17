@@ -6,6 +6,7 @@ import com.takiku.im_lib.entity.base.Response;
 import com.takiku.im_lib.exception.AuthException;
 import com.takiku.im_lib.internal.connection.StreamAllocation;
 import com.takiku.im_lib.internal.connection.TcpStream;
+import com.takiku.im_lib.listener.EventListener;
 
 import java.io.IOException;
 
@@ -20,7 +21,8 @@ public class ConnectInterceptor implements Interceptor {
         RealInterceptorChain realChain = (RealInterceptorChain) chain;
         Request request = realChain.request();
         StreamAllocation streamAllocation = realChain.streamAllocation();
-        TcpStream tcpStream= streamAllocation.newStream(client, chain);
+        EventListener eventListener=realChain.eventListener();
+        TcpStream tcpStream= streamAllocation.newStream(client, chain,eventListener);
         return realChain.proceed(request,streamAllocation,tcpStream,streamAllocation.connection());
     }
 }

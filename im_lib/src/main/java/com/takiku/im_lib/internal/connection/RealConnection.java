@@ -1,9 +1,6 @@
 package com.takiku.im_lib.internal.connection;
 
-import android.os.Looper;
-
-import com.google.protobuf.Internal;
-import com.takiku.im_lib.Codec.Codec;
+import com.takiku.im_lib.codec.Codec;
 import com.takiku.im_lib.client.IMClient;
 import com.takiku.im_lib.dispatcher.Connection;
 import com.takiku.im_lib.dispatcher.Handshake;
@@ -12,9 +9,11 @@ import com.takiku.im_lib.internal.handler.HeartbeatChannelHandler;
 import com.takiku.im_lib.internal.handler.InternalChannelHandler;
 import com.takiku.im_lib.internal.handler.HeartbeatRespChannelHandler;
 import com.takiku.im_lib.internal.handler.LoginAuthChannelHandler;
-import com.takiku.im_lib.internal.handler.MessageHandler;
-import com.takiku.im_lib.internal.handler.MessageChannelHandler;
+import com.takiku.im_lib.internal.handler.MessageRespHandler;
+import com.takiku.im_lib.internal.handler.MessageRespChannelHandler;
 import com.takiku.im_lib.internal.handler.ShakeHandsHandler;
+import com.takiku.im_lib.internal.handler.StatusChannelHandler;
+import com.takiku.im_lib.listener.EventListener;
 import com.takiku.im_lib.util.LRUMap;
 
 import java.net.InetSocketAddress;
@@ -23,7 +22,6 @@ import java.util.concurrent.TimeUnit;
 
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
-import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
@@ -34,8 +32,6 @@ import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 import io.netty.handler.codec.LengthFieldPrepender;
 import io.netty.handler.timeout.IdleStateHandler;
-import io.netty.util.concurrent.Future;
-import io.netty.util.concurrent.GenericFutureListener;
 
 
 public class RealConnection  implements Connection {
@@ -45,16 +41,18 @@ public class RealConnection  implements Connection {
     private final ConnectionPool connectionPool;
     private Bootstrap bootstrap;
     private TcpStream tcpStream;
-    private LRUMap<Integer,Object> lruMap;
+    private static volatile LRUMap<String,Object> lruMap;
     private com.google.protobuf.GeneratedMessageV3 heartBeatMsg;
     private int heartbeatInterval;
-    private int resultIndex=0;
     private boolean hasInit=false;
     private InetSocketAddress inetSocketAddress;
+    private LinkedHashMap<String, ChannelHandler> handlers;
+    private EventListener eventListener;
 
-    public RealConnection(ConnectionPool connectionPool, InetSocketAddress inetSocketAddress){
+    public RealConnection(ConnectionPool connectionPool, InetSocketAddress inetSocketAddress, EventListener eventListener){
         this.inetSocketAddress=inetSocketAddress;
         this.connectionPool=connectionPool;
+        this.eventListener=eventListener;
         lruMap=new LRUMap(10);
         EventLoopGroup loopGroup = new NioEventLoopGroup(4);
         bootstrap = new Bootstrap();
@@ -68,7 +66,13 @@ public class RealConnection  implements Connection {
 
         removeHandler(LoginAuthChannelHandler.class.getSimpleName(),channel);
         removeHandler(HeartbeatChannelHandler.class.getSimpleName(),channel);
-        removeHandler(MessageChannelHandler.class.getSimpleName(),channel);
+        removeHandler(MessageRespChannelHandler.class.getSimpleName(),channel);
+        if (handlers!=null){
+            for (String key : handlers.keySet()) {
+                removeHandler(key, channel);
+            }
+        }
+
         channel.close();
         channel.eventLoop().shutdownGracefully();
         channel.close();
@@ -93,8 +97,9 @@ public class RealConnection  implements Connection {
 
     public void ChannelInitializerHandler(final Codec codec, final com.google.protobuf.GeneratedMessageV3 shakeHandsMsg,final com.google.protobuf.GeneratedMessageV3 heartBeatMsg,
                                           final ShakeHandsHandler shakeHandsHandler, final InternalChannelHandler heartInternalChannelHandler,
-                                          final MessageHandler messageHandler,
-                                          final LinkedHashMap<String, ChannelHandler> handlers) throws AuthException {
+                                          final MessageRespHandler messageRespHandler,
+                                          final LinkedHashMap<String, ChannelHandler> handlers,
+                                          final connectionBrokenListener connectionBrokenListener) throws AuthException {
         if (hasInit){
             return;
         }
@@ -111,28 +116,37 @@ public class RealConnection  implements Connection {
                 pipeline.addLast(codec.EnCoder().getClass().getSimpleName(),codec.EnCoder());
                 pipeline.addLast(codec.DeCoder().getClass().getSimpleName(),codec.DeCoder());
 
+                pipeline.addLast(StatusChannelHandler.class.getSimpleName(),new StatusChannelHandler(eventListener,connectionBrokenListener));
+
                 pipeline.addLast(LoginAuthChannelHandler.class.getSimpleName(),new LoginAuthChannelHandler(shakeHandsMsg, shakeHandsHandler, new LoginAuthChannelHandler.ShakeHandsListener() {
                     @Override
                     public void shakeHandsSuccess(boolean isSuccess) {
                         if (isSuccess){
-                            addHeartbeatHandler(connectionPool,heartBeatMsg);
+                            if (heartBeatMsg!=null){ //握手成功且设置了心跳包，则里面启动心跳机制
+                                addHeartbeatHandler(connectionPool,heartBeatMsg);
+                            }
                         }else {
                             release();
                         }
                     }
                 }));
                 pipeline.addLast(HeartbeatRespChannelHandler.class.getSimpleName(),new HeartbeatRespChannelHandler(heartInternalChannelHandler));
+                pipeline.addLast(MessageRespChannelHandler.class.getSimpleName(),new MessageRespChannelHandler(messageRespHandler,new MessageRespChannelHandler.onResponseListener() {
+                    @Override
+                    public void onResponse(String tag,Object msg) {
+                      lruMap.put(tag,  msg);
+                    }
+                }));
                 if (handlers!=null){
                     for (String key : handlers.keySet()) {
                         pipeline.addLast(key, handlers.get(key));
                     }
                 }
-                pipeline.addLast(MessageChannelHandler.class.getSimpleName(),new MessageChannelHandler(messageHandler,new MessageChannelHandler.onResponseListener() {
-                    @Override
-                    public void onResponse(Object msg) {
-                      lruMap.put(resultIndex++,  msg);
+                if (shakeHandsMsg==null||shakeHandsHandler==null){ //如果没有握手消息且设置了心跳包，则直接添加心跳机制，否则等握手成功后添加心跳机制
+                    if (heartBeatMsg!=null){
+                        addHeartbeatHandler(connectionPool,heartBeatMsg);
                     }
-                }));
+                }
                 hasInit=true;
             }
         });
@@ -155,8 +169,8 @@ public class RealConnection  implements Connection {
             if (channel.pipeline().get(HeartbeatChannelHandler.class.getSimpleName()) != null) {
                 channel.pipeline().remove(HeartbeatChannelHandler.class.getSimpleName());
             }
-            if (channel.pipeline().get(MessageChannelHandler.class.getSimpleName()) != null) {
-                channel.pipeline().addBefore(MessageChannelHandler.class.getSimpleName(), HeartbeatChannelHandler.class.getSimpleName(),
+            if (channel.pipeline().get(MessageRespChannelHandler.class.getSimpleName()) != null) {
+                channel.pipeline().addBefore(MessageRespChannelHandler.class.getSimpleName(), HeartbeatChannelHandler.class.getSimpleName(),
                         new HeartbeatChannelHandler(connectionPool,heartBeatMsg));
             }
         } catch (Exception e) {
@@ -173,13 +187,18 @@ public class RealConnection  implements Connection {
 
 
     public void connect( int connectTimeout) throws InterruptedException {
-
+          eventListener.connectStart(inetSocketAddress);
         // 设置连接超时时长
           bootstrap.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, connectTimeout);
-          String ip= inetSocketAddress.getAddress().getHostAddress();
+           String ip;
+          if (inetSocketAddress.getAddress()!=null){
+              ip= inetSocketAddress.getAddress().getHostAddress();
+          }else {
+              ip=inetSocketAddress.getHostName();
+          }
           int port=inetSocketAddress.getPort();
-        String threadName=Thread.currentThread().getName();
-     channel=  bootstrap.connect(ip,port).sync().channel();
+          String threadName=Thread.currentThread().getName();
+         channel=  bootstrap.connect(ip,port).sync().channel();
 
 //        channelFuture.addListener(new GenericFutureListener<Future<? super Void>>() {
 //            @Override
@@ -210,7 +229,12 @@ public class RealConnection  implements Connection {
         return null;
     }
 
-    public  LRUMap<Integer,Object> lruMap(){
+    public synchronized static    LRUMap<String,Object> lruMap(){
         return lruMap;
     }
+
+   public   interface connectionBrokenListener{
+        void connectionBroken();
+    }
+
 }

@@ -17,7 +17,6 @@ public final class ConnectionPool {
     private static final ExecutorService bossPool = Executors.newFixedThreadPool(1);
     private static final ExecutorService workPool = Executors.newFixedThreadPool(1);;// 工作线程组，负责心跳
     private  RealConnection realConnection;
-    public RouteDatabase routeDatabase = new RouteDatabase();
 
 
 
@@ -38,17 +37,10 @@ public final class ConnectionPool {
     }
 
 
-    /**
-     * 执行boss任务
-     *
-     * @param r
-     */
-    public void execBossTask(Runnable r) {
-        bossPool.execute(r);
-    }
+
 
     /**
-     * 执行work任务
+     * 执行心跳任务
      *
      * @param r
      */

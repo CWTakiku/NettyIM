@@ -2,10 +2,10 @@ package com.takiku.im_lib.entity.base;
 
 import com.google.protobuf.GeneratedMessageV3;
 
-public class Response {
+public class Response<T extends com.google.protobuf.GeneratedMessageV3> {
    public int code;
    public Request request;
-   public Object response;
+   public T  body;
 
    public static final int SUCCESS=0;
    public static final int NO_RESPONSE=-1;//无响应
@@ -14,13 +14,13 @@ public class Response {
    public Response(Builder builder){
        this.code=builder.code;
        this.request=builder.request;
-       this.response=builder.response;
+       this.body= (T) builder.response;
    }
 
 
-    public static class Builder{
+    public static class Builder<T extends com.google.protobuf.GeneratedMessageV3>{
         private Request request;
-        private Object response;
+        private T response;
         private int code;
 
         public Builder setRequest(Request request) {
@@ -28,7 +28,7 @@ public class Response {
             return this;
         }
 
-        public Builder setResponse(GeneratedMessageV3 response) {
+        public Builder setResponse(T response) {
             this.response = response;
             return this;
         }

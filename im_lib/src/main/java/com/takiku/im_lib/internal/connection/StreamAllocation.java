@@ -5,16 +5,13 @@ import com.takiku.im_lib.entity.base.Address;
 import com.takiku.im_lib.exception.AuthException;
 import com.takiku.im_lib.interceptor.Interceptor;
 import com.takiku.im_lib.internal.Internal;
-import com.takiku.im_lib.internal.handler.HeartbeatChannelHandler;
-import com.takiku.im_lib.internal.handler.HeartbeatRespChannelHandler;
-import com.takiku.im_lib.internal.handler.LoginAuthChannelHandler;
-import com.takiku.im_lib.internal.handler.MessageChannelHandler;
+import com.takiku.im_lib.listener.EventListener;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.util.LinkedHashMap;
 import java.util.List;
 
-import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandler;
 
 public class StreamAllocation {
@@ -23,7 +20,6 @@ public class StreamAllocation {
     private final Object callStackTrace;
     private RealConnection connection;
     private final RouteSelector routeSelector; //路由选择器
-    private Route route;
     private boolean released;
     private boolean canceled;
     private ConnectionPool connectionPool;
@@ -38,6 +34,9 @@ public class StreamAllocation {
 
     public void nextRoute() throws IOException {
         routeSelector.nextInetSocketAddress();
+    }
+    public InetSocketAddress currentInetSocketAddress(){
+        return routeSelector.lastInetSocketAddress();
     }
 
     public void release() {
@@ -63,10 +62,10 @@ public class StreamAllocation {
     }
 
     public boolean hasMoreRoutes() {
-        return route!=null||routeSelector.hasNext();
+        return routeSelector.hasNext();
     }
 
-    public TcpStream newStream(IMClient client, Interceptor.Chain chain) throws IOException, InterruptedException,AuthException  {
+    public TcpStream newStream(IMClient client, Interceptor.Chain chain, EventListener eventListener) throws IOException, InterruptedException,AuthException  {
         int connectTimeout = chain.connectTimeoutMillis();
         int heartbeatInterval= client.heartInterval();
         Address address=chain.request().address;
@@ -76,11 +75,16 @@ public class StreamAllocation {
             if (this.connection==null||!this.connection.isHealth()){
                 Internal.instance.get(connectionPool, address, this);
 
-                    connection= new RealConnection(connectionPool, routeSelector.lastInetSocketAddress());
+                    connection= new RealConnection(connectionPool, routeSelector.lastInetSocketAddress(), eventListener);
 
-                    connection.ChannelInitializerHandler(client.codec(),client.loginAuthMsg(),client.heartBeatMsg(),
-                            client.shakeHandsHandler(),client.heartChannelHandler(),
-                               client.messageHandler(),client.customChannelHandlerLinkedHashMap());
+                    connection.ChannelInitializerHandler(client.codec(), client.loginAuthMsg(), client.heartBeatMsg(),
+                            client.shakeHandsHandler(), client.heartChannelHandler(),
+                            client.messageHandler(), client.customChannelHandlerLinkedHashMap(), new RealConnection.connectionBrokenListener() {
+                                @Override
+                                public void connectionBroken() {
+                                    client.startConnect();
+                                }
+                            });
                     connection.connect(connectTimeout);
                     TcpStream tcpStream=connection.newStream(client,this,client.heartInterval());
                     return tcpStream;

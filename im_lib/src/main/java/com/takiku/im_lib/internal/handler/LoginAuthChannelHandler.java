@@ -4,6 +4,7 @@ import com.takiku.im_lib.entity.base.AbstractPack;
 import com.takiku.im_lib.exception.AuthError;
 import com.takiku.im_lib.exception.AuthException;
 
+import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 
@@ -20,18 +21,12 @@ public class LoginAuthChannelHandler extends ChannelInboundHandlerAdapter  {
 
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
+        super.channelActive(ctx);
         if (loginAuth!=null){
-            System.out.println("IMClient channelActive");
             ctx.channel().writeAndFlush(loginAuth);
         }
     }
 
-    @Override
-    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws AuthException {
-      if (cause.getCause() instanceof AuthError ){
-          throw  new AuthException(new AuthError("auth failure"));
-      }
-    }
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws AuthException {

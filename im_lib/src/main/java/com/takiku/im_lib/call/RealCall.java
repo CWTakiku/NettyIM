@@ -56,7 +56,7 @@ public class RealCall implements Call {
         private final Callback responseCallback;
 
         AsyncCall(Callback responseCallback) {
-            super("IMClient requestType %d",redactedRequest());
+            super("IMClient requestType %s",redactedRequest());
             this.responseCallback=responseCallback;
         }
         String host(){return originalRequest.address.getUrl();}
@@ -95,8 +95,13 @@ public class RealCall implements Call {
          }
         }
     }
-    int redactedRequest() {
-        return originalRequest.body.getPackType();
+    String redactedRequest() {
+        if (originalRequest.requestTag!=null){
+            return originalRequest.requestTag;
+        }else {
+            return "requestTag null";
+        }
+
     }
 
     Response getResponseWithInterceptorChain() throws IOException, InterruptedException, AuthException {

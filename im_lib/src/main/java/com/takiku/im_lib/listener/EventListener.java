@@ -28,11 +28,36 @@ public abstract class EventListener {
     }
 
 
-    public  void connectStart(Call call, InetSocketAddress inetSocketAddress){
+    public  void connectStart( InetSocketAddress inetSocketAddress){
 
     }
-    public void connectFailed(Call call, InetSocketAddress inetSocketAddress, IOException ioe) {
+    public  void connectSuccess(){
+
     }
+
+    /**
+     * 
+     * @param throwable
+     */
+    public void connectionException(Throwable throwable){
+
+    }
+
+    /**
+     * 连接失败
+     * @param inetSocketAddress
+     * @param ioe
+     */
+    public void connectFailed( InetSocketAddress inetSocketAddress, IOException ioe) {
+    }
+
+    /**
+     * 连接断开
+     */
+    public void connectionBroken(){
+
+    }
+
     public void connectionAcquired(Call call, Connection connection) {
     }
     public void connectionReleased(Call call, Connection connection) {
@@ -45,4 +70,5 @@ public abstract class EventListener {
     }
     public void sendMsgEnd(Call call) {
     }
+
 }

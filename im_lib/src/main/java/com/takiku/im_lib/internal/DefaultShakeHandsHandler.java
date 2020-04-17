@@ -1,5 +1,6 @@
-package com.takiku.im_lib.internal.handler;
+package com.takiku.im_lib.internal;
 
+import com.takiku.im_lib.internal.handler.ShakeHandsHandler;
 import com.takiku.im_lib.protobuf.PackProtobuf;
 
 public class DefaultShakeHandsHandler implements ShakeHandsHandler {

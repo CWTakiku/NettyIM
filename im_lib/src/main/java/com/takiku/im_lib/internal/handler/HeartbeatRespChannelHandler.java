@@ -18,6 +18,10 @@ public class HeartbeatRespChannelHandler extends ChannelInboundHandlerAdapter {
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-       internalChannelHandler.channelRead(ctx,msg);
+        if (internalChannelHandler!=null){
+            internalChannelHandler.channelRead(ctx,msg);
+        }else {
+            ctx.fireChannelRead(msg);
+        }
     }
 }

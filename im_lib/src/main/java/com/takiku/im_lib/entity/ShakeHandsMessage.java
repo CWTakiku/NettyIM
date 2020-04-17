@@ -8,7 +8,8 @@ public class ShakeHandsMessage extends AbstractPack {
     private String userId;
     private String token;
     private String msgId;
-
+    public static final int AUTH_SUCCESS=1;
+    public static final int AUTH_FAILED=0;
 
     public ShakeHandsMessage() {
         super(Request.PACK_HANDS_TYPE);
@@ -42,7 +43,7 @@ public class ShakeHandsMessage extends AbstractPack {
         this.token = token;
     }
 
-    public PackProtobuf.ShakeHands build() {
+    public PackProtobuf.ShakeHands buildProto() {
        return PackProtobuf.ShakeHands.newBuilder()
                 .setMsgId(msgId)
                 .setToken(token)
