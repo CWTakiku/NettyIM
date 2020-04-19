@@ -4,6 +4,7 @@ import com.takiku.im_lib.client.IMClient;
 import com.takiku.im_lib.entity.base.Request;
 import com.takiku.im_lib.entity.base.Response;
 import com.takiku.im_lib.exception.AuthException;
+import com.takiku.im_lib.exception.SendTimeoutException;
 import com.takiku.im_lib.interceptor.BridgeInterceptor;
 import com.takiku.im_lib.interceptor.CallServerInterceptor;
 import com.takiku.im_lib.interceptor.ConnectInterceptor;
@@ -82,13 +83,14 @@ public class RealCall implements Call {
          }catch ( InterruptedException e){
 
          }catch (IOException e){
+
              if (signalledCallback) {
                  // Do not signal the callback twice!
                  // Platform.get().log(INFO, "Callback failure for " + toLoggableString(), e);
              } else {
                  responseCallback.onFailure(RealCall.this, e);
              }
-         } catch (AuthException e) {
+         }         catch (AuthException e) {
           //   e.printStackTrace();
          } finally {
           client.dispatcher().finished(this);
@@ -104,7 +106,7 @@ public class RealCall implements Call {
 
     }
 
-    Response getResponseWithInterceptorChain() throws IOException, InterruptedException, AuthException {
+    Response getResponseWithInterceptorChain() throws IOException, InterruptedException, AuthException, SendTimeoutException {
         // Build a full stack of interceptors.
         List<Interceptor> interceptors = new ArrayList<>();
         if (client.interceptors()!=null&&client.interceptors().size()>0){

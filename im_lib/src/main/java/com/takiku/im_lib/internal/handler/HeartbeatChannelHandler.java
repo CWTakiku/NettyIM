@@ -1,6 +1,7 @@
 package com.takiku.im_lib.internal.handler;
 
 import com.takiku.im_lib.internal.connection.ConnectionPool;
+import com.takiku.im_lib.internal.connection.RealConnection;
 
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
@@ -10,9 +11,11 @@ import io.netty.handler.timeout.IdleStateEvent;
 public class HeartbeatChannelHandler extends ChannelInboundHandlerAdapter {
     ConnectionPool connectionPool;
     com.google.protobuf.GeneratedMessageV3 heartbeatMsg;
-    public HeartbeatChannelHandler(ConnectionPool connectionPool,com.google.protobuf.GeneratedMessageV3 hearBeatMsg){
+    RealConnection.connectionBrokenListener connectionBrokenListener;
+    public HeartbeatChannelHandler(ConnectionPool connectionPool, com.google.protobuf.GeneratedMessageV3 hearBeatMsg, RealConnection.connectionBrokenListener connectionBrokenListener){
        this.connectionPool=connectionPool;
        this.heartbeatMsg=hearBeatMsg;
+       this.connectionBrokenListener=connectionBrokenListener;
     }
 
     @Override
@@ -25,7 +28,7 @@ public class HeartbeatChannelHandler extends ChannelInboundHandlerAdapter {
             IdleState state = ((IdleStateEvent) evt).state();
             switch (state) {
                 case READER_IDLE: {
-                    //重连
+                    connectionBrokenListener.connectionBroken();
                     break;
                 }
 

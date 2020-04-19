@@ -11,14 +11,10 @@ import android.widget.TextView;
 
 import com.takiku.im_lib.call.Call;
 import com.takiku.im_lib.call.Callback;
-import com.takiku.im_lib.client.IMClient;
 import com.takiku.im_lib.entity.AppMessage;
-import com.takiku.im_lib.entity.ShakeHandsMessage;
-import com.takiku.im_lib.entity.base.Address;
+import com.takiku.im_lib.entity.ReplyMessage;
 import com.takiku.im_lib.entity.base.Request;
 import com.takiku.im_lib.entity.base.Response;
-import com.takiku.im_lib.internal.DefaultMessageRespHandler;
-import com.takiku.im_lib.internal.DefaultShakeHandsHandler;
 import com.takiku.im_lib.protobuf.PackProtobuf;
 
 import java.io.IOException;
@@ -50,31 +46,47 @@ public class MainActivity extends AppCompatActivity {
                         setRequestTag(appMessage.getHead().getMsgId()).
                         setBody(getMsgPack(appMessage.buildProto())).
                         build();
-                MyApplication.imClient.newCall(request).enqueue(new Callback<PackProtobuf.Pack>() {
+
+
+                CommonIMClient.getInstance().sendMsg(request, new Callback() {
                     @Override
                     public void onFailure(Call call, IOException e) {
+                        e.printStackTrace();
                     }
 
                     @Override
-                    public void onResponse(Call call, final Response<PackProtobuf.Pack> response) throws IOException {
-                        if (response!=null&&response.code==Response.SUCCESS){
-                            mDeliveryHandler.post(new Runnable() {
-                                @Override
-                                public void run() {
-                                 textView.setText(response.body.getReply().toString());
-                                }
-                            });
-                        }
+                    public void onResponse(Call call, Response response) throws IOException {
+                         if (response!=null&&response.code==Response.SUCCESS){
+                             CommonIMClient.getInstance().sendReply(getReplyRequest());
+                         }
                     }
                 });
+
             }
         });
 
+    }
+
+    public Request getReplyRequest(){
+        ReplyMessage replyMessage=new ReplyMessage();
+        replyMessage.setMsgId("11111");
+        replyMessage.setStatusReport(1);
+        Request replyRequest=  new Request.Builder()
+                .setNeedResponse(false)
+                .setBody(getReplyPack(replyMessage.buildProto()))
+                .build();
+        return replyRequest;
     }
     public PackProtobuf.Pack getMsgPack(PackProtobuf.Msg  msg){
         return PackProtobuf.Pack.newBuilder()
                 .setPackType(PackProtobuf.Pack.PackType.MSG)
                 .setMsg(msg)
+                .build();
+    }
+    public PackProtobuf.Pack getReplyPack(PackProtobuf.Reply  reply){
+        return PackProtobuf.Pack.newBuilder()
+                .setPackType(PackProtobuf.Pack.PackType.REPLY)
+                .setReply(reply)
                 .build();
     }
 

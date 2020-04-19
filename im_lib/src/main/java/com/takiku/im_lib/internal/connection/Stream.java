@@ -36,8 +36,8 @@ public class Stream implements TcpStream {
     @Override
     public void writeRequest(Request request) throws IOException {
         if (channel!=null&&channel.isActive()){
-            System.out.println(" requestTag: "+request.requestTag+" request body: "+request.body.toString());
-            channel.writeAndFlush(request.body);
+            System.out.println(" requestTag: "+request.requestTag+" request body: "+request.requestBody.toString());
+            channel.writeAndFlush(request.requestBody);
         }
 
     }

@@ -19,6 +19,7 @@ public class StatusChannelHandler extends ChannelInboundHandlerAdapter {
 
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
+        super.channelActive(ctx);
         System.out.println("channelActive");
         eventListener.connectSuccess();
     }
@@ -35,12 +36,6 @@ public class StatusChannelHandler extends ChannelInboundHandlerAdapter {
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
         super.channelInactive(ctx);
-        System.out.println("channelInactive");
-        Channel channel = ctx.channel();
-        if (channel != null) {
-            channel.close();
-            ctx.close();
-        }
         connectionBrokenListener.connectionBroken();
         eventListener.connectionBroken();
 

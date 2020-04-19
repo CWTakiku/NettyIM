@@ -6,6 +6,7 @@ import com.takiku.im_lib.call.Call;
 import com.takiku.im_lib.entity.base.Request;
 import com.takiku.im_lib.dispatcher.Connection;
 import com.takiku.im_lib.exception.AuthException;
+import com.takiku.im_lib.exception.SendTimeoutException;
 import com.takiku.im_lib.internal.connection.RealConnection;
 import com.takiku.im_lib.internal.connection.StreamAllocation;
 import com.takiku.im_lib.entity.base.Response;
@@ -77,7 +78,7 @@ public class RealInterceptorChain implements Interceptor.Chain {
     }
 
     @Override
-    public Response proceed(Request request) throws IOException, InterruptedException, AuthException {
+    public Response proceed(Request request) throws IOException, InterruptedException, AuthException ,SendTimeoutException{
         return proceed(request, streamAllocation, tcpStream, connection);
     }
 
@@ -87,7 +88,7 @@ public class RealInterceptorChain implements Interceptor.Chain {
     }
 
     public Response proceed(Request request, StreamAllocation streamAllocation, TcpStream tcpStream,
-                            RealConnection connection) throws IOException, InterruptedException, AuthException {
+                            RealConnection connection) throws IOException, InterruptedException, AuthException , SendTimeoutException {
         if (index >= interceptors.size()) throw new AssertionError();
         calls++;
         // Call the next interceptor in the chain.

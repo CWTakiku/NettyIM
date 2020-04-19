@@ -18,6 +18,6 @@ public class DefaultCodec implements Codec {
 
     @Override
     public MessageToMessageDecoder<ByteBuf> DeCoder() {
-        return new ProtobufDecoder( PackProtobuf.Pack.getDefaultInstance());
+        return new ProtobufDecoder(PackProtobuf.Pack.getDefaultInstance());
     }
 }

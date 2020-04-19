@@ -7,13 +7,14 @@ import com.takiku.im_lib.entity.base.Request;
 import com.takiku.im_lib.dispatcher.Connection;
 import com.takiku.im_lib.entity.base.Response;
 import com.takiku.im_lib.exception.AuthException;
+import com.takiku.im_lib.exception.SendTimeoutException;
 
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
 public interface Interceptor {
 
-    Response intercept(Chain chain) throws IOException, InterruptedException, AuthException;
+    Response intercept(Chain chain) throws IOException, InterruptedException, AuthException, SendTimeoutException;
     interface Chain {
 
         @Nullable
@@ -29,7 +30,7 @@ public interface Interceptor {
 
         Request request();
 
-        Response proceed(Request request) throws IOException, InterruptedException, AuthException;
+        Response proceed(Request request) throws IOException, InterruptedException, AuthException, SendTimeoutException;
 
         Call call();
     }

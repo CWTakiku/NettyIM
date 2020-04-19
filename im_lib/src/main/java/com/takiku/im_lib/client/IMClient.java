@@ -8,6 +8,7 @@ import com.takiku.im_lib.cache.Cache;
 import com.takiku.im_lib.call.Call;
 import com.takiku.im_lib.call.Callback;
 import com.takiku.im_lib.call.RealCall;
+import com.takiku.im_lib.entity.base.ConnectRequest;
 import com.takiku.im_lib.entity.base.Request;
 import com.takiku.im_lib.dispatcher.Dispatcher;
 import com.takiku.im_lib.entity.base.Address;
@@ -19,6 +20,7 @@ import com.takiku.im_lib.internal.connection.ConnectionPool;
 import com.takiku.im_lib.internal.connection.RealConnection;
 import com.takiku.im_lib.internal.connection.StreamAllocation;
 import com.takiku.im_lib.internal.handler.InternalChannelHandler;
+import com.takiku.im_lib.internal.handler.MessageReceiveHandler;
 import com.takiku.im_lib.internal.handler.MessageRespHandler;
 import com.takiku.im_lib.internal.handler.ShakeHandsHandler;
 import com.takiku.im_lib.listener.EventListener;
@@ -71,7 +73,6 @@ public class IMClient {
      boolean isBackground;//是否处于后台
      EventListener.Factory eventListenerFactory;
      ConnectionPool connectionPool;
-     Bootstrap bootstrap;
      Codec codec;
      LinkedHashMap<String , ChannelHandler> customChannelHandlerLinkedHashMap;
      com.google.protobuf.GeneratedMessageV3 loginAuthMsg;
@@ -79,6 +80,7 @@ public class IMClient {
      ShakeHandsHandler shakeHandsHandler;
      InternalChannelHandler heartChannelHandler;
      MessageRespHandler messageRespHandler;
+     MessageReceiveHandler messageReceiveHandler;
      List<Address> addressList;
 
     public IMClient(){this(new Builder());}
@@ -94,7 +96,6 @@ public class IMClient {
        this.connectionPool=builder.connectionPool;
        this.eventListenerFactory=builder.eventListenerFactory;
        this.connectionRetryEnabled=builder.connectionRetryEnabled;
-       this.bootstrap=builder.bootstrap;
        this.codec=builder.codec;
        this.customChannelHandlerLinkedHashMap=builder.customChannelHandlerLinkedHashMap;
        this.loginAuthMsg=builder.loginAuthMsg;
@@ -105,12 +106,13 @@ public class IMClient {
        this.sendTimeout=builder.sendTimeout;
        this.addressList=builder.addressList;
        this.isBackground=builder.isBackground;
+       this.messageReceiveHandler=builder.messageReceiveHandler;
     }
 
     public void startConnect() {
         checkAddressList(addressList);
-      Call call= newCall( new Request.Builder().setBody(null).build());
-      call.enqueue(new Callback() {
+        Call call= newCall( new ConnectRequest());
+        call.enqueue(new Callback() {
           @Override
           public void onFailure(Call call, IOException e) {
 
@@ -135,7 +137,6 @@ public class IMClient {
 
     public ConnectionPool connectionPool(){return  connectionPool;};
 
-    public Bootstrap bootstrap(){return bootstrap;}
 
     public Codec codec(){return codec;}
 
@@ -147,6 +148,14 @@ public class IMClient {
 
     public List<Address> addressList(){ return addressList; }
 
+    public MessageReceiveHandler messageReceiveHandler(){return messageReceiveHandler;}
+
+
+    /**
+     * 发送消息
+     * @param request
+     * @return
+     */
      public Call newCall(Request request) {
         return new RealCall(this, request);
     }
@@ -165,7 +174,7 @@ public class IMClient {
 
     public  LinkedHashMap<String , ChannelHandler> customChannelHandlerLinkedHashMap(){ return customChannelHandlerLinkedHashMap; }
 
-    public MessageRespHandler messageHandler(){
+    public MessageRespHandler messageRespHandler(){
         return messageRespHandler;
     }
 
@@ -185,32 +194,32 @@ public class IMClient {
     public static final class Builder{
      Dispatcher dispatcher;
      final List<Interceptor> interceptors = new ArrayList<>();
-     int connectTimeout;
+     int connectTimeout;//连接超时
      int sendTimeout;//发送超时
      int resendInterval;// 重发间隔
      int resendCount;//消息发送失败，重发次数
      boolean connectionRetryEnabled;//是否连接失败、连接重试
-     int heartIntervalForeground;
+     int heartIntervalForeground;//前台心跳间隔
      int heartIntervalBackground;
      boolean isBackground;
      EventListener.Factory eventListenerFactory;
      ConnectionPool connectionPool;
-     @Nullable Cache cache;
+     Cache cache;
      Authenticator authenticator;
      List<Address> addressList;
-     Bootstrap bootstrap;
-     Codec codec;
+     @Nullable Codec codec;
      LinkedHashMap<String , ChannelHandler> customChannelHandlerLinkedHashMap;
      com.google.protobuf.GeneratedMessageV3 loginAuthMsg;
      com.google.protobuf.GeneratedMessageV3 heartBeatMsg;
      ShakeHandsHandler shakeHandsHandler;
      InternalChannelHandler heartChannelHandler;
      MessageRespHandler messageRespHandler;
+     MessageReceiveHandler messageReceiveHandler;
 
      public Builder(){
          dispatcher=new Dispatcher();
          heartIntervalForeground=3*1000;
-         heartIntervalBackground=30*1000;
+         heartIntervalBackground=3*1000;
          isBackground=true;
          resendInterval=0;
          resendCount=3;
@@ -220,8 +229,12 @@ public class IMClient {
          addressList=new ArrayList<>();
          this.connectionPool=new ConnectionPool();
          eventListenerFactory = EventListener.factory(EventListener.NONE);
-         codec=new DefaultCodec();
      }
+
+        public Builder setCodec(@Nullable Codec codec){
+         this.codec=codec;
+         return this;
+        }
 
         public Builder setAuthenticator(Authenticator authenticator) {
             this.authenticator = authenticator;
@@ -286,10 +299,6 @@ public class IMClient {
            return this;
         }
 
-        public Builder setBootstrap(Bootstrap bootstrap){
-           this.bootstrap=bootstrap;
-           return this;
-        }
         public Builder setBackground(boolean isBackground){
          this.isBackground=isBackground;
          return this;
@@ -307,6 +316,10 @@ public class IMClient {
 
         public Builder setHeartBeatMsg(com.google.protobuf.GeneratedMessageV3 heartBeatMsg){
          this.heartBeatMsg=heartBeatMsg;
+         return this;
+        }
+        public Builder setMessageReceiveHandler(MessageReceiveHandler messageReceiveHandler){
+         this.messageReceiveHandler=messageReceiveHandler;
          return this;
         }
 

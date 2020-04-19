@@ -1,30 +1,25 @@
 package com.takiku.im_lib.interceptor;
 
+import com.takiku.im_lib.entity.base.ConnectRequest;
 import com.takiku.im_lib.entity.base.Request;
 import com.takiku.im_lib.client.IMClient;
 import com.takiku.im_lib.exception.AuthException;
 import com.takiku.im_lib.exception.RouteException;
+import com.takiku.im_lib.exception.SendTimeoutException;
 import com.takiku.im_lib.internal.connection.StreamAllocation;
 
 import com.takiku.im_lib.entity.base.Response;
-import com.takiku.im_lib.exception.ConnectionShutdownException;
 
 import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.net.ProtocolException;
 import java.net.SocketTimeoutException;
 
-
-import io.netty.channel.ConnectTimeoutException;
-
-import static com.takiku.im_lib.entity.base.Response.CONNECT_FAILED;
-
 public class RetryAndFollowUpInterceptor implements Interceptor {
 
     private final IMClient client;
     private StreamAllocation streamAllocation;
     private Object callStackTrace;
-    private static final int MAX_FOLLOW_UPS = 20;
     private static final int MAX_CONNECT_RETRY=3;
     private volatile boolean canceled;
     public void setCallStackTrace(Object callStackTrace) {
@@ -38,7 +33,6 @@ public class RetryAndFollowUpInterceptor implements Interceptor {
     public Response intercept(Chain chain) throws IOException {
         Request request = chain.request();
         streamAllocation = new StreamAllocation(client.connectionPool(),client.addressList(),client.customChannelHandlerLinkedHashMap(), callStackTrace);
-        int followUpCount = 0;
         int resendCount=0;
         int connect_retry=0;
         while (true){
@@ -52,62 +46,34 @@ public class RetryAndFollowUpInterceptor implements Interceptor {
                 response = ((RealInterceptorChain) chain).proceed(request, streamAllocation, null, null);
                 releaseConnection = false;
             } catch (RouteException e) {
-                // The attempt to connect via a route failed. The request will not have been sent.
-                if (!recover(e.getLastConnectException(), false, request)) {
-                    throw e.getLastConnectException();
-                }
-                releaseConnection = false;
 
-            }catch (ConnectTimeoutException e){
-                if (client.connectionRetryEnabled()){
-                    if (++connect_retry>MAX_CONNECT_RETRY){
-                    Request  connectRequest=followUpRequest(followUpCount,request);
-                     if (connectRequest!=null){
-                         releaseConnection=false;
-                         connect_retry=0;
-                         continue;
-                     }else {
-                         e.printStackTrace();
-                         return new Response.Builder().setCode(CONNECT_FAILED).build();
-                     }
-                    }else {
-                        System.out.println("连接重试 "+streamAllocation.currentInetSocketAddress().toString());
-                        releaseConnection=false;
-                        continue;
-                    }
-                }
             } catch (IOException e) {
-                // An attempt to communicate with a server failed. The request may have been sent.
-                //先判断当前请求是否已经发送了
-                boolean requestSendStarted = !(e instanceof ConnectionShutdownException);
-                if (!recover(e, requestSendStarted, request)) throw e;
-                releaseConnection = false;
+                if (request instanceof ConnectRequest){ //连接请求重试
+                    if (!connectRecover(e,request,++connect_retry%(MAX_CONNECT_RETRY+1))) throw e;
+                       System.out.println("连接重试 " + streamAllocation.currentInetSocketAddress().toString());
+                       releaseConnection=false;
+                       continue;
+                }
+                if (!sendRecover(e,  request,++resendCount)) throw e;   //发送请求重试
+                       System.out.println("发送重试");
+                       releaseConnection=false;
+                       continue;
 
             } catch (InterruptedException e) {
-
-                System.out.println(" InterruptedException ");
                 e.printStackTrace();
-
-                continue;
+                return null;
             } catch (AuthException e)  {
                 e.printStackTrace();
             }finally {
                 // We're throwing an unchecked exception. Release any resources.
-                if (releaseConnection) {   //未捕获到，释放资源
-                    streamAllocation.streamFailed(null);
+                if (releaseConnection) {   //是否需要释放连接
                     streamAllocation.release();
                 }
             }
+
             if (isOk(response)){ //拿到正确response直接返回
                 return response;
             }
-           if (!request.sendRetry){ //如果当前request不需要失败重发，直接返回失败结果
-               return response;
-            }
-            if (++resendCount>client.resendCount()){//已经达到重复次数无需继续重试
-                return response;
-            }
-
         }
     }
 
@@ -119,42 +85,58 @@ public class RetryAndFollowUpInterceptor implements Interceptor {
         }
     }
 
-    private Request followUpRequest(int followUpCount,Request request) throws IOException {
+    //切换下一个地址
+    private Request followUpRequest(Request request) throws IOException {
         if (!streamAllocation.hasMoreRoutes()) return null;
-        if (++followUpCount >MAX_FOLLOW_UPS) { //重定向次数太多了，放弃这个连接
-           return null;
-        }
+
          streamAllocation.nextRoute();
       return   request;
     }
 
     /**
-     * 是否能恢复
+     * 发送请求是否能恢复
      * @param e
-     * @param requestSendStarted
      * @param userRequest
      * @return
      */
-    private boolean recover(IOException e, boolean requestSendStarted, Request userRequest) {
-        streamAllocation.streamFailed(e);
+    private boolean sendRecover(IOException e,  Request userRequest,int sendCount) {
+
 
         // The application layer has forbidden retries.
-        if (client.resendCount()<=0) return false;
+        if (sendCount>client.resendCount()) return false;
 
         // We can't send the request body again.
-        if (requestSendStarted && !userRequest.sendRetry) return false;
+        if (!userRequest.sendRetry) return false;
 
         // This exception is fatal.
-        if (!isRecoverable(e, requestSendStarted)) return false;
-
-        // No more routes to attempt.
-
-
-        // For failure recovery, use the same route selector with a new connection.
+        if (!isRecoverable(e)) return false;
         return true;
     }
 
-    private boolean isRecoverable(IOException e, boolean requestSendStarted) {
+    /**
+     * 连接请求是否能恢复
+     * @param e
+     * @param userRequest
+     * @return
+     */
+    private boolean connectRecover(IOException e,  Request userRequest,int  connectCount) throws IOException {
+
+        // The application layer has forbidden retries.
+        if (!client.connectionRetryEnabled()) return false;
+
+
+        if (connectCount>=MAX_CONNECT_RETRY){
+            Request request=followUpRequest(userRequest);
+            if (request==null) return false;
+
+        }
+
+        // This exception is fatal.
+        if (!isRecoverable(e)) return false;
+            return true;
+    }
+
+    private boolean isRecoverable(IOException e) {
         // If there was a protocol problem, don't recover.
         if (e instanceof ProtocolException) {
             return false;
@@ -163,7 +145,7 @@ public class RetryAndFollowUpInterceptor implements Interceptor {
         // If there was an interruption don't recover, but if there was a timeout connecting to a route
         // we should try the next route (if there is one).
         if (e instanceof InterruptedIOException) {
-            return e instanceof SocketTimeoutException && !requestSendStarted;
+            return e instanceof SocketTimeoutException;
         }
 
 

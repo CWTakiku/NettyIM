@@ -7,6 +7,9 @@ import com.google.protobuf.GeneratedMessageV3;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 
+/**
+ * 消息响应，面向服务端发过来的状态回应
+ */
 public class MessageRespChannelHandler extends ChannelInboundHandlerAdapter {
 
     MessageRespHandler messageRespHandler;

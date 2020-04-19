@@ -31,15 +31,7 @@ import static com.takiku.im_lib.entity.ShakeHandsMessage.AUTH_FAILED;
 import static com.takiku.im_lib.entity.ShakeHandsMessage.AUTH_SUCCESS;
 
 /**
- * <p>@ProjectName:     BoChat</p>
- * <p>@ClassName:       NettyServerDemo.java</p>
- * <p>@PackageName:     com.bochat.im.netty</p>
- * <b>
- * <p>@Description:     TCP netty服务端</p>
- * </b>
- * <p>@author:          FreddyChen</p>
- * <p>@date:            2019/02/15 14:42</p>
- * <p>@email:           chenshichao@outlook.com</p>
+ * IMCient 服务端demo
  */
 public class NettyServerDemo {
 
@@ -172,7 +164,7 @@ class ServerHandler extends ChannelInboundHandlerAdapter {
                 break;
             case MSG:
                 PackProtobuf.Msg message=pack.getMsg();
-                System.out.println("收到客户端发送过来的消息:"+message.toString());
+                System.out.println("收到发送方客户端发送过来的消息:"+message.toString());
                 PackProtobuf.Reply reply=PackProtobuf.Reply.newBuilder().setReplyType(MSG_REPLY_TYPE)
                         .setMsgId(message.getHead().getMsgId())
                         .setStatusReport(MSG_SENDED) //已发送状态回执
@@ -180,68 +172,35 @@ class ServerHandler extends ChannelInboundHandlerAdapter {
                 replyPack=PackProtobuf.Pack.newBuilder()
                         .setPackType(PackProtobuf.Pack.PackType.REPLY)
                         .setReply(reply).build();
-                ChannelContainer.getInstance().getActiveChannelByUserId(message.getHead().getFromId()).getChannel().writeAndFlush(replyPack);
+
+                ChannelContainer.getInstance().getActiveChannelByUserId(message.getHead().getFromId()).getChannel().writeAndFlush(replyPack);//回给发送端消息已经发送
+
+                mockOtherClientSendMsg();//模拟其他用户给他发消息
+                //TODO 如果接受方在线 转发给接受方
+                break;
+            case REPLY:
+                PackProtobuf.Reply receiveReply=pack.getReply();
+                System.out.println("收到接受方客户端响应的状态:"+receiveReply.toString());
+                //TODO 此时可以转告该消息的发送方该消息的状态，是被送达了，还是被阅读了等
+                break;
 
         }
+    }
 
+    /**
+     * 模拟其他用户发消息
+     */
+    private void mockOtherClientSendMsg() {
+        PackProtobuf.Msg mockOtherClientMsg=PackProtobuf.Msg.newBuilder()
+                .setHead(PackProtobuf.Head.newBuilder().setFromId("other userId").setToId("your userId").build())
+                .setBody("other给你发送消息了")
+                .build();
+        PackProtobuf.Pack otherMsgPack=PackProtobuf.Pack.newBuilder()
+                .setPackType(PackProtobuf.Pack.PackType.MSG)
+                .setMsg(mockOtherClientMsg)
+                .build();
 
-//        System.out.println("收到来自客户端的消息：" + message);
-//        int msgType = message.getHead().getMsgType();
-//        switch (msgType) {
-//            // 握手消息
-//            case 1001: {
-//                String fromId = message.getHead().getFromId();
-//                JSONObject jsonObj = JSON.parseObject(message.getHead().getExtend());
-//                String token = jsonObj.getString("token");
-//                JSONObject resp = new JSONObject();
-//                if (token.equals("token_" + fromId)) {
-//                    resp.put("status", 1);
-//                    // 握手成功后，保存用户通道
-//                    ChannelContainer.getInstance().saveChannel(new NettyChannel(fromId, ctx.channel()));
-//                } else {
-//                    resp.put("status", -1);
-//                    ChannelContainer.getInstance().removeChannelIfConnectNoActive(ctx.channel());
-//                }
-//
-//                message = message.toBuilder().setHead(message.getHead().toBuilder().setExtend(resp.toString()).build()).build();
-//                ChannelContainer.getInstance().getActiveChannelByUserId(fromId).getChannel().writeAndFlush(message);
-//                break;
-//            }
-//
-//            // 心跳消息
-//            case 1002: {
-//                // 收到心跳消息，原样返回
-//                String fromId = message.getHead().getFromId();
-//                ChannelContainer.getInstance().getActiveChannelByUserId(fromId).getChannel().writeAndFlush(message);
-//                break;
-//            }
-//
-//            case 2001: {
-//                // 收到2001或3001消息，返回给客户端消息发送状态报告
-//                String fromId = message.getHead().getFromId();
-//                MessageProtobuf.Msg.Builder sentReportMsgBuilder = MessageProtobuf.Msg.newBuilder();
-//                MessageProtobuf.Head.Builder sentReportHeadBuilder = MessageProtobuf.Head.newBuilder();
-//                sentReportHeadBuilder.setMsgId(message.getHead().getMsgId());
-//                sentReportHeadBuilder.setMsgType(1010);
-//                sentReportHeadBuilder.setTimestamp(System.currentTimeMillis());
-//                sentReportHeadBuilder.setStatusReport(1);
-//                sentReportMsgBuilder.setHead(sentReportHeadBuilder.build());
-//                ChannelContainer.getInstance().getActiveChannelByUserId(fromId).getChannel().writeAndFlush(sentReportMsgBuilder.build());
-//
-//                // 同时转发消息到接收方
-//                String toId = message.getHead().getToId();
-//                ChannelContainer.getInstance().getActiveChannelByUserId(toId).getChannel().writeAndFlush(message);
-//                break;
-//            }
-//
-//            case 3001: {
-//                // todo 群聊，自己实现吧，toId可以是群id，根据群id查找所有在线用户的id，循环遍历channel发送即可。
-//                break;
-//            }
-//
-//            default:
-//                break;
-    //    }
+        ChannelContainer.getInstance().getActiveChannelByUserId(mockOtherClientMsg.getHead().getToId()).getChannel().writeAndFlush(otherMsgPack);
     }
 
     public static class ChannelContainer {

@@ -45,7 +45,7 @@ public class StreamAllocation {
 
     private void closeQuietly(RealConnection connection) {
         released=true;
-        if (connection!=null&&connection.channel()!=null){
+        if (connection!=null){
            connection.release();
            connection=null;
         }
@@ -53,13 +53,11 @@ public class StreamAllocation {
 
 
     public void acquire(RealConnection connection) {
-        if (this.connection != null) throw new IllegalStateException();
+        if (this.connection != null&&this.connection.isHealth()) throw new IllegalStateException();
 
         this.connection = connection;
     }
 
-    public void streamFailed(IOException e) {
-    }
 
     public boolean hasMoreRoutes() {
         return routeSelector.hasNext();
@@ -74,20 +72,24 @@ public class StreamAllocation {
 
             if (this.connection==null||!this.connection.isHealth()){
                 Internal.instance.get(connectionPool, address, this);
+                    if(connection==null||!connection.isHealth()){
+                        connection= new RealConnection(connectionPool, routeSelector.lastInetSocketAddress(), eventListener);
 
-                    connection= new RealConnection(connectionPool, routeSelector.lastInetSocketAddress(), eventListener);
-
-                    connection.ChannelInitializerHandler(client.codec(), client.loginAuthMsg(), client.heartBeatMsg(),
-                            client.shakeHandsHandler(), client.heartChannelHandler(),
-                            client.messageHandler(), client.customChannelHandlerLinkedHashMap(), new RealConnection.connectionBrokenListener() {
-                                @Override
-                                public void connectionBroken() {
-                                    client.startConnect();
-                                }
-                            });
-                    connection.connect(connectTimeout);
-                    TcpStream tcpStream=connection.newStream(client,this,client.heartInterval());
-                    return tcpStream;
+                        connection.ChannelInitializerHandler(client.codec(), client.loginAuthMsg(), client.heartBeatMsg(),
+                                client.shakeHandsHandler(), client.heartChannelHandler(),
+                                client.messageRespHandler(),client.messageReceiveHandler(),
+                                client.customChannelHandlerLinkedHashMap(), new RealConnection.connectionBrokenListener() {
+                                    @Override
+                                    public void connectionBroken() {
+                                        closeQuietly(connection);
+                                        client.startConnect();
+                                    }
+                                });
+                        connection.connect(connectTimeout);
+                        Internal.instance.put(connectionPool,connection);
+                        TcpStream tcpStream=connection.newStream(client,this,client.heartInterval());
+                        return tcpStream;
+                    }else {return connection.newStream(client,this,heartbeatInterval);}
             }else {
                 return connection.newStream(client,this,heartbeatInterval);
             }

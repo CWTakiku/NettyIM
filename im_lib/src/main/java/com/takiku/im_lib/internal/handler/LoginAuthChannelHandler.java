@@ -32,7 +32,7 @@ public class LoginAuthChannelHandler extends ChannelInboundHandlerAdapter  {
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws AuthException {
         if (shakeHandsHandler!=null){
             if (shakeHandsHandler.isShakeHands(msg)){
-                if (shakeHandsHandler.isAuthOk(msg)){
+                if (shakeHandsHandler.isShakeHandsOk(msg)){
                     shakeHandsListener.shakeHandsSuccess(true);
                 }else {
                     shakeHandsListener.shakeHandsSuccess(false);

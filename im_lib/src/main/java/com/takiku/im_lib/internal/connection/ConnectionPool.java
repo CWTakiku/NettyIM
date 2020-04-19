@@ -14,9 +14,9 @@ public final class ConnectionPool {
 
 
 
-    private static final ExecutorService bossPool = Executors.newFixedThreadPool(1);
-    private static final ExecutorService workPool = Executors.newFixedThreadPool(1);;// 工作线程组，负责心跳
-    private  RealConnection realConnection;
+
+    private static volatile ExecutorService workPool ;// 工作线程组，负责心跳
+    private static   RealConnection realConnection;
 
 
 
@@ -44,7 +44,13 @@ public final class ConnectionPool {
      *
      * @param r
      */
-    public void execWorkTask(Runnable r) {
+    public synchronized void execWorkTask(Runnable r) {
+        if (r==null){
+            return;
+        }
+        if (workPool==null){
+            workPool= Executors.newFixedThreadPool(1);
+        }
         workPool.execute(r);
     }
 
@@ -53,5 +59,19 @@ public final class ConnectionPool {
             streamAllocation.acquire(realConnection);
         }
         return realConnection;
+    }
+    /**
+     * 释放work线程池
+     */
+    public synchronized void destroyWorkLoopGroup() {
+        if (workPool != null) {
+            try {
+                workPool.shutdownNow();
+            } catch (Throwable t) {
+                t.printStackTrace();
+            } finally {
+                workPool = null;
+            }
+        }
     }
 }

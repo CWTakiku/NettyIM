@@ -7,7 +7,7 @@ public class DefaultShakeHandsHandler implements ShakeHandsHandler {
 
 
     @Override
-    public boolean isAuthOk(Object msg)  {
+    public boolean isShakeHandsOk(Object msg)  {
         PackProtobuf.Pack pack= (PackProtobuf.Pack) msg;
         if (pack.getShakeHands().getStatusReport()==1&&pack.getShakeHands().getUserId().equals("your userId")){
                  return true;
