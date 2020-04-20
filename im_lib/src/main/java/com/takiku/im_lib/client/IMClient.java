@@ -165,6 +165,7 @@ public class IMClient {
         return new RealCall(this, request);
     }
 
+
     public com.google.protobuf.GeneratedMessageV3 loginAuthMsg(){ return loginAuthMsg; }
 
     public com.google.protobuf.GeneratedMessageV3 heartBeatMsg(){ return heartBeatMsg; }

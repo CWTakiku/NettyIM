@@ -3,6 +3,9 @@ package com.takiku.im_lib.internal;
 import com.takiku.im_lib.internal.handler.ShakeHandsHandler;
 import com.takiku.im_lib.protobuf.PackProtobuf;
 
+/**
+ * 默认握手实现
+ */
 public class DefaultShakeHandsHandler implements ShakeHandsHandler {
 
    public static final int SHAKE_HANDS_REPLY_TYPE=0x12;

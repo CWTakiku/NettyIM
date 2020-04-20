@@ -1,6 +1,7 @@
 package com.takiku.im_lib.internal.connection;
 
 import com.google.protobuf.GeneratedMessageV3;
+import com.takiku.im_lib.call.SubsequentCallback;
 import com.takiku.im_lib.entity.base.Request;
 import com.takiku.im_lib.client.IMClient;
 import com.takiku.im_lib.entity.base.Response;
@@ -52,6 +53,17 @@ public class Stream implements TcpStream {
 
         return null;
     }
+
+    @Override
+    public void subsequentResponse(Request request, SubsequentCallback callback) {
+         streamAllocation.connection().registerAttentionResponse(request.requestTag, new RealConnection.OnResponseListener() {
+            @Override
+            public void onResponseArrive(String tag, Object o) throws IOException {
+              Response response=   new Response.Builder().setCode(Response.SUCCESS).setRequest(request).setResponse((GeneratedMessageV3) o).build();
+                callback.onSubsequentResponse(response);
+            }
+        });
+    };
 
 
 

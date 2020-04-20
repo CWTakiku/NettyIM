@@ -6,7 +6,17 @@ package com.takiku.im_lib.internal.handler;
  * Date:2020/4/18
  */
 public interface MessageReceiveHandler<message extends com.google.protobuf.GeneratedMessageV3> {
+    /**
+     * 是否是用户发的消息
+     * @param msg
+     * @return
+     */
     boolean isClientMessage(Object msg);
+
+    /**
+     * 接受用户发送的消息
+     * @param message
+     */
     void receiveMessage(message message);
 
 }

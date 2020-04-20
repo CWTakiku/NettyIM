@@ -11,7 +11,7 @@ public  class Request {
   public static final int PACK_HANDS_TYPE=3;
   public static final int PACK_CONNECT_TYPE=4;
 
- public String requestTag;
+ public String requestTag;//请求tag，与应答的tag对呀
  public Address address; //暂时未用到，为预留字段
  public boolean sendRetry;//失败是否重试
  public boolean needResponse;//是否需要响应

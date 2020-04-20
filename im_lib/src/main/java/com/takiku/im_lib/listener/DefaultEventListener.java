@@ -5,6 +5,9 @@ import com.takiku.im_lib.call.Call;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 
+/**
+ * 默认事件处理，这里只是打印了日志
+ */
 public class DefaultEventListener extends EventListener {
     @Override
     public void connectionBroken() {

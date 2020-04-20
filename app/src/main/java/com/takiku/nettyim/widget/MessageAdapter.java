@@ -1,4 +1,4 @@
-package com.takiku.nettyim;
+package com.takiku.nettyim.widget;
 
 import android.view.LayoutInflater;
 import android.view.View;
@@ -10,6 +10,7 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.takiku.im_lib.entity.AppMessage;
+import com.takiku.nettyim.R;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -97,6 +98,10 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
                     frameSendHolder.errorView.setVisibility(View.GONE);
                     frameSendHolder.statusView.setText("已读");
                     break;
+                case MSG_STATUS_SENDING:
+                    frameSendHolder.errorView.setVisibility(View.GONE);
+                    frameSendHolder.statusView.setText("发送中...");
+                    break;
             }
         }
     }
@@ -115,6 +120,10 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
         }
     }
 
+    /**
+     * 更新单条消息状态
+     * @param appMessage
+     */
     public void onItemChange(AppMessage appMessage){
             for (int i=0;i<list.size();i++){
                 AppMessage target=list.get(i);

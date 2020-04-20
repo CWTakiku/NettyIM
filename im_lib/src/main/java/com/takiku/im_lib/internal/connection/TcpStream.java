@@ -1,5 +1,6 @@
 package com.takiku.im_lib.internal.connection;
 
+import com.takiku.im_lib.call.SubsequentCallback;
 import com.takiku.im_lib.entity.base.Request;
 import com.takiku.im_lib.entity.base.Response;
 
@@ -10,5 +11,7 @@ public interface TcpStream {
     void cancel();
     void writeRequest(Request request) throws IOException;
     Response readResponse(Request request);
+    void subsequentResponse(Request request, SubsequentCallback callback);
+
 
 }

@@ -3,6 +3,7 @@ package com.takiku.nettyim.clientdemo;
 import com.google.protobuf.GeneratedMessageV3;
 import com.takiku.im_lib.call.Call;
 import com.takiku.im_lib.call.Callback;
+import com.takiku.im_lib.call.UICallback;
 import com.takiku.im_lib.client.IMClient;
 import com.takiku.im_lib.codec.DefaultCodec;
 import com.takiku.im_lib.entity.ShakeHandsMessage;
@@ -12,6 +13,7 @@ import com.takiku.im_lib.entity.base.Response;
 import com.takiku.im_lib.internal.DefaultMessageReceiveHandler;
 import com.takiku.im_lib.internal.DefaultMessageRespHandler;
 import com.takiku.im_lib.internal.DefaultShakeHandsHandler;
+import com.takiku.im_lib.internal.connection.RealConnection;
 import com.takiku.im_lib.listener.DefaultEventListener;
 import com.takiku.im_lib.protobuf.PackProtobuf;
 
@@ -33,11 +35,17 @@ public class IMClientDemo {
                 .setHeartBeatMsg(getDefaultHeart()) //设置心跳,可选
                 .setMessageRespHandler(new DefaultMessageRespHandler()) //消息响应，开发者可自行定制实现MessageRespHandler接口即可
              //   .setMessageReceiveHandler(new DefaultMessageReceiveHandler())
+                .setEventListener(new DefaultEventListener()) //可选
                 .setAddress(new Address("192.168.69.32",8765,Address.Type.SOCKS))
                 .setAddress(new Address("192.168.8.154",8765,Address.Type.SOCKS))
                 .setAddress(new Address("www.baidu.com",8765,Address.Type.HTTP))
                 .build();
     }
+
+    /**
+     * IMCient
+     * @param onMessageArriveListener //主要消息接受监听，单一职责
+     */
     private IMClientDemo(DefaultMessageReceiveHandler.onMessageArriveListener onMessageArriveListener){
         imClient=new IMClient.Builder()
                 .setCodec(new DefaultCodec()) //默认的编解码，开发者可以使用自己的protobuf编解码
@@ -45,8 +53,8 @@ public class IMClientDemo {
                 .setHeartBeatMsg(getDefaultHeart()) //设置心跳,可选
                 .setMessageRespHandler(new DefaultMessageRespHandler()) //消息响应，开发者可自行定制实现MessageRespHandler接口即可
                 .setMessageReceiveHandler(new DefaultMessageReceiveHandler(onMessageArriveListener))
-                .setEventListener(new DefaultEventListener())
-                .setAddress(new Address("192.168.69.32",8765,Address.Type.SOCKS))
+                .setEventListener(new DefaultEventListener()) //可选
+               // .setAddress(new Address("192.168.69.32",8765,Address.Type.SOCKS))
                 .setAddress(new Address("192.168.8.154",8765,Address.Type.SOCKS))
                 .setAddress(new Address("www.baidu.com",8765,Address.Type.HTTP))
                 .build();
@@ -87,9 +95,24 @@ public class IMClientDemo {
      */
     public void disConnect(){imClient.disConnect();}
 
+    /**
+     * 发送消息，回调在子线程
+     * @param request
+     * @param callback
+     */
     public void sendMsg(Request request,Callback callback){
         imClient.newCall(request).enqueue(callback);
     }
+
+    /**
+     * 发送消息，回调在主线程
+     * @param request
+     * @param onResponseListener
+     */
+    public void sendMsg(Request request, UICallback.OnResultListener onResponseListener){
+        imClient.newCall(request).enqueue(new UICallback(onResponseListener));
+    }
+
     public void sendReply(Request request){
         imClient.newCall(request).enqueue(new Callback() {
             @Override
@@ -102,6 +125,14 @@ public class IMClientDemo {
 
             }
         });
+    }
+
+    /**
+     * 发送状态回复 在UI线程，这里与发送消息并无二异，只是request设置无需要服务端响应
+     * @param request
+     */
+    public void sendReplyUI(Request request){
+        imClient.newCall(request).enqueue(new UICallback(null));
     }
 
 

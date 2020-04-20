@@ -6,7 +6,7 @@ import com.takiku.im_lib.protobuf.PackProtobuf;
 
 /**
  * author:chengwl
- * Description:
+ * Description:  默认的消息接收器，只针对用户发送的消息，其他类型的消息不在这处理
  * Date:2020/4/18
  */
 public class DefaultMessageReceiveHandler implements MessageReceiveHandler<PackProtobuf.Pack> {

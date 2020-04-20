@@ -3,6 +3,7 @@ package com.takiku.nettyim.clientdemo;
 import com.google.protobuf.GeneratedMessageV3;
 import com.takiku.im_lib.call.Call;
 import com.takiku.im_lib.call.Callback;
+import com.takiku.im_lib.call.UICallback;
 import com.takiku.im_lib.client.IMClient;
 import com.takiku.im_lib.codec.DefaultCodec;
 import com.takiku.im_lib.entity.ShakeHandsMessage;
@@ -27,7 +28,7 @@ public class IMClientDemo2 {
                 .setHeartBeatMsg(getDefaultHeart()) //设置心跳,可选
                 .setMessageRespHandler(new DefaultMessageRespHandler()) //消息响应，开发者可自行定制实现MessageRespHandler接口即可
                 //   .setMessageReceiveHandler(new DefaultMessageReceiveHandler())
-                .setAddress(new Address("192.168.69.32",8765,Address.Type.SOCKS))
+              //  .setAddress(new Address("192.168.69.32",8765,Address.Type.SOCKS))
                 .setAddress(new Address("192.168.8.154",8765,Address.Type.SOCKS))
                 .setAddress(new Address("www.baidu.com",8765,Address.Type.HTTP))
                 .build();
@@ -40,7 +41,7 @@ public class IMClientDemo2 {
                 .setMessageRespHandler(new DefaultMessageRespHandler()) //消息响应，开发者可自行定制实现MessageRespHandler接口即可
                 .setMessageReceiveHandler(new DefaultMessageReceiveHandler(onMessageArriveListener))
                 .setEventListener(new DefaultEventListener())
-                .setAddress(new Address("192.168.69.32",8765,Address.Type.SOCKS))
+                //.setAddress(new Address("192.168.69.32",8765,Address.Type.SOCKS))
                 .setAddress(new Address("192.168.8.154",8765,Address.Type.SOCKS))
                 .setAddress(new Address("www.baidu.com",8765,Address.Type.HTTP))
                 .build();
@@ -81,6 +82,16 @@ public class IMClientDemo2 {
      */
     public void disConnect(){imClient.disConnect();}
 
+    /**
+     * 发送消息，回调在主线程
+     * @param request
+     * @param onResponseListener
+     */
+    public void sendMsg(Request request, UICallback.OnResultListener onResponseListener){
+        imClient.newCall(request).enqueue(new UICallback(onResponseListener));
+    }
+
+
     public void sendMsg(Request request, Callback callback){
         imClient.newCall(request).enqueue(callback);
     }
@@ -97,7 +108,9 @@ public class IMClientDemo2 {
             }
         });
     }
-
+    public void sendReplyUI(Request request){
+        imClient.newCall(request).enqueue(new UICallback(null));
+    }
 
 
     /**

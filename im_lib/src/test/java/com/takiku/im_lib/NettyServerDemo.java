@@ -173,8 +173,13 @@ class ServerHandler extends ChannelInboundHandlerAdapter {
                 System.out.println("收到发送方客户端发送过来的消息:"+message.toString());
                 ChannelContainer.getInstance().getActiveChannelByUserId(message.getHead().getFromId()).getChannel() //回给发送端消息已经发送
                         .writeAndFlush(createMsgReply(message.getHead().getFromId(),message.getHead().getMsgId(),MSG_REPLY_TYPE, NettyServerDemo.MSG_STATUS_SEND));
-                ChannelContainer.getInstance().getActiveChannelByUserId(message.getHead().getToId()).getChannel() //转发给接受端
-                        .writeAndFlush(pack);
+                if (ChannelContainer.getInstance().isOnline(message.getHead().getToId())){
+                    ChannelContainer.getInstance().getActiveChannelByUserId(message.getHead().getToId()).getChannel() //转发给接受端
+                            .writeAndFlush(pack);
+                }else { //TODO 对方离线，缓存起来
+
+                }
+
 
                 break;
             case REPLY:
@@ -183,7 +188,11 @@ class ServerHandler extends ChannelInboundHandlerAdapter {
                 switch (receiveReply.getReplyType()){
                     case MSG_REPLY_TYPE://消息状态回复，转发给发送方是被送达了，还是被阅读了等
                         System.out.println("转发消息状态给发送方"+receiveReply.getUserId());
-                        ChannelContainer.getInstance().getActiveChannelByUserId(receiveReply.getUserId()).getChannel().writeAndFlush(pack);
+                        if (ChannelContainer.getInstance().isOnline(receiveReply.getUserId())) {
+                            ChannelContainer.getInstance().getActiveChannelByUserId(receiveReply.getUserId()).getChannel().writeAndFlush(pack);
+                        }else {//TODO 对方离线，缓存起来
+
+                        }
                         break;
 
                 }
@@ -243,13 +252,13 @@ class ServerHandler extends ChannelInboundHandlerAdapter {
             return INSTANCE;
         }
 
-        private final Map<String, NettyChannel> CHANNELS = new ConcurrentHashMap<>();
+        private final Map<String, NettyChannel> channelMap = new ConcurrentHashMap<>();
 
         public void saveChannel(NettyChannel channel) {
             if (channel == null) {
                 return;
             }
-            CHANNELS.put(channel.getChannelId(), channel);
+            channelMap.put(channel.getChannelId(), channel);
         }
 
         public NettyChannel removeChannelIfConnectNoActive(Channel channel) {
@@ -263,8 +272,8 @@ class ServerHandler extends ChannelInboundHandlerAdapter {
         }
 
         public NettyChannel removeChannelIfConnectNoActive(String channelId) {
-            if (CHANNELS.containsKey(channelId) && !CHANNELS.get(channelId).isActive()) {
-                return CHANNELS.remove(channelId);
+            if (channelMap.containsKey(channelId) && !channelMap.get(channelId).isActive()) {
+                return channelMap.remove(channelId);
             }
 
             return null;
@@ -275,15 +284,22 @@ class ServerHandler extends ChannelInboundHandlerAdapter {
         }
 
         public String getUserIdByChannel(String channelId) {
-            if (CHANNELS.containsKey(channelId)) {
-                return CHANNELS.get(channelId).getUserId();
+            if (channelMap.containsKey(channelId)) {
+                return channelMap.get(channelId).getUserId();
             }
 
             return null;
         }
+        public boolean isOnline(String userId){
+            if (getActiveChannelByUserId(userId)!=null){
+                return true;
+            }else {
+                return false;
+            }
+        }
 
         public NettyChannel getActiveChannelByUserId(String userId) {
-            for (Map.Entry<String, NettyChannel> entry : CHANNELS.entrySet()) {
+            for (Map.Entry<String, NettyChannel> entry : channelMap.entrySet()) {
                 if (entry.getValue().getUserId().equals(userId) && entry.getValue().isActive()) {
                     return entry.getValue();
                 }

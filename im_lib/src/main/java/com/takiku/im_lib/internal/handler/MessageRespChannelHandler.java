@@ -4,6 +4,8 @@ package com.takiku.im_lib.internal.handler;
 
 import com.google.protobuf.GeneratedMessageV3;
 
+import java.io.IOException;
+
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 
@@ -38,6 +40,6 @@ public class MessageRespChannelHandler extends ChannelInboundHandlerAdapter {
     }
 
   public   interface onResponseListener{
-      void   onResponse(String tag,Object msg);
+      void   onResponse(String tag,Object msg) throws IOException;
     }
 }

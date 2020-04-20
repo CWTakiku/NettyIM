@@ -17,8 +17,13 @@ import com.takiku.im_lib.internal.handler.StatusChannelHandler;
 import com.takiku.im_lib.listener.EventListener;
 import com.takiku.im_lib.util.LRUMap;
 
+import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import io.netty.bootstrap.Bootstrap;
@@ -49,6 +54,7 @@ public class RealConnection  implements Connection {
     private InetSocketAddress inetSocketAddress;
     private LinkedHashMap<String, ChannelHandler> handlers;
     private EventListener eventListener;
+    private static volatile Map<String,OnResponseListener> onResponseListenerMap=new HashMap<>();
 
     public RealConnection(ConnectionPool connectionPool, InetSocketAddress inetSocketAddress, EventListener eventListener){
         this.inetSocketAddress=inetSocketAddress;
@@ -159,8 +165,8 @@ public class RealConnection  implements Connection {
 
                 pipeline.addLast(MessageRespChannelHandler.class.getSimpleName(),new MessageRespChannelHandler(messageRespHandler,new MessageRespChannelHandler.onResponseListener() {
                     @Override
-                    public void onResponse(String tag,Object msg) {
-                      lruMap.put(tag,  msg);
+                    public void onResponse(String tag,Object msg) throws IOException {
+                        putResponse(tag,msg);
                     }
                 }));
 
@@ -247,8 +253,36 @@ public class RealConnection  implements Connection {
         return lruMap;
     }
 
+
+    private synchronized void  putResponse(String tag,Object o) throws IOException {
+        synchronized (lruMap()){
+            lruMap.put(tag,o);
+            if (onResponseListenerMap.containsKey(tag)){
+                onResponseListenerMap.get(tag).onResponseArrive(tag,o);
+            }
+        }
+    }
+
+    /**
+     * 注册后续消息状态的监听，例如已读、撤回、等状态
+     * @param tag
+     * @param listener
+     */
+    public void registerAttentionResponse(String tag,OnResponseListener listener){
+
+        synchronized (onResponseListenerMap){
+            onResponseListenerMap.put(tag,listener);
+        }
+
+    }
+
    public   interface connectionBrokenListener{
         void connectionBroken();
     }
+
+    public interface OnResponseListener{
+       void onResponseArrive(String tag,Object o) throws IOException;
+    }
+
 
 }

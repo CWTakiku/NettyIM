@@ -1,5 +1,6 @@
 package com.takiku.im_lib.call;
 
+import com.google.protobuf.GeneratedMessageV3;
 import com.takiku.im_lib.client.IMClient;
 import com.takiku.im_lib.entity.base.Request;
 import com.takiku.im_lib.entity.base.Response;
@@ -72,7 +73,12 @@ public class RealCall implements Call {
         protected void execute() {
             boolean signalledCallback = false;
          try{
-             Response response = getResponseWithInterceptorChain();
+             Response response = getResponseWithInterceptorChain(new SubsequentCallback() {
+                 @Override
+                 public void onSubsequentResponse(Response subsequentResponse) throws IOException {
+                     responseCallback.onResponse(RealCall.this,subsequentResponse);
+                 }
+             });
              if (retryAndFollowUpInterceptor.isCanceled()){
                  signalledCallback = true;
 
@@ -107,7 +113,7 @@ public class RealCall implements Call {
 
     }
 
-    Response getResponseWithInterceptorChain() throws IOException, InterruptedException, AuthException, SendTimeoutException {
+    Response getResponseWithInterceptorChain(SubsequentCallback callback) throws IOException, InterruptedException, AuthException, SendTimeoutException {
         // Build a full stack of interceptors.
         List<Interceptor> interceptors = new ArrayList<>();
         if (client.interceptors()!=null&&client.interceptors().size()>0){
@@ -117,7 +123,7 @@ public class RealCall implements Call {
         interceptors.add(new BridgeInterceptor(client));
        // interceptors.add(new CacheInterceptor());
         interceptors.add(new ConnectInterceptor(client));
-        interceptors.add(new CallServerInterceptor());
+        interceptors.add(new CallServerInterceptor(callback));
 
 
         Interceptor.Chain chain = new RealInterceptorChain(
