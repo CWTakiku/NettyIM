@@ -19,6 +19,7 @@ import com.takiku.im_lib.internal.Internal;
 import com.takiku.im_lib.internal.connection.ConnectionPool;
 import com.takiku.im_lib.internal.connection.RealConnection;
 import com.takiku.im_lib.internal.connection.StreamAllocation;
+import com.takiku.im_lib.internal.handler.HeartbeatRespHandler;
 import com.takiku.im_lib.internal.handler.InternalChannelHandler;
 import com.takiku.im_lib.internal.handler.MessageReceiveHandler;
 import com.takiku.im_lib.internal.handler.MessageRespHandler;
@@ -47,8 +48,8 @@ public class IMClient {
             }
 
             @Override
-            public void deduplicate(ConnectionPool pool,  StreamAllocation streamAllocation) {
-                 pool.deduplicate( streamAllocation);
+            public void deduplicate(ConnectionPool pool) {
+                 pool.deduplicate();
             }
 
             @Override
@@ -78,10 +79,11 @@ public class IMClient {
      com.google.protobuf.GeneratedMessageV3 loginAuthMsg;
      com.google.protobuf.GeneratedMessageV3 heartBeatMsg;
      ShakeHandsHandler shakeHandsHandler;
-     InternalChannelHandler heartChannelHandler;
+     HeartbeatRespHandler heartbeatRespHandler;
      MessageRespHandler messageRespHandler;
      MessageReceiveHandler messageReceiveHandler;
      List<Address> addressList;
+
 
     public IMClient(){this(new Builder());}
 
@@ -102,7 +104,7 @@ public class IMClient {
        this.heartBeatMsg=builder.heartBeatMsg;
        this.shakeHandsHandler=builder.shakeHandsHandler;
        this.messageRespHandler =builder.messageRespHandler;
-       this.heartChannelHandler=builder.heartChannelHandler;
+       this.heartbeatRespHandler=builder.heartbeatRespHandler;
        this.sendTimeout=builder.sendTimeout;
        this.addressList=builder.addressList;
        this.isBackground=builder.isBackground;
@@ -123,6 +125,9 @@ public class IMClient {
 
           }
       });
+    }
+    public void disConnect(){
+       Internal.instance.deduplicate(connectionPool);
     }
 
     public Dispatcher dispatcher() {
@@ -182,8 +187,8 @@ public class IMClient {
         return shakeHandsHandler;
     }
 
-    public InternalChannelHandler heartChannelHandler(){
-        return heartChannelHandler;
+    public HeartbeatRespHandler heartbeatRespHandler(){
+        return heartbeatRespHandler;
     }
 
     public EventListener.Factory eventListenerFactory() {
@@ -212,14 +217,14 @@ public class IMClient {
      com.google.protobuf.GeneratedMessageV3 loginAuthMsg;
      com.google.protobuf.GeneratedMessageV3 heartBeatMsg;
      ShakeHandsHandler shakeHandsHandler;
-     InternalChannelHandler heartChannelHandler;
+     HeartbeatRespHandler heartbeatRespHandler;
      MessageRespHandler messageRespHandler;
      MessageReceiveHandler messageReceiveHandler;
 
      public Builder(){
          dispatcher=new Dispatcher();
          heartIntervalForeground=3*1000;
-         heartIntervalBackground=3*1000;
+         heartIntervalBackground=30*1000;
          isBackground=true;
          resendInterval=0;
          resendCount=3;
@@ -303,6 +308,10 @@ public class IMClient {
          this.isBackground=isBackground;
          return this;
         }
+        public Builder setEventListener(EventListener eventListener){
+         this.eventListenerFactory=EventListener.factory(eventListener);
+         return this;
+        }
 
         public Builder setShakeHands(com.google.protobuf.GeneratedMessageV3 shakeHands,ShakeHandsHandler shakeHandler){
          this.loginAuthMsg=shakeHands;
@@ -318,6 +327,12 @@ public class IMClient {
          this.heartBeatMsg=heartBeatMsg;
          return this;
         }
+
+        public Builder setHeartbeatRespHandler(HeartbeatRespHandler heartbeatRespHandler){
+         this.heartbeatRespHandler=heartbeatRespHandler;
+         return this;
+        }
+
         public Builder setMessageReceiveHandler(MessageReceiveHandler messageReceiveHandler){
          this.messageReceiveHandler=messageReceiveHandler;
          return this;

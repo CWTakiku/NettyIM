@@ -1,5 +1,7 @@
 package com.takiku.im_lib.internal.handler;
 
+import com.google.protobuf.GeneratedMessageV3;
+
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 
@@ -10,16 +12,20 @@ import io.netty.channel.ChannelInboundHandlerAdapter;
  */
 public class HeartbeatRespChannelHandler extends ChannelInboundHandlerAdapter {
 
-    private InternalChannelHandler internalChannelHandler;
+    private HeartbeatRespHandler heartbeatRespHandler;
 
-    public HeartbeatRespChannelHandler(InternalChannelHandler internalChannelHandler){
-      this.internalChannelHandler = internalChannelHandler;
+    public HeartbeatRespChannelHandler(HeartbeatRespHandler heartbeatRespHandler){
+      this.heartbeatRespHandler = heartbeatRespHandler;
     }
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-        if (internalChannelHandler!=null){
-            internalChannelHandler.channelRead(ctx,msg);
+        if (heartbeatRespHandler!=null){
+            if (heartbeatRespHandler.isHeartbeatResp(msg)){
+                heartbeatRespHandler.handleHeartbeatResp((GeneratedMessageV3) msg);
+            }else {
+                ctx.fireChannelRead(msg);
+            }
         }else {
             ctx.fireChannelRead(msg);
         }

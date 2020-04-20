@@ -76,7 +76,7 @@ public class StreamAllocation {
                         connection= new RealConnection(connectionPool, routeSelector.lastInetSocketAddress(), eventListener);
 
                         connection.ChannelInitializerHandler(client.codec(), client.loginAuthMsg(), client.heartBeatMsg(),
-                                client.shakeHandsHandler(), client.heartChannelHandler(),
+                                client.shakeHandsHandler(), client.heartbeatRespHandler(),
                                 client.messageRespHandler(),client.messageReceiveHandler(),
                                 client.customChannelHandlerLinkedHashMap(), new RealConnection.connectionBrokenListener() {
                                     @Override

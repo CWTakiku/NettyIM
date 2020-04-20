@@ -22,6 +22,7 @@ public class RetryAndFollowUpInterceptor implements Interceptor {
     private Object callStackTrace;
     private static final int MAX_CONNECT_RETRY=3;
     private volatile boolean canceled;
+    int connect_retry=0;
     public void setCallStackTrace(Object callStackTrace) {
         this.callStackTrace = callStackTrace;
     }
@@ -31,10 +32,10 @@ public class RetryAndFollowUpInterceptor implements Interceptor {
     }
     @Override
     public Response intercept(Chain chain) throws IOException {
+        RealInterceptorChain realChain = (RealInterceptorChain) chain;
         Request request = chain.request();
         streamAllocation = new StreamAllocation(client.connectionPool(),client.addressList(),client.customChannelHandlerLinkedHashMap(), callStackTrace);
         int resendCount=0;
-        int connect_retry=0;
         while (true){
             if (canceled) {
                 streamAllocation.release();
@@ -49,12 +50,19 @@ public class RetryAndFollowUpInterceptor implements Interceptor {
 
             } catch (IOException e) {
                 if (request instanceof ConnectRequest){ //连接请求重试
-                    if (!connectRecover(e,request,++connect_retry%(MAX_CONNECT_RETRY+1))) throw e;
+                    if (!connectRecover(e,request, ++connect_retry)) {
+                        realChain.eventListener().connectFailed(streamAllocation.currentInetSocketAddress(),e);
+                        throw e;
+                    }
                        System.out.println("连接重试 " + streamAllocation.currentInetSocketAddress().toString());
                        releaseConnection=false;
                        continue;
                 }
-                if (!sendRecover(e,  request,++resendCount)) throw e;   //发送请求重试
+                if (!sendRecover(e,  request,++resendCount)){
+                    realChain.eventListener().sendMsgFailed(realChain.call());
+                    throw e;
+                }
+                      //发送请求重试
                        System.out.println("发送重试");
                        releaseConnection=false;
                        continue;
@@ -125,8 +133,9 @@ public class RetryAndFollowUpInterceptor implements Interceptor {
         if (!client.connectionRetryEnabled()) return false;
 
 
-        if (connectCount>=MAX_CONNECT_RETRY){
-            Request request=followUpRequest(userRequest);
+        if (connectCount>MAX_CONNECT_RETRY){
+            connect_retry=1;
+             Request request=followUpRequest(userRequest);
             if (request==null) return false;
 
         }

@@ -16,7 +16,7 @@ public final class ConnectionPool {
 
 
     private static volatile ExecutorService workPool ;// 工作线程组，负责心跳
-    private static   RealConnection realConnection;
+    private static  volatile   RealConnection realConnection;
 
 
 
@@ -25,10 +25,10 @@ public final class ConnectionPool {
     }
 
 
-    public void deduplicate(StreamAllocation streamAllocation){
-        realConnection=null;
-        if (streamAllocation!=null){
-            streamAllocation.release();
+    public void deduplicate(){
+        if (realConnection!=null){
+            realConnection.release();
+            realConnection=null;
         }
     }
     public void put(RealConnection connection) {

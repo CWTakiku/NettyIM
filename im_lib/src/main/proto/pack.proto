@@ -20,11 +20,10 @@ enum PackType{
     }
 }
 
-message ShakeHands{
+message ShakeHands{ //握手认证
 string msgId=1;
 string userId=2;
 string token=3;
-int32 statusReport=4;
 }
 message Msg{
   Head head=1;
@@ -40,11 +39,12 @@ message Head {
     string extend = 7;// 扩展字段，以key/value形式存放的json
     string auth=8;
 }
-message Reply{
-  int32 replyType=1;
+message Reply{ //通用回复
+  int32 replyType=1;//回复类型
   string msgId=2;
-  int32 statusReport=3;
+  string userId=3;
+  int32 statusReport=4;//状态
 }
-message Heart{
+message Heart{ //心跳
   string userId=1;
 }

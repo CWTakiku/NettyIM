@@ -21,14 +21,14 @@ public class CallServerInterceptor implements Interceptor {
         StreamAllocation streamAllocation = realChain.streamAllocation();
         RealConnection connection = (RealConnection) realChain.connection();
         Request request = realChain.request();
-        realChain.eventListener().sendMsgStart(realChain.call());
+
         long sentRequestMillis = System.currentTimeMillis();
         boolean sendFinish=false;
         Response response=null;
-
         if (request instanceof ConnectRequest||request.requestBody==null){
             return new Response.Builder().setRequest(request).setCode(Response.SUCCESS).build();
         }
+        realChain.eventListener().sendMsgStart(realChain.call());
         tcpStream.writeRequest(request);
         realChain.eventListener().sendMsgEnd(realChain.call());
         if (!request.needResponse){

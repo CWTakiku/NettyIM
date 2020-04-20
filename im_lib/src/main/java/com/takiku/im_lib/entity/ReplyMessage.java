@@ -16,11 +16,15 @@ public class ReplyMessage extends AbstractPack {
     String msgId;
 
     int statusReport;
+    String userId;
+    int replyType;
 
 
     public PackProtobuf.Reply buildProto() {
         return PackProtobuf.Reply.newBuilder()
                 .setMsgId(msgId)
+                .setReplyType(replyType)
+                .setUserId(userId)
                 .setStatusReport(statusReport)
                 .build();
 
@@ -40,5 +44,21 @@ public class ReplyMessage extends AbstractPack {
 
     public void setStatusReport(int statusReport) {
         this.statusReport = statusReport;
+    }
+
+    public String getUserId() {
+        return userId;
+    }
+
+    public void setUserId(String userId) {
+        this.userId = userId;
+    }
+
+    public int getReplyType() {
+        return replyType;
+    }
+
+    public void setReplyType(int replyType) {
+        this.replyType = replyType;
     }
 }

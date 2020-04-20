@@ -1,4 +1,4 @@
-package com.takiku.nettyim;
+package com.takiku.nettyim.clientdemo;
 
 import com.google.protobuf.GeneratedMessageV3;
 import com.takiku.im_lib.call.Call;
@@ -7,41 +7,60 @@ import com.takiku.im_lib.client.IMClient;
 import com.takiku.im_lib.codec.DefaultCodec;
 import com.takiku.im_lib.entity.ShakeHandsMessage;
 import com.takiku.im_lib.entity.base.Address;
-import com.takiku.im_lib.entity.base.ConnectRequest;
 import com.takiku.im_lib.entity.base.Request;
 import com.takiku.im_lib.entity.base.Response;
 import com.takiku.im_lib.internal.DefaultMessageReceiveHandler;
 import com.takiku.im_lib.internal.DefaultMessageRespHandler;
 import com.takiku.im_lib.internal.DefaultShakeHandsHandler;
+import com.takiku.im_lib.listener.DefaultEventListener;
 import com.takiku.im_lib.protobuf.PackProtobuf;
 
 import java.io.IOException;
 
-/**
- * author:chengwl
- * Description:
- * Date:2020/4/18
- */
-public class CommonIMClient {
-
-    private static CommonIMClient instance;
+public class IMClientDemo2 {
+    private static IMClientDemo2 instance;
     private IMClient imClient;
-    private CommonIMClient(){
+    private IMClientDemo2(){
         imClient=new IMClient.Builder()
                 .setCodec(new DefaultCodec()) //默认的编解码，开发者可以使用自己的protobuf编解码
                 .setShakeHands(getDefaultHands(),new DefaultShakeHandsHandler()) //设置握手认证，可选
                 .setHeartBeatMsg(getDefaultHeart()) //设置心跳,可选
                 .setMessageRespHandler(new DefaultMessageRespHandler()) //消息响应，开发者可自行定制实现MessageRespHandler接口即可
-                .setMessageReceiveHandler(new DefaultMessageReceiveHandler())
+                //   .setMessageReceiveHandler(new DefaultMessageReceiveHandler())
+                .setAddress(new Address("192.168.69.32",8765,Address.Type.SOCKS))
                 .setAddress(new Address("192.168.8.154",8765,Address.Type.SOCKS))
                 .setAddress(new Address("www.baidu.com",8765,Address.Type.HTTP))
                 .build();
     }
-    public static CommonIMClient getInstance(){
+    private IMClientDemo2(DefaultMessageReceiveHandler.onMessageArriveListener onMessageArriveListener){
+        imClient=new IMClient.Builder()
+                .setCodec(new DefaultCodec()) //默认的编解码，开发者可以使用自己的protobuf编解码
+                .setShakeHands(getDefaultHands(),new DefaultShakeHandsHandler()) //设置握手认证，可选
+                .setHeartBeatMsg(getDefaultHeart()) //设置心跳,可选
+                .setMessageRespHandler(new DefaultMessageRespHandler()) //消息响应，开发者可自行定制实现MessageRespHandler接口即可
+                .setMessageReceiveHandler(new DefaultMessageReceiveHandler(onMessageArriveListener))
+                .setEventListener(new DefaultEventListener())
+                .setAddress(new Address("192.168.69.32",8765,Address.Type.SOCKS))
+                .setAddress(new Address("192.168.8.154",8765,Address.Type.SOCKS))
+                .setAddress(new Address("www.baidu.com",8765,Address.Type.HTTP))
+                .build();
+    }
+    public static IMClientDemo2 getInstance(){
         if (instance==null){
-            synchronized (CommonIMClient.class){
+            synchronized (IMClientDemo2.class){
                 if (instance==null){
-                    instance=new CommonIMClient();
+                    instance=new IMClientDemo2();
+                }
+            }
+            return instance;
+        }
+        return instance;
+    }
+    public static IMClientDemo2 getInstance(DefaultMessageReceiveHandler.onMessageArriveListener onMessageArriveListener){
+        if (instance==null){
+            synchronized (IMClientDemo2.class){
+                if (instance==null){
+                    instance=new IMClientDemo2(onMessageArriveListener);
                 }
             }
             return instance;
@@ -49,11 +68,20 @@ public class CommonIMClient {
         return instance;
     }
 
+
+    /**
+     * 建立连接
+     */
     public void startConnect(){
         imClient.startConnect();
     }
 
-    public void sendMsg(Request request,Callback callback){
+    /**
+     * 断开连接
+     */
+    public void disConnect(){imClient.disConnect();}
+
+    public void sendMsg(Request request, Callback callback){
         imClient.newCall(request).enqueue(callback);
     }
     public void sendReply(Request request){
@@ -79,7 +107,7 @@ public class CommonIMClient {
     private GeneratedMessageV3 getDefaultHeart() {
         return PackProtobuf.Pack.newBuilder()
                 .setPackType(PackProtobuf.Pack.PackType.HEART)
-                .setHeart(PackProtobuf.Heart.newBuilder().setUserId("your userId").build())
+                .setHeart(PackProtobuf.Heart.newBuilder().setUserId("user id2").build())
                 .build();
     }
 
@@ -89,9 +117,9 @@ public class CommonIMClient {
      */
     private GeneratedMessageV3 getDefaultHands() {
         ShakeHandsMessage shakeHandsMessage =new ShakeHandsMessage();
-        shakeHandsMessage.setToken("your token");
-        shakeHandsMessage.setUserId("your userId");
-        shakeHandsMessage.setMsgId("12345678");
+        shakeHandsMessage.setToken("token2");
+        shakeHandsMessage.setUserId("user id2");
+        shakeHandsMessage.setMsgId("2222");
         return PackProtobuf.Pack.newBuilder()
                 .setPackType(PackProtobuf.Pack.PackType.SHAKEHANDS)
                 .setShakeHands(shakeHandsMessage.buildProto())

@@ -7,16 +7,18 @@ import com.takiku.im_lib.protobuf.PackProtobuf;
 import com.takiku.im_lib.util.StringUtil;
 
 public  class AppMessage extends AbstractPack {
-    public static final int MSG_REPLY_TYPE=1001;
-    public static final int MSG_SENDED=1;
+
+
 
     private Head head;  // 消息头
     private String body;// 消息体
+    public int msgStatus;
     public AppMessage(Builder builder){
         super(Request.PACK_MSG_TYPE);
         this.head=builder.head;
         this.body=builder.body;
     }
+
 
     public Head getHead() {
         return head;
@@ -100,5 +102,15 @@ public  class AppMessage extends AbstractPack {
             builder.setBody(getBody());
         builder.setHead(headBuilder);
         return builder.build();
+    }
+    public static AppMessage buildAppMessage(PackProtobuf.Msg msg){
+
+        return  new AppMessage.Builder().setToId(msg.getHead().getToId())
+             .setFromId(msg.getHead().getFromId())
+             .setBody(msg.getBody())
+             .setExtend(msg.getHead().getExtend())
+             .setMsgContentType(msg.getHead().getMsgContentType())
+             .setMsgId(msg.getHead().getMsgId())
+             .build();
     }
 }

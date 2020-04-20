@@ -20,17 +20,15 @@ public class StatusChannelHandler extends ChannelInboundHandlerAdapter {
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
         super.channelActive(ctx);
-        System.out.println("channelActive");
         eventListener.connectSuccess();
     }
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws AuthException {
-        System.out.println("exceptionCaught  "+cause.getMessage());
+        eventListener.connectionException(cause);
         if (cause.getCause() instanceof AuthError){
             throw  new AuthException(new AuthError("auth failure"));
         }
-        eventListener.connectionException(cause);
     }
 
     @Override

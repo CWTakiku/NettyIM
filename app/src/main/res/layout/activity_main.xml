@@ -1,20 +1,69 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".MainActivity">
-
-   <TextView
-       android:layout_width="match_parent"
-       android:layout_height="wrap_content"
-       android:id="@+id/tv_response"></TextView>
-    <Button
-        android:layout_width="wrap_content"
+    tools:context=".MainActivity"
+    android:orientation="horizontal"
+    >
+<LinearLayout
+    android:layout_width="0dp"
+    android:layout_weight="1"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+    <androidx.recyclerview.widget.RecyclerView
+        android:layout_width="match_parent"
+        android:layout_weight="1"
+        android:id="@+id/recycler1"
+        android:layout_height="match_parent">
+    </androidx.recyclerview.widget.RecyclerView>
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_centerInParent="true"
-        android:id="@+id/btn_send"
-        android:text="发送消息"></Button>
+        android:orientation="horizontal">
+        <EditText
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:id="@+id/et_content1"
+            android:hint="client1"
+            android:background="@null"
+            android:layout_height="wrap_content"/>
+        <Button
+            android:layout_width="70dp"
+            android:id="@+id/btn_1"
+            android:text="发送"
+            android:layout_height="wrap_content"/>
+    </LinearLayout>
+</LinearLayout>
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_weight="1"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+        <androidx.recyclerview.widget.RecyclerView
+            android:layout_width="match_parent"
+            android:id="@+id/recycler2"
+            android:layout_weight="1"
+            android:layout_height="match_parent">
+        </androidx.recyclerview.widget.RecyclerView>
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+            <EditText
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:id="@+id/et_content2"
+                android:hint="client2"
+                android:background="@null"
+                android:layout_height="wrap_content"/>
+            <Button
+                android:layout_width="70dp"
+                android:id="@+id/btn_2"
+                android:text="发送"
+                android:layout_height="wrap_content"/>
+        </LinearLayout>
+    </LinearLayout>
 
-</RelativeLayout>
+</LinearLayout>

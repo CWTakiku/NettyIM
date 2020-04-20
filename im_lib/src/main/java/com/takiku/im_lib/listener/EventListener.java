@@ -2,6 +2,7 @@ package com.takiku.im_lib.listener;
 
 import com.takiku.im_lib.call.Call;
 import com.takiku.im_lib.dispatcher.Connection;
+import com.takiku.im_lib.entity.base.Request;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -9,7 +10,7 @@ import java.net.Proxy;
 
 /**
  * author:chengwl
- * Description:
+ * Description:事件监听
  * Date:2020/4/11
  */
 public abstract class EventListener {
@@ -28,15 +29,23 @@ public abstract class EventListener {
     }
 
 
+    /**
+     * 连接开始
+     * @param inetSocketAddress
+     */
     public  void connectStart( InetSocketAddress inetSocketAddress){
 
     }
+
+    /**
+     * 连接成功
+     */
     public  void connectSuccess(){
 
     }
 
     /**
-     * 
+     * 连接出现异常
      * @param throwable
      */
     public void connectionException(Throwable throwable){
@@ -49,6 +58,7 @@ public abstract class EventListener {
      * @param ioe
      */
     public void connectFailed( InetSocketAddress inetSocketAddress, IOException ioe) {
+
     }
 
     /**
@@ -58,17 +68,32 @@ public abstract class EventListener {
 
     }
 
-    public void connectionAcquired(Call call, Connection connection) {
+
+    /**
+     * 连接释放
+     * @param connection
+     */
+    public void connectionReleased(Connection connection) {
     }
-    public void connectionReleased(Call call, Connection connection) {
-    }
-    public void callFailed(Call call, IOException ioe) {
-    }
-    public void callStart(Call call) {
-    }
+
+    /**
+     * 发送开始
+     * @param call
+     */
     public void sendMsgStart(Call call) {
     }
+
+    /**
+     * 发送结束
+     * @param call
+     */
     public void sendMsgEnd(Call call) {
     }
+
+    /**
+     * 发送失败
+     * @param call
+     */
+    public void sendMsgFailed(Call call){}
 
 }

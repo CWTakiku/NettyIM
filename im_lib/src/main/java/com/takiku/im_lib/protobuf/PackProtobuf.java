@@ -1661,14 +1661,12 @@ public final class PackProtobuf {
      */
     com.google.protobuf.ByteString
         getTokenBytes();
-
-    /**
-     * <code>int32 statusReport = 4;</code>
-     * @return The statusReport.
-     */
-    int getStatusReport();
   }
   /**
+   * <pre>
+   *握手认证
+   * </pre>
+   *
    * Protobuf type {@code ShakeHands}
    */
   public  static final class ShakeHands extends
@@ -1732,11 +1730,6 @@ public final class PackProtobuf {
               String s = input.readStringRequireUtf8();
 
               token_ = s;
-              break;
-            }
-            case 32: {
-
-              statusReport_ = input.readInt32();
               break;
             }
             default: {
@@ -1879,16 +1872,6 @@ public final class PackProtobuf {
       }
     }
 
-    public static final int STATUSREPORT_FIELD_NUMBER = 4;
-    private int statusReport_;
-    /**
-     * <code>int32 statusReport = 4;</code>
-     * @return The statusReport.
-     */
-    public int getStatusReport() {
-      return statusReport_;
-    }
-
     private byte memoizedIsInitialized = -1;
     @Override
     public final boolean isInitialized() {
@@ -1912,9 +1895,6 @@ public final class PackProtobuf {
       if (!getTokenBytes().isEmpty()) {
         com.google.protobuf.GeneratedMessageV3.writeString(output, 3, token_);
       }
-      if (statusReport_ != 0) {
-        output.writeInt32(4, statusReport_);
-      }
       unknownFields.writeTo(output);
     }
 
@@ -1932,10 +1912,6 @@ public final class PackProtobuf {
       }
       if (!getTokenBytes().isEmpty()) {
         size += com.google.protobuf.GeneratedMessageV3.computeStringSize(3, token_);
-      }
-      if (statusReport_ != 0) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeInt32Size(4, statusReport_);
       }
       size += unknownFields.getSerializedSize();
       memoizedSize = size;
@@ -1958,8 +1934,6 @@ public final class PackProtobuf {
           .equals(other.getUserId())) return false;
       if (!getToken()
           .equals(other.getToken())) return false;
-      if (getStatusReport()
-          != other.getStatusReport()) return false;
       if (!unknownFields.equals(other.unknownFields)) return false;
       return true;
     }
@@ -1977,8 +1951,6 @@ public final class PackProtobuf {
       hash = (53 * hash) + getUserId().hashCode();
       hash = (37 * hash) + TOKEN_FIELD_NUMBER;
       hash = (53 * hash) + getToken().hashCode();
-      hash = (37 * hash) + STATUSREPORT_FIELD_NUMBER;
-      hash = (53 * hash) + getStatusReport();
       hash = (29 * hash) + unknownFields.hashCode();
       memoizedHashCode = hash;
       return hash;
@@ -2075,6 +2047,10 @@ public final class PackProtobuf {
       return builder;
     }
     /**
+     * <pre>
+     *握手认证
+     * </pre>
+     *
      * Protobuf type {@code ShakeHands}
      */
     public static final class Builder extends
@@ -2118,8 +2094,6 @@ public final class PackProtobuf {
 
         token_ = "";
 
-        statusReport_ = 0;
-
         return this;
       }
 
@@ -2149,7 +2123,6 @@ public final class PackProtobuf {
         result.msgId_ = msgId_;
         result.userId_ = userId_;
         result.token_ = token_;
-        result.statusReport_ = statusReport_;
         onBuilt();
         return result;
       }
@@ -2209,9 +2182,6 @@ public final class PackProtobuf {
         if (!other.getToken().isEmpty()) {
           token_ = other.token_;
           onChanged();
-        }
-        if (other.getStatusReport() != 0) {
-          setStatusReport(other.getStatusReport());
         }
         this.mergeUnknownFields(other.unknownFields);
         onChanged();
@@ -2466,36 +2436,6 @@ public final class PackProtobuf {
   checkByteStringIsUtf8(value);
         
         token_ = value;
-        onChanged();
-        return this;
-      }
-
-      private int statusReport_ ;
-      /**
-       * <code>int32 statusReport = 4;</code>
-       * @return The statusReport.
-       */
-      public int getStatusReport() {
-        return statusReport_;
-      }
-      /**
-       * <code>int32 statusReport = 4;</code>
-       * @param value The statusReport to set.
-       * @return This builder for chaining.
-       */
-      public Builder setStatusReport(int value) {
-        
-        statusReport_ = value;
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>int32 statusReport = 4;</code>
-       * @return This builder for chaining.
-       */
-      public Builder clearStatusReport() {
-        
-        statusReport_ = 0;
         onChanged();
         return this;
       }
@@ -4890,6 +4830,10 @@ public final class PackProtobuf {
       com.google.protobuf.MessageOrBuilder {
 
     /**
+     * <pre>
+     *回复类型
+     * </pre>
+     *
      * <code>int32 replyType = 1;</code>
      * @return The replyType.
      */
@@ -4908,12 +4852,32 @@ public final class PackProtobuf {
         getMsgIdBytes();
 
     /**
-     * <code>int32 statusReport = 3;</code>
+     * <code>string userId = 3;</code>
+     * @return The userId.
+     */
+    String getUserId();
+    /**
+     * <code>string userId = 3;</code>
+     * @return The bytes for userId.
+     */
+    com.google.protobuf.ByteString
+        getUserIdBytes();
+
+    /**
+     * <pre>
+     *状态
+     * </pre>
+     *
+     * <code>int32 statusReport = 4;</code>
      * @return The statusReport.
      */
     int getStatusReport();
   }
   /**
+   * <pre>
+   *通用回复
+   * </pre>
+   *
    * Protobuf type {@code Reply}
    */
   public  static final class Reply extends
@@ -4927,6 +4891,7 @@ public final class PackProtobuf {
     }
     private Reply() {
       msgId_ = "";
+      userId_ = "";
     }
 
     @Override
@@ -4970,7 +4935,13 @@ public final class PackProtobuf {
               msgId_ = s;
               break;
             }
-            case 24: {
+            case 26: {
+              String s = input.readStringRequireUtf8();
+
+              userId_ = s;
+              break;
+            }
+            case 32: {
 
               statusReport_ = input.readInt32();
               break;
@@ -5010,6 +4981,10 @@ public final class PackProtobuf {
     public static final int REPLYTYPE_FIELD_NUMBER = 1;
     private int replyType_;
     /**
+     * <pre>
+     *回复类型
+     * </pre>
+     *
      * <code>int32 replyType = 1;</code>
      * @return The replyType.
      */
@@ -5053,10 +5028,50 @@ public final class PackProtobuf {
       }
     }
 
-    public static final int STATUSREPORT_FIELD_NUMBER = 3;
+    public static final int USERID_FIELD_NUMBER = 3;
+    private volatile Object userId_;
+    /**
+     * <code>string userId = 3;</code>
+     * @return The userId.
+     */
+    public String getUserId() {
+      Object ref = userId_;
+      if (ref instanceof String) {
+        return (String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        String s = bs.toStringUtf8();
+        userId_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string userId = 3;</code>
+     * @return The bytes for userId.
+     */
+    public com.google.protobuf.ByteString
+        getUserIdBytes() {
+      Object ref = userId_;
+      if (ref instanceof String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (String) ref);
+        userId_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int STATUSREPORT_FIELD_NUMBER = 4;
     private int statusReport_;
     /**
-     * <code>int32 statusReport = 3;</code>
+     * <pre>
+     *状态
+     * </pre>
+     *
+     * <code>int32 statusReport = 4;</code>
      * @return The statusReport.
      */
     public int getStatusReport() {
@@ -5083,8 +5098,11 @@ public final class PackProtobuf {
       if (!getMsgIdBytes().isEmpty()) {
         com.google.protobuf.GeneratedMessageV3.writeString(output, 2, msgId_);
       }
+      if (!getUserIdBytes().isEmpty()) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 3, userId_);
+      }
       if (statusReport_ != 0) {
-        output.writeInt32(3, statusReport_);
+        output.writeInt32(4, statusReport_);
       }
       unknownFields.writeTo(output);
     }
@@ -5102,9 +5120,12 @@ public final class PackProtobuf {
       if (!getMsgIdBytes().isEmpty()) {
         size += com.google.protobuf.GeneratedMessageV3.computeStringSize(2, msgId_);
       }
+      if (!getUserIdBytes().isEmpty()) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(3, userId_);
+      }
       if (statusReport_ != 0) {
         size += com.google.protobuf.CodedOutputStream
-          .computeInt32Size(3, statusReport_);
+          .computeInt32Size(4, statusReport_);
       }
       size += unknownFields.getSerializedSize();
       memoizedSize = size;
@@ -5125,6 +5146,8 @@ public final class PackProtobuf {
           != other.getReplyType()) return false;
       if (!getMsgId()
           .equals(other.getMsgId())) return false;
+      if (!getUserId()
+          .equals(other.getUserId())) return false;
       if (getStatusReport()
           != other.getStatusReport()) return false;
       if (!unknownFields.equals(other.unknownFields)) return false;
@@ -5142,6 +5165,8 @@ public final class PackProtobuf {
       hash = (53 * hash) + getReplyType();
       hash = (37 * hash) + MSGID_FIELD_NUMBER;
       hash = (53 * hash) + getMsgId().hashCode();
+      hash = (37 * hash) + USERID_FIELD_NUMBER;
+      hash = (53 * hash) + getUserId().hashCode();
       hash = (37 * hash) + STATUSREPORT_FIELD_NUMBER;
       hash = (53 * hash) + getStatusReport();
       hash = (29 * hash) + unknownFields.hashCode();
@@ -5240,6 +5265,10 @@ public final class PackProtobuf {
       return builder;
     }
     /**
+     * <pre>
+     *通用回复
+     * </pre>
+     *
      * Protobuf type {@code Reply}
      */
     public static final class Builder extends
@@ -5281,6 +5310,8 @@ public final class PackProtobuf {
 
         msgId_ = "";
 
+        userId_ = "";
+
         statusReport_ = 0;
 
         return this;
@@ -5311,6 +5342,7 @@ public final class PackProtobuf {
         Reply result = new Reply(this);
         result.replyType_ = replyType_;
         result.msgId_ = msgId_;
+        result.userId_ = userId_;
         result.statusReport_ = statusReport_;
         onBuilt();
         return result;
@@ -5367,6 +5399,10 @@ public final class PackProtobuf {
           msgId_ = other.msgId_;
           onChanged();
         }
+        if (!other.getUserId().isEmpty()) {
+          userId_ = other.userId_;
+          onChanged();
+        }
         if (other.getStatusReport() != 0) {
           setStatusReport(other.getStatusReport());
         }
@@ -5401,6 +5437,10 @@ public final class PackProtobuf {
 
       private int replyType_ ;
       /**
+       * <pre>
+       *回复类型
+       * </pre>
+       *
        * <code>int32 replyType = 1;</code>
        * @return The replyType.
        */
@@ -5408,6 +5448,10 @@ public final class PackProtobuf {
         return replyType_;
       }
       /**
+       * <pre>
+       *回复类型
+       * </pre>
+       *
        * <code>int32 replyType = 1;</code>
        * @param value The replyType to set.
        * @return This builder for chaining.
@@ -5419,6 +5463,10 @@ public final class PackProtobuf {
         return this;
       }
       /**
+       * <pre>
+       *回复类型
+       * </pre>
+       *
        * <code>int32 replyType = 1;</code>
        * @return This builder for chaining.
        */
@@ -5505,16 +5553,100 @@ public final class PackProtobuf {
         return this;
       }
 
+      private Object userId_ = "";
+      /**
+       * <code>string userId = 3;</code>
+       * @return The userId.
+       */
+      public String getUserId() {
+        Object ref = userId_;
+        if (!(ref instanceof String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          String s = bs.toStringUtf8();
+          userId_ = s;
+          return s;
+        } else {
+          return (String) ref;
+        }
+      }
+      /**
+       * <code>string userId = 3;</code>
+       * @return The bytes for userId.
+       */
+      public com.google.protobuf.ByteString
+          getUserIdBytes() {
+        Object ref = userId_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (String) ref);
+          userId_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string userId = 3;</code>
+       * @param value The userId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setUserId(
+          String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  
+        userId_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string userId = 3;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearUserId() {
+        
+        userId_ = getDefaultInstance().getUserId();
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string userId = 3;</code>
+       * @param value The bytes for userId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setUserIdBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  checkByteStringIsUtf8(value);
+        
+        userId_ = value;
+        onChanged();
+        return this;
+      }
+
       private int statusReport_ ;
       /**
-       * <code>int32 statusReport = 3;</code>
+       * <pre>
+       *状态
+       * </pre>
+       *
+       * <code>int32 statusReport = 4;</code>
        * @return The statusReport.
        */
       public int getStatusReport() {
         return statusReport_;
       }
       /**
-       * <code>int32 statusReport = 3;</code>
+       * <pre>
+       *状态
+       * </pre>
+       *
+       * <code>int32 statusReport = 4;</code>
        * @param value The statusReport to set.
        * @return This builder for chaining.
        */
@@ -5525,7 +5657,11 @@ public final class PackProtobuf {
         return this;
       }
       /**
-       * <code>int32 statusReport = 3;</code>
+       * <pre>
+       *状态
+       * </pre>
+       *
+       * <code>int32 statusReport = 4;</code>
        * @return This builder for chaining.
        */
       public Builder clearStatusReport() {
@@ -5604,6 +5740,10 @@ public final class PackProtobuf {
         getUserIdBytes();
   }
   /**
+   * <pre>
+   *心跳
+   * </pre>
+   *
    * Protobuf type {@code Heart}
    */
   public  static final class Heart extends
@@ -5878,6 +6018,10 @@ public final class PackProtobuf {
       return builder;
     }
     /**
+     * <pre>
+     *心跳
+     * </pre>
+     *
      * Protobuf type {@code Heart}
      */
     public static final class Builder extends
@@ -6197,17 +6341,17 @@ public final class PackProtobuf {
       "reply\030\003 \001(\0132\006.ReplyH\000\022\027\n\005heart\030\004 \001(\0132\006.H" +
       "eartH\000\022!\n\nshakeHands\030\005 \001(\0132\013.ShakeHandsH" +
       "\000\"9\n\010PackType\022\007\n\003MSG\020\000\022\t\n\005REPLY\020\001\022\t\n\005HEA" +
-      "RT\020\002\022\016\n\nSHAKEHANDS\020\003B\006\n\004body\"P\n\nShakeHan" +
+      "RT\020\002\022\016\n\nSHAKEHANDS\020\003B\006\n\004body\":\n\nShakeHan" +
       "ds\022\r\n\005msgId\030\001 \001(\t\022\016\n\006userId\030\002 \001(\t\022\r\n\005tok" +
-      "en\030\003 \001(\t\022\024\n\014statusReport\030\004 \001(\005\"(\n\003Msg\022\023\n" +
-      "\004head\030\001 \001(\0132\005.Head\022\014\n\004body\030\002 \001(\t\"\215\001\n\004Hea" +
-      "d\022\r\n\005msgId\030\001 \001(\t\022\017\n\007msgType\030\002 \001(\005\022\026\n\016msg" +
-      "ContentType\030\003 \001(\005\022\016\n\006fromId\030\004 \001(\t\022\014\n\004toI" +
-      "d\030\005 \001(\t\022\021\n\ttimestamp\030\006 \001(\003\022\016\n\006extend\030\007 \001" +
-      "(\t\022\014\n\004auth\030\010 \001(\t\"?\n\005Reply\022\021\n\treplyType\030\001" +
-      " \001(\005\022\r\n\005msgId\030\002 \001(\t\022\024\n\014statusReport\030\003 \001(" +
-      "\005\"\027\n\005Heart\022\016\n\006userId\030\001 \001(\tB*\n\032com.takiku" +
-      ".im_lib.protobufB\014PackProtobufb\006proto3"
+      "en\030\003 \001(\t\"(\n\003Msg\022\023\n\004head\030\001 \001(\0132\005.Head\022\014\n\004" +
+      "body\030\002 \001(\t\"\215\001\n\004Head\022\r\n\005msgId\030\001 \001(\t\022\017\n\007ms" +
+      "gType\030\002 \001(\005\022\026\n\016msgContentType\030\003 \001(\005\022\016\n\006f" +
+      "romId\030\004 \001(\t\022\014\n\004toId\030\005 \001(\t\022\021\n\ttimestamp\030\006" +
+      " \001(\003\022\016\n\006extend\030\007 \001(\t\022\014\n\004auth\030\010 \001(\t\"O\n\005Re" +
+      "ply\022\021\n\treplyType\030\001 \001(\005\022\r\n\005msgId\030\002 \001(\t\022\016\n" +
+      "\006userId\030\003 \001(\t\022\024\n\014statusReport\030\004 \001(\005\"\027\n\005H" +
+      "eart\022\016\n\006userId\030\001 \001(\tB*\n\032com.takiku.im_li" +
+      "b.protobufB\014PackProtobufb\006proto3"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
@@ -6224,7 +6368,7 @@ public final class PackProtobuf {
     internal_static_ShakeHands_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_ShakeHands_descriptor,
-        new String[] { "MsgId", "UserId", "Token", "StatusReport", });
+        new String[] { "MsgId", "UserId", "Token", });
     internal_static_Msg_descriptor =
       getDescriptor().getMessageTypes().get(2);
     internal_static_Msg_fieldAccessorTable = new
@@ -6242,7 +6386,7 @@ public final class PackProtobuf {
     internal_static_Reply_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_Reply_descriptor,
-        new String[] { "ReplyType", "MsgId", "StatusReport", });
+        new String[] { "ReplyType", "MsgId", "UserId", "StatusReport", });
     internal_static_Heart_descriptor =
       getDescriptor().getMessageTypes().get(5);
     internal_static_Heart_fieldAccessorTable = new

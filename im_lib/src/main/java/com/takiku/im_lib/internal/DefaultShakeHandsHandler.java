@@ -5,11 +5,13 @@ import com.takiku.im_lib.protobuf.PackProtobuf;
 
 public class DefaultShakeHandsHandler implements ShakeHandsHandler {
 
-
+   public static final int SHAKE_HANDS_REPLY_TYPE=0x12;
+    public static final int SHAKE_HANDS_STATUS_SUCCESS=1;
+    public static final int SHAKE_HANDS_STATUS_FAILED=0;
     @Override
     public boolean isShakeHandsOk(Object msg)  {
         PackProtobuf.Pack pack= (PackProtobuf.Pack) msg;
-        if (pack.getShakeHands().getStatusReport()==1&&pack.getShakeHands().getUserId().equals("your userId")){
+        if (pack.getReply().getStatusReport()== SHAKE_HANDS_STATUS_SUCCESS ){
                  return true;
         }else {
                return false;
@@ -19,6 +21,6 @@ public class DefaultShakeHandsHandler implements ShakeHandsHandler {
     @Override
     public boolean isShakeHands(Object msg) {
         PackProtobuf.Pack pack= (PackProtobuf.Pack) msg;
-        return pack.getPackType()==PackProtobuf.Pack.PackType.SHAKEHANDS;
+        return pack.getPackType()==PackProtobuf.Pack.PackType.REPLY&&pack.getReply().getReplyType()==SHAKE_HANDS_REPLY_TYPE;
     }
 }

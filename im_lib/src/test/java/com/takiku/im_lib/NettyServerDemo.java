@@ -5,6 +5,7 @@ import com.takiku.im_lib.protobuf.PackProtobuf;
 
 import org.junit.Test;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -25,22 +26,33 @@ import io.netty.handler.codec.LengthFieldPrepender;
 import io.netty.handler.codec.protobuf.ProtobufDecoder;
 import io.netty.handler.codec.protobuf.ProtobufEncoder;
 
-import static com.takiku.im_lib.entity.AppMessage.MSG_REPLY_TYPE;
-import static com.takiku.im_lib.entity.AppMessage.MSG_SENDED;
-import static com.takiku.im_lib.entity.ShakeHandsMessage.AUTH_FAILED;
-import static com.takiku.im_lib.entity.ShakeHandsMessage.AUTH_SUCCESS;
+import static com.takiku.im_lib.NettyServerDemo.HEART_REPLY_TYPE;
+import static com.takiku.im_lib.NettyServerDemo.MSG_REPLY_TYPE;
+import static com.takiku.im_lib.NettyServerDemo.SHAKE_HANDS_REPLY_TYPE;
+import static com.takiku.im_lib.NettyServerDemo.SHAKE_HANDS_STATUS_FAILED;
+import static com.takiku.im_lib.NettyServerDemo.SHAKE_HANDS_STATUS_SUCCESS;
+import static com.takiku.im_lib.NettyServerDemo.userMap;
 
 /**
  * IMCient 服务端demo
  */
 public class NettyServerDemo {
 
+    public static final int MSG_REPLY_TYPE=0x10;
+    public static final int HEART_REPLY_TYPE=0x11;
+    public static final int SHAKE_HANDS_REPLY_TYPE=0x12;
 
+    public static final int SHAKE_HANDS_STATUS_SUCCESS=1;
+    public static final int SHAKE_HANDS_STATUS_FAILED=0;
+    public static final int MSG_STATUS_SEND=1;
+    public static final int MSG_STATUS_READ=2;
 
-
+    public static Map<String,String>  userMap=new HashMap<>();
 
     @Test
     public  void Server() {
+
+        initUserDb();
 
         //boss线程监听端口，worker线程负责数据读写
         EventLoopGroup boss = new NioEventLoopGroup();
@@ -94,6 +106,11 @@ public class NettyServerDemo {
             worker.shutdownGracefully();
         }
     }
+
+    private void initUserDb() {
+        userMap.put("user id1","token1");
+        userMap.put("user id2","token2");
+    }
 }
 
 class ServerHandler extends ChannelInboundHandlerAdapter {
@@ -129,7 +146,6 @@ class ServerHandler extends ChannelInboundHandlerAdapter {
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         PackProtobuf.Pack pack = (PackProtobuf.Pack) msg;
-        PackProtobuf.Pack replyPack=null;
         switch (pack.getPackType()){
             case SHAKEHANDS:
                 PackProtobuf.ShakeHands shakeHands=pack.getShakeHands();
@@ -137,55 +153,66 @@ class ServerHandler extends ChannelInboundHandlerAdapter {
                 String token=shakeHands.getToken();
                 String msgId=shakeHands.getMsgId();
                 System.out.println("收到连接认证消息，该用户的id: "+userId+" 该用户的token: "+token );
-                if (token.equals("your token")&&userId.equals("your userId")){ //连接认证成功
 
-                    replyPack= PackProtobuf.Pack.newBuilder()
-                            .setPackType(PackProtobuf.Pack.PackType.SHAKEHANDS)
-                            .setShakeHands(shakeHands.toBuilder().setStatusReport(AUTH_SUCCESS))
-                            .build();
+                if (userMap.containsKey(userId)&&token.equals(userMap.get(userId))){ //连接认证成功
+                    ctx.channel().writeAndFlush(createShakeHandsResp(msgId,userId,SHAKE_HANDS_STATUS_SUCCESS));
                     ChannelContainer.getInstance().saveChannel(new NettyChannel(userId, ctx.channel()));
                 }else {
-                    replyPack= PackProtobuf.Pack.newBuilder()
-                            .setPackType(PackProtobuf.Pack.PackType.SHAKEHANDS)
-                            .setShakeHands(shakeHands.toBuilder().setStatusReport(AUTH_FAILED))
-                            .build();
-                    ctx.channel().writeAndFlush(replyPack);
+                    ctx.channel().writeAndFlush(createShakeHandsResp(msgId,userId,SHAKE_HANDS_STATUS_FAILED));
                     ChannelContainer.getInstance().removeChannelIfConnectNoActive(ctx.channel());
-
                     return;
-                }
-                if (replyPack!=null){
-                    ChannelContainer.getInstance().getActiveChannelByUserId(userId).getChannel().writeAndFlush(replyPack);
                 }
                 break;
             case HEART:
                 PackProtobuf.Heart heart=pack.getHeart();
                 System.out.println("收到客户端心跳消息,该用户id："+heart.getUserId());
+                ChannelContainer.getInstance().getActiveChannelByUserId(heart.getUserId()).getChannel().writeAndFlush(createHeartResp(heart.getUserId()));
                 break;
             case MSG:
                 PackProtobuf.Msg message=pack.getMsg();
                 System.out.println("收到发送方客户端发送过来的消息:"+message.toString());
-                PackProtobuf.Reply reply=PackProtobuf.Reply.newBuilder().setReplyType(MSG_REPLY_TYPE)
-                        .setMsgId(message.getHead().getMsgId())
-                        .setStatusReport(MSG_SENDED) //已发送状态回执
-                        .build();
-                replyPack=PackProtobuf.Pack.newBuilder()
-                        .setPackType(PackProtobuf.Pack.PackType.REPLY)
-                        .setReply(reply).build();
+                ChannelContainer.getInstance().getActiveChannelByUserId(message.getHead().getFromId()).getChannel() //回给发送端消息已经发送
+                        .writeAndFlush(createMsgReply(message.getHead().getFromId(),message.getHead().getMsgId(),MSG_REPLY_TYPE, NettyServerDemo.MSG_STATUS_SEND));
+                ChannelContainer.getInstance().getActiveChannelByUserId(message.getHead().getToId()).getChannel() //转发给接受端
+                        .writeAndFlush(pack);
 
-                ChannelContainer.getInstance().getActiveChannelByUserId(message.getHead().getFromId()).getChannel().writeAndFlush(replyPack);//回给发送端消息已经发送
-
-                mockOtherClientSendMsg();//模拟其他用户给他发消息
-                //TODO 如果接受方在线 转发给接受方
                 break;
             case REPLY:
                 PackProtobuf.Reply receiveReply=pack.getReply();
                 System.out.println("收到接受方客户端响应的状态:"+receiveReply.toString());
-                //TODO 此时可以转告该消息的发送方该消息的状态，是被送达了，还是被阅读了等
+                switch (receiveReply.getReplyType()){
+                    case MSG_REPLY_TYPE://消息状态回复，转发给发送方是被送达了，还是被阅读了等
+                        System.out.println("转发消息状态给发送方"+receiveReply.getUserId());
+                        ChannelContainer.getInstance().getActiveChannelByUserId(receiveReply.getUserId()).getChannel().writeAndFlush(pack);
+                        break;
+
+                }
+
                 break;
 
         }
     }
+
+    private PackProtobuf.Pack createHeartResp(String userId){
+        PackProtobuf.Pack pack=    PackProtobuf.Pack.newBuilder().setPackType(PackProtobuf.Pack.PackType.REPLY)
+                .setReply(PackProtobuf.Reply.newBuilder().setReplyType(HEART_REPLY_TYPE).setUserId(userId).build())
+                .build();
+                return pack;
+    }
+    private PackProtobuf.Pack createShakeHandsResp(String msgId,String userId,int status){
+       return PackProtobuf.Pack.newBuilder()
+                .setPackType(PackProtobuf.Pack.PackType.REPLY)
+                .setReply(PackProtobuf.Reply.newBuilder()
+                        .setReplyType(SHAKE_HANDS_REPLY_TYPE).setMsgId(msgId).setUserId(userId).setStatusReport(status).build())
+                .build();
+    }
+    private PackProtobuf.Pack createMsgReply(String userId,String msgId,int replyType,int status){
+        return PackProtobuf.Pack.newBuilder()
+                .setPackType(PackProtobuf.Pack.PackType.REPLY)
+                .setReply( PackProtobuf.Reply.newBuilder().setUserId(userId).setReplyType(replyType).setMsgId(msgId).setStatusReport(status).build())
+                .build();
+    }
+
 
     /**
      * 模拟其他用户发消息
@@ -202,6 +229,7 @@ class ServerHandler extends ChannelInboundHandlerAdapter {
 
         ChannelContainer.getInstance().getActiveChannelByUserId(mockOtherClientMsg.getHead().getToId()).getChannel().writeAndFlush(otherMsgPack);
     }
+
 
     public static class ChannelContainer {
 

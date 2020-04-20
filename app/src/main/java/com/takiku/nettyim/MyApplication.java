@@ -12,14 +12,12 @@ import com.takiku.im_lib.protobuf.PackProtobuf;
 
 public class MyApplication extends Application {
 
-    public static IMClient imClient;
+
     @Override
     protected void attachBaseContext(Context base) {
         super.attachBaseContext(base);
-        initIMClient();
+
     }
 
-    private void initIMClient() {
-        CommonIMClient.getInstance().startConnect();
-    }
+
 }

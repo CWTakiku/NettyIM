@@ -75,15 +75,16 @@ public class RealCall implements Call {
              Response response = getResponseWithInterceptorChain();
              if (retryAndFollowUpInterceptor.isCanceled()){
                  signalledCallback = true;
+
                  responseCallback.onFailure(RealCall.this, new IOException("Canceled"));
              }else {
                  signalledCallback = true;
+
                  responseCallback.onResponse(RealCall.this, response);
              }
          }catch ( InterruptedException e){
 
          }catch (IOException e){
-
              if (signalledCallback) {
                  // Do not signal the callback twice!
                  // Platform.get().log(INFO, "Callback failure for " + toLoggableString(), e);

@@ -18,7 +18,7 @@ public abstract class Internal {
                                      StreamAllocation streamAllocation);
 
   public abstract void deduplicate(
-          ConnectionPool pool, StreamAllocation streamAllocation);
+          ConnectionPool pool);
 
   public abstract void put(ConnectionPool pool, RealConnection connection);
 

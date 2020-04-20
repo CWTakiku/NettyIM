@@ -3,10 +3,9 @@ package com.takiku.im_lib.internal.connection;
 import com.takiku.im_lib.codec.Codec;
 import com.takiku.im_lib.client.IMClient;
 import com.takiku.im_lib.dispatcher.Connection;
-import com.takiku.im_lib.dispatcher.Handshake;
 import com.takiku.im_lib.exception.AuthException;
 import com.takiku.im_lib.internal.handler.HeartbeatChannelHandler;
-import com.takiku.im_lib.internal.handler.InternalChannelHandler;
+import com.takiku.im_lib.internal.handler.HeartbeatRespHandler;
 import com.takiku.im_lib.internal.handler.HeartbeatRespChannelHandler;
 import com.takiku.im_lib.internal.handler.LoginAuthChannelHandler;
 import com.takiku.im_lib.internal.handler.MessageReceiveChannelHandler;
@@ -16,7 +15,6 @@ import com.takiku.im_lib.internal.handler.MessageRespChannelHandler;
 import com.takiku.im_lib.internal.handler.ShakeHandsHandler;
 import com.takiku.im_lib.internal.handler.StatusChannelHandler;
 import com.takiku.im_lib.listener.EventListener;
-import com.takiku.im_lib.protobuf.PackProtobuf;
 import com.takiku.im_lib.util.LRUMap;
 
 import java.net.InetSocketAddress;
@@ -51,8 +49,6 @@ public class RealConnection  implements Connection {
     private InetSocketAddress inetSocketAddress;
     private LinkedHashMap<String, ChannelHandler> handlers;
     private EventListener eventListener;
-    private com.google.protobuf.GeneratedMessageV3 shakeHandsMsg;
-    private ShakeHandsHandler shakeHandsHandler;
 
     public RealConnection(ConnectionPool connectionPool, InetSocketAddress inetSocketAddress, EventListener eventListener){
         this.inetSocketAddress=inetSocketAddress;
@@ -69,6 +65,7 @@ public class RealConnection  implements Connection {
     }
     public void release(){
         if (channel!=null){
+            removeHandler(StatusChannelHandler.class.getSimpleName(),channel);
             removeHandler(LoginAuthChannelHandler.class.getSimpleName(),channel);
             removeHandler(HeartbeatChannelHandler.class.getSimpleName(),channel);
             removeHandler(MessageReceiveChannelHandler.class.getSimpleName(),channel);
@@ -88,6 +85,7 @@ public class RealConnection  implements Connection {
         }
         connectionPool.destroyWorkLoopGroup();
         bootstrap=null;
+        eventListener.connectionReleased(this);
     }
     /**
      * 移除指定handler
@@ -108,7 +106,7 @@ public class RealConnection  implements Connection {
     }
 
     public void ChannelInitializerHandler(final Codec codec, final com.google.protobuf.GeneratedMessageV3 shakeHandsMsg, final com.google.protobuf.GeneratedMessageV3 heartBeatMsg,
-                                          final ShakeHandsHandler shakeHandsHandler, final InternalChannelHandler heartInternalChannelHandler,
+                                          final ShakeHandsHandler shakeHandsHandler, final HeartbeatRespHandler heartbeatRespHandler,
                                           final MessageRespHandler messageRespHandler,
                                           final MessageReceiveHandler messageReceiveHandler,
                                           final LinkedHashMap<String, ChannelHandler> handlers,
@@ -155,7 +153,7 @@ public class RealConnection  implements Connection {
                     }
                 }));
 
-                pipeline.addLast(HeartbeatRespChannelHandler.class.getSimpleName(),new HeartbeatRespChannelHandler(heartInternalChannelHandler));
+                pipeline.addLast(HeartbeatRespChannelHandler.class.getSimpleName(),new HeartbeatRespChannelHandler(heartbeatRespHandler));
 
                 pipeline.addLast(MessageReceiveChannelHandler.class.getSimpleName(),new MessageReceiveChannelHandler(messageReceiveHandler));
 
@@ -181,7 +179,6 @@ public class RealConnection  implements Connection {
         if (channel == null || channel.pipeline() == null) {
             return;
         }
-       System.out.println("addHeartbeatHandler");
         try {
             // 之前存在的读写超时handler，先移除掉，再重新添加
             if (channel.pipeline().get(IdleStateHandler.class.getSimpleName()) != null) {
@@ -196,7 +193,7 @@ public class RealConnection  implements Connection {
                 channel.pipeline().remove(HeartbeatChannelHandler.class.getSimpleName());
             }
             if (channel.pipeline().get(IdleStateHandler.class.getSimpleName()) != null) {
-                channel.pipeline().addLast( HeartbeatChannelHandler.class.getSimpleName(),
+                channel.pipeline().addLast(HeartbeatChannelHandler.class.getSimpleName(),
                         new HeartbeatChannelHandler(connectionPool,heartBeatMsg,connectionBrokenListener));
             }
         } catch (Exception e) {
@@ -209,6 +206,11 @@ public class RealConnection  implements Connection {
     @Override
     public Channel channel() {
         return channel;
+    }
+
+    @Override
+    public InetSocketAddress InetSocketAddress() {
+        return inetSocketAddress;
     }
 
 
@@ -224,17 +226,6 @@ public class RealConnection  implements Connection {
           }
           int port=inetSocketAddress.getPort();
          channel=  bootstrap.connect(ip,port).sync().channel();
-
-
-//        channelFuture.addListener(new GenericFutureListener<Future<? super Void>>() {
-//            @Override
-//            public void operationComplete(Future<? super Void> future) throws Exception {
-//                if (!future.isSuccess()){
-//
-//                }
-//            }
-//        });
-//        channel=channelFuture.channel();
     }
     public boolean isHealth(){
       if (channel!=null&&channel.isActive()){
@@ -250,10 +241,7 @@ public class RealConnection  implements Connection {
         return tcpStream;
     }
 
-    @Override
-    public Handshake handshake() {
-        return null;
-    }
+
 
     public synchronized static    LRUMap<String,Object> lruMap(){
         return lruMap;
