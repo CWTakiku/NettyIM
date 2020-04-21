@@ -78,7 +78,6 @@ public class RetryAndFollowUpInterceptor implements Interceptor {
                     streamAllocation.release();
                 }
             }
-
             if (isOk(response)){ //拿到正确response直接返回
                 return response;
             }

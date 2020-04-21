@@ -31,9 +31,8 @@ public class HeartbeatChannelHandler extends ChannelInboundHandlerAdapter {
                     connectionBrokenListener.connectionBroken();
                     break;
                 }
-
                 case WRITER_IDLE: {
-                    // 规定时间内没向服务端发送心跳包，即发送一个心跳包
+                    // 规定时间内没向服务端发送心跳包,则马上发送一个心跳包
                     if (heartbeatTask == null) {
                         heartbeatTask = new HeartbeatTask(ctx);
                     }

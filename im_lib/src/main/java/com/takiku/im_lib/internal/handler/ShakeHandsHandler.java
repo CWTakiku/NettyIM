@@ -1,6 +1,8 @@
 package com.takiku.im_lib.internal.handler;
 
-public interface ShakeHandsHandler  {
+import com.google.protobuf.GeneratedMessageV3;
+
+public interface ShakeHandsHandler<T extends GeneratedMessageV3>  {
 
     /**
      * 是否是握手包
@@ -11,10 +13,10 @@ public interface ShakeHandsHandler  {
 
     /**
      * 握手认证是否成功
-     * @param msg
+     * @param pack
      * @return
      */
-    boolean isShakeHandsOk(Object msg) ;
+    boolean isShakeHandsOk(T pack) ;
 
 
 }

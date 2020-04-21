@@ -39,7 +39,7 @@ message Head {
     string extend = 7;// 扩展字段，以key/value形式存放的json
     string auth=8;
 }
-message Reply{ //通用回复
+message Reply{ //消息回执
   int32 replyType=1;//回复类型
   string msgId=2;
   string userId=3;

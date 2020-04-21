@@ -178,12 +178,12 @@ class ServerHandler extends ChannelInboundHandlerAdapter {
             case MSG:
                 PackProtobuf.Msg message=pack.getMsg();
                 System.out.println("收到发送方客户端发送过来的消息:"+message.toString());
-                ChannelContainer.getInstance().getChannelByUserId(message.getHead().getFromId())//回给发送端消息已经发送
+                ChannelContainer.getInstance().getChannelByUserId(message.getHead().getFromId())//回给发送端消息回执已经发送
                         .writeAndFlush(createMsgReply(message.getHead().getFromId(),message.getHead().getMsgId(),MSG_REPLY_TYPE, NettyServerDemo.MSG_STATUS_SEND));
-                if (ChannelContainer.getInstance().isOnline(message.getHead().getToId())){
+                if (ChannelContainer.getInstance().isOnline(message.getHead().getToId())){ //如果接受发在线
                     ChannelContainer.getInstance().getChannelByUserId(message.getHead().getToId()) //转发给接受端
                             .writeAndFlush(pack);
-                }else { //对方离线，缓存起来，等用户上线立马发送
+                }else { //如果对方离线，缓存起来，等用户上线立马发送
                     putOffLienMessage(message.getHead().getToId(),pack);
                 }
 

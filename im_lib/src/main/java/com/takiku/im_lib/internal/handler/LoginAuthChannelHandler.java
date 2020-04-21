@@ -1,5 +1,6 @@
 package com.takiku.im_lib.internal.handler;
 
+import com.google.protobuf.GeneratedMessageV3;
 import com.takiku.im_lib.entity.base.AbstractPack;
 import com.takiku.im_lib.exception.AuthError;
 import com.takiku.im_lib.exception.AuthException;
@@ -32,7 +33,7 @@ public class LoginAuthChannelHandler extends ChannelInboundHandlerAdapter  {
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws AuthException {
         if (shakeHandsHandler!=null){
             if (shakeHandsHandler.isShakeHands(msg)){
-                if (shakeHandsHandler.isShakeHandsOk(msg)){
+                if (shakeHandsHandler.isShakeHandsOk((GeneratedMessageV3) msg)){
                     shakeHandsListener.shakeHandsSuccess(true);
                 }else {
                     shakeHandsListener.shakeHandsSuccess(false);

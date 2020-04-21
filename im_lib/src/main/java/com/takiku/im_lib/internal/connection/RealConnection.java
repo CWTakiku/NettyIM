@@ -195,7 +195,7 @@ public class RealConnection  implements Connection {
             if (channel.pipeline().get(IdleStateHandler.class.getSimpleName()) != null) {
                 channel.pipeline().remove(IdleStateHandler.class.getSimpleName());
             }
-            // 3次心跳没响应，代表连接已断开
+            // 3次心跳时间内没得到服务端响应，即可代表连接已断开
             channel.pipeline().addFirst(IdleStateHandler.class.getSimpleName(), new IdleStateHandler(
                     heartbeatInterval * 3, heartbeatInterval, 0, TimeUnit.MILLISECONDS));
 
