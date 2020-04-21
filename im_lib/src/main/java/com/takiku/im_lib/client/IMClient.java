@@ -276,13 +276,13 @@ public class IMClient {
             return this;
         }
 
-        public Builder setHeartIntervalForeground(int heartIntervalForeground) {
-            this.heartIntervalForeground = heartIntervalForeground;
+        public Builder setHeartIntervalForeground(int interval, TimeUnit unit) {
+            this.heartIntervalForeground = checkDuration("interval", interval, unit);
             return this;
         }
 
-        public Builder setHeartIntervalBackground(int heartIntervalBackground) {
-            this.heartIntervalBackground = heartIntervalBackground;
+        public Builder setHeartIntervalBackground(long interval, TimeUnit unit) {
+            this.heartIntervalBackground = checkDuration("interval", interval, unit);
             return this;
         }
 

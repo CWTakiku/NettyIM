@@ -18,6 +18,7 @@ import com.takiku.im_lib.listener.DefaultEventListener;
 import com.takiku.im_lib.protobuf.PackProtobuf;
 
 import java.io.IOException;
+import java.util.concurrent.TimeUnit;
 
 /**
  * author:chengwl
@@ -51,6 +52,11 @@ public class IMClientDemo {
                 .setCodec(new DefaultCodec()) //默认的编解码，开发者可以使用自己的protobuf编解码
                 .setShakeHands(getDefaultHands(),new DefaultShakeHandsHandler()) //设置握手认证，可选
                 .setHeartBeatMsg(getDefaultHeart()) //设置心跳,可选
+                .setConnectTimeout(10, TimeUnit.SECONDS)
+                .setResendCount(3)//设置失败重试数
+                .setConnectionRetryEnabled(true)//是否连接重试
+                .setSendTimeout(6,TimeUnit.SECONDS)//设置发送超时
+                .setHeartIntervalBackground(30,TimeUnit.SECONDS)//后台心跳间隔
                 .setMessageRespHandler(new DefaultMessageRespHandler()) //消息响应，开发者可自行定制实现MessageRespHandler接口即可
                 .setMessageReceiveHandler(new DefaultMessageReceiveHandler(onMessageArriveListener)) //客户端消息接收器
                 .setEventListener(new DefaultEventListener("user id1")) //事件监听，可选
