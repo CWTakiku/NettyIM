@@ -28,7 +28,7 @@ public class IMClientDemo2 {
                 .setHeartBeatMsg(getDefaultHeart()) //设置心跳,可选
                 .setMessageRespHandler(new DefaultMessageRespHandler()) //消息响应，开发者可自行定制实现MessageRespHandler接口即可
                 //   .setMessageReceiveHandler(new DefaultMessageReceiveHandler())
-              //  .setAddress(new Address("192.168.69.32",8765,Address.Type.SOCKS))
+                .setAddress(new Address("192.168.69.32",8765,Address.Type.SOCKS))
                 .setAddress(new Address("192.168.8.154",8765,Address.Type.SOCKS))
                 .setAddress(new Address("www.baidu.com",8765,Address.Type.HTTP))
                 .build();
@@ -40,8 +40,8 @@ public class IMClientDemo2 {
                 .setHeartBeatMsg(getDefaultHeart()) //设置心跳,可选
                 .setMessageRespHandler(new DefaultMessageRespHandler()) //消息响应，开发者可自行定制实现MessageRespHandler接口即可
                 .setMessageReceiveHandler(new DefaultMessageReceiveHandler(onMessageArriveListener))
-                .setEventListener(new DefaultEventListener())
-                //.setAddress(new Address("192.168.69.32",8765,Address.Type.SOCKS))
+                .setEventListener(new DefaultEventListener("user id2"))
+                .setAddress(new Address("192.168.69.32",8765,Address.Type.SOCKS))
                 .setAddress(new Address("192.168.8.154",8765,Address.Type.SOCKS))
                 .setAddress(new Address("www.baidu.com",8765,Address.Type.HTTP))
                 .build();

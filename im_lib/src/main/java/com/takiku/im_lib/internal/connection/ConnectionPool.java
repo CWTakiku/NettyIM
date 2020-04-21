@@ -15,8 +15,8 @@ public final class ConnectionPool {
 
 
 
-    private static volatile ExecutorService workPool ;// 工作线程组，负责心跳
-    private static  volatile   RealConnection realConnection;
+    private  volatile ExecutorService workPool ;// 工作线程组，负责心跳
+    private   volatile   RealConnection realConnection;
 
 
 
@@ -27,7 +27,7 @@ public final class ConnectionPool {
 
     public void deduplicate(){
         if (realConnection!=null){
-            realConnection.release();
+            realConnection.release(false);
             realConnection=null;
         }
     }

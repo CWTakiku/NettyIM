@@ -75,7 +75,7 @@ public class IMClient {
      EventListener.Factory eventListenerFactory;
      ConnectionPool connectionPool;
      Codec codec;
-     LinkedHashMap<String , ChannelHandler> customChannelHandlerLinkedHashMap;
+     LinkedHashMap<String , ChannelHandler> channelHandlerLinkedHashMap;
      com.google.protobuf.GeneratedMessageV3 loginAuthMsg;
      com.google.protobuf.GeneratedMessageV3 heartBeatMsg;
      ShakeHandsHandler shakeHandsHandler;
@@ -92,14 +92,13 @@ public class IMClient {
        this.resendCount=builder.resendCount;
        this.dispatcher=builder.dispatcher;
        this.connectTimeout=builder.connectTimeout;
-       this.resendInterval=builder.resendInterval;
        this.heartIntervalBackground=builder.heartIntervalBackground;
        this.heartIntervalForeground=builder.heartIntervalForeground;
        this.connectionPool=builder.connectionPool;
        this.eventListenerFactory=builder.eventListenerFactory;
        this.connectionRetryEnabled=builder.connectionRetryEnabled;
        this.codec=builder.codec;
-       this.customChannelHandlerLinkedHashMap=builder.customChannelHandlerLinkedHashMap;
+       this.channelHandlerLinkedHashMap=builder.channelHandlerLinkedHashMap;
        this.loginAuthMsg=builder.loginAuthMsg;
        this.heartBeatMsg=builder.heartBeatMsg;
        this.shakeHandsHandler=builder.shakeHandsHandler;
@@ -178,7 +177,7 @@ public class IMClient {
         }
     }
 
-    public  LinkedHashMap<String , ChannelHandler> customChannelHandlerLinkedHashMap(){ return customChannelHandlerLinkedHashMap; }
+    public  LinkedHashMap<String , ChannelHandler> customChannelHandlerLinkedHashMap(){ return channelHandlerLinkedHashMap; }
 
     public MessageRespHandler messageRespHandler(){
         return messageRespHandler;
@@ -201,8 +200,7 @@ public class IMClient {
      Dispatcher dispatcher;
      final List<Interceptor> interceptors = new ArrayList<>();
      int connectTimeout;//连接超时
-     int sendTimeout;//发送超时
-     int resendInterval;// 重发间隔
+     int sendTimeout;//发送超时,规定时间内需服务端响应
      int resendCount;//消息发送失败，重发次数
      boolean connectionRetryEnabled;//是否连接失败、连接重试
      int heartIntervalForeground;//前台心跳间隔
@@ -214,7 +212,7 @@ public class IMClient {
      Authenticator authenticator;
      List<Address> addressList;
      @Nullable Codec codec;
-     LinkedHashMap<String , ChannelHandler> customChannelHandlerLinkedHashMap;
+     LinkedHashMap<String , ChannelHandler> channelHandlerLinkedHashMap;
      com.google.protobuf.GeneratedMessageV3 loginAuthMsg;
      com.google.protobuf.GeneratedMessageV3 heartBeatMsg;
      ShakeHandsHandler shakeHandsHandler;
@@ -227,7 +225,6 @@ public class IMClient {
          heartIntervalForeground=3*1000;
          heartIntervalBackground=30*1000;
          isBackground=true;
-         resendInterval=0;
          resendCount=3;
          sendTimeout=5*1000;
          connectTimeout=10*1000;
@@ -274,12 +271,6 @@ public class IMClient {
             return this;
         }
 
-
-        public Builder setResendInterval(long interval, TimeUnit unit) {
-            this.resendInterval = checkDuration("interval", interval, unit);
-            return this;
-        }
-
         public Builder setResendCount(int resendCount) {
             this.resendCount = resendCount;
             return this;
@@ -298,6 +289,10 @@ public class IMClient {
         public Builder addInterceptor(Interceptor interceptor){
              interceptors.add(interceptor);
              return this;
+        }
+        public Builder addChannelHandler(String name,ChannelHandler channelHandler){
+            channelHandlerLinkedHashMap.put(name,channelHandler);
+            return this;
         }
 
         public Builder setConnectionRetryEnabled(boolean connectionRetryEnabled){

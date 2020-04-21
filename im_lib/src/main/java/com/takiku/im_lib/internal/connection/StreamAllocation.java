@@ -46,7 +46,7 @@ public class StreamAllocation {
     private void closeQuietly(RealConnection connection) {
         released=true;
         if (connection!=null){
-           connection.release();
+           connection.release(true);
            connection=null;
         }
     }
@@ -81,8 +81,13 @@ public class StreamAllocation {
                                 client.customChannelHandlerLinkedHashMap(), new RealConnection.connectionBrokenListener() {
                                     @Override
                                     public void connectionBroken() {
-                                        closeQuietly(connection);
-                                        client.startConnect();
+                                        if (connection.isReConnect()){
+                                            closeQuietly(connection);
+                                            client.startConnect();
+                                        }else {
+                                            closeQuietly(connection);
+                                        }
+
                                     }
                                 });
                         connection.connect(connectTimeout);

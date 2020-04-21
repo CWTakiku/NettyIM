@@ -37,6 +37,8 @@ public class MainActivity extends AppCompatActivity {
 
     private Button btn1;
     private Button btn2;
+    private Button btnLine1;
+    private Button btnLine2;
     private EditText editText1;
     private EditText editText2;
     private RecyclerView recyclerView1;
@@ -48,6 +50,8 @@ public class MainActivity extends AppCompatActivity {
 
     public static final String client1UserId="user id1";
     public static final String client2UserId="user id2";
+    private boolean client1Online=true;
+    private boolean client2Online=true;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -133,14 +137,46 @@ public class MainActivity extends AppCompatActivity {
                 });
             }
         });
+
+        btnLine1.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                client1Online=!client1Online;
+                if (client1Online){
+                    btnLine1.setText("下线");
+                    IMClientDemo.getInstance().startConnect();
+                }else {
+                    btnLine1.setText("上线");
+                    IMClientDemo.getInstance().disConnect();
+                }
+            }
+        });
+        btnLine2.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                client2Online=!client2Online;
+                if (client2Online){
+                    btnLine2.setText("下线");
+                    IMClientDemo2.getInstance().startConnect();
+                }else {
+                    btnLine2.setText("上线");
+                    IMClientDemo2.getInstance().disConnect();
+                }
+            }
+        });
     }
 
     //UI显示一条发送消息
     private void addClient1Message(AppMessage appMessage){
          messageAdapter1.addMessage(appMessage);
+         recyclerView1.scrollToPosition(messageAdapter1.getItemCount()-1);
+
+
     }
     private void addClient2Message(AppMessage appMessage){
         messageAdapter2.addMessage(appMessage);
+        recyclerView2.scrollToPosition(messageAdapter2.getItemCount()-1);
+
     }
 
     private void initAdapter() {
@@ -198,6 +234,8 @@ public class MainActivity extends AppCompatActivity {
         editText2=findViewById(R.id.et_content2);
         recyclerView1=findViewById(R.id.recycler1);
         recyclerView2=findViewById(R.id.recycler2);
+        btnLine1=findViewById(R.id.btn_line1);
+        btnLine2=findViewById(R.id.btn_line2);
     }
 
     /**

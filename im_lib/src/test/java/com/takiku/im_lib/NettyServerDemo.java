@@ -1,11 +1,14 @@
 package com.takiku.im_lib;
 
 
+import com.google.protobuf.GeneratedMessageV3;
 import com.takiku.im_lib.protobuf.PackProtobuf;
 
 import org.junit.Test;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -29,9 +32,13 @@ import io.netty.handler.codec.protobuf.ProtobufEncoder;
 import static com.takiku.im_lib.NettyServerDemo.HEART_REPLY_TYPE;
 import static com.takiku.im_lib.NettyServerDemo.MSG_REPLY_TYPE;
 import static com.takiku.im_lib.NettyServerDemo.SHAKE_HANDS_REPLY_TYPE;
+import static com.takiku.im_lib.NettyServerDemo.SHAKE_HANDS_REPLY_TYPE;
+import static com.takiku.im_lib.NettyServerDemo.SHAKE_HANDS_REPLY_TYPE;
 import static com.takiku.im_lib.NettyServerDemo.SHAKE_HANDS_STATUS_FAILED;
 import static com.takiku.im_lib.NettyServerDemo.SHAKE_HANDS_STATUS_SUCCESS;
+import static com.takiku.im_lib.NettyServerDemo.offLine;
 import static com.takiku.im_lib.NettyServerDemo.userMap;
+
 
 /**
  * IMCient 服务端demo
@@ -48,6 +55,7 @@ public class NettyServerDemo {
     public static final int MSG_STATUS_READ=2;
 
     public static Map<String,String>  userMap=new HashMap<>();
+    public static Map<String, List<PackProtobuf.Pack>> offLine=new HashMap<>();
 
     @Test
     public  void Server() {
@@ -126,9 +134,8 @@ class ServerHandler extends ChannelInboundHandlerAdapter {
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
         super.channelInactive(ctx);
-        System.out.println("ServerHandler channelInactive()");
-        // 用户断开连接后，移除channel
-        ChannelContainer.getInstance().removeChannelIfConnectNoActive(ctx.channel());
+      System.out.println("channelInactive");
+       ctx.channel().close();
     }
 
     @Override
@@ -156,28 +163,28 @@ class ServerHandler extends ChannelInboundHandlerAdapter {
 
                 if (userMap.containsKey(userId)&&token.equals(userMap.get(userId))){ //连接认证成功
                     ctx.channel().writeAndFlush(createShakeHandsResp(msgId,userId,SHAKE_HANDS_STATUS_SUCCESS));
-                    ChannelContainer.getInstance().saveChannel(new NettyChannel(userId, ctx.channel()));
+                    ChannelContainer.getInstance().saveChannel(userId,ctx.channel());
+                    sendOfflineMsg(userId);
                 }else {
                     ctx.channel().writeAndFlush(createShakeHandsResp(msgId,userId,SHAKE_HANDS_STATUS_FAILED));
-                    ChannelContainer.getInstance().removeChannelIfConnectNoActive(ctx.channel());
                     return;
                 }
                 break;
             case HEART:
                 PackProtobuf.Heart heart=pack.getHeart();
                 System.out.println("收到客户端心跳消息,该用户id："+heart.getUserId());
-                ChannelContainer.getInstance().getActiveChannelByUserId(heart.getUserId()).getChannel().writeAndFlush(createHeartResp(heart.getUserId()));
+                ChannelContainer.getInstance().getChannelByUserId(heart.getUserId()).writeAndFlush(createHeartResp(heart.getUserId()));
                 break;
             case MSG:
                 PackProtobuf.Msg message=pack.getMsg();
                 System.out.println("收到发送方客户端发送过来的消息:"+message.toString());
-                ChannelContainer.getInstance().getActiveChannelByUserId(message.getHead().getFromId()).getChannel() //回给发送端消息已经发送
+                ChannelContainer.getInstance().getChannelByUserId(message.getHead().getFromId())//回给发送端消息已经发送
                         .writeAndFlush(createMsgReply(message.getHead().getFromId(),message.getHead().getMsgId(),MSG_REPLY_TYPE, NettyServerDemo.MSG_STATUS_SEND));
                 if (ChannelContainer.getInstance().isOnline(message.getHead().getToId())){
-                    ChannelContainer.getInstance().getActiveChannelByUserId(message.getHead().getToId()).getChannel() //转发给接受端
+                    ChannelContainer.getInstance().getChannelByUserId(message.getHead().getToId()) //转发给接受端
                             .writeAndFlush(pack);
-                }else { //TODO 对方离线，缓存起来
-
+                }else { //对方离线，缓存起来，等用户上线立马发送
+                    putOffLienMessage(message.getHead().getToId(),pack);
                 }
 
 
@@ -189,16 +196,45 @@ class ServerHandler extends ChannelInboundHandlerAdapter {
                     case MSG_REPLY_TYPE://消息状态回复，转发给发送方是被送达了，还是被阅读了等
                         System.out.println("转发消息状态给发送方"+receiveReply.getUserId());
                         if (ChannelContainer.getInstance().isOnline(receiveReply.getUserId())) {
-                            ChannelContainer.getInstance().getActiveChannelByUserId(receiveReply.getUserId()).getChannel().writeAndFlush(pack);
-                        }else {//TODO 对方离线，缓存起来
+                            ChannelContainer.getInstance().getChannelByUserId(receiveReply.getUserId()).writeAndFlush(pack);
+                        }else {//对方离线,消息回执就不要转发了，等用户上线主动来获取消息状态
 
                         }
                         break;
 
                 }
-
                 break;
+        }
+    }
 
+    /**
+     * 发送离线后的消息
+     * @param userId
+     */
+    private void sendOfflineMsg(String userId) {
+        if (offLine.containsKey(userId)){
+            Channel channel=ChannelContainer.getInstance().getChannelByUserId(userId);
+            if (channel==null){
+                return;
+            }
+            List<PackProtobuf.Pack> list=offLine.get(userId);
+            List<PackProtobuf.Pack> removeList=new ArrayList<>();
+            for (PackProtobuf.Pack pack:list){
+                channel.writeAndFlush(pack);
+                removeList.add(pack);
+            }
+            list.removeAll(removeList);
+        }
+    }
+
+    private void putOffLienMessage(String userId, PackProtobuf.Pack pack){
+        if (offLine.containsKey(userId)){
+            List<PackProtobuf.Pack> list=offLine.get(userId);
+            list.add(pack);
+        }else {
+            List<PackProtobuf.Pack> list=new ArrayList<>();
+            list.add(pack);
+            offLine.put(userId,list);
         }
     }
 
@@ -236,7 +272,7 @@ class ServerHandler extends ChannelInboundHandlerAdapter {
                 .setMsg(mockOtherClientMsg)
                 .build();
 
-        ChannelContainer.getInstance().getActiveChannelByUserId(mockOtherClientMsg.getHead().getToId()).getChannel().writeAndFlush(otherMsgPack);
+        ChannelContainer.getInstance().getChannelByUserId(mockOtherClientMsg.getHead().getToId()).writeAndFlush(otherMsgPack);
     }
 
 
@@ -252,94 +288,48 @@ class ServerHandler extends ChannelInboundHandlerAdapter {
             return INSTANCE;
         }
 
-        private final Map<String, NettyChannel> channelMap = new ConcurrentHashMap<>();
+        private final Map<String, Channel> channelMap = new ConcurrentHashMap<>();
 
-        public void saveChannel(NettyChannel channel) {
-            if (channel == null) {
+        public void saveChannel(String userId, Channel channel) {
+            if (channel == null || !channel.isActive()) {
                 return;
             }
-            channelMap.put(channel.getChannelId(), channel);
+            channelMap.put(userId, channel);
         }
 
-        public NettyChannel removeChannelIfConnectNoActive(Channel channel) {
-            if (channel == null) {
+        public void removeChannel(String userId) {
+            if (channelMap.containsKey(userId)) {
+                channelMap.remove(userId);
+            }
+        }
+
+
+        public Channel getChannelByUserId(String userId) {
+            if (channelMap.containsKey(userId)) {
+                Channel channel = channelMap.get(userId);
+                if (channel != null && channel.isActive()) {
+                    return channel;
+                } else {
+                    channelMap.remove(userId);
+                    return null;
+                }
+            } else {
                 return null;
             }
-
-            String channelId = channel.id().toString();
-
-            return removeChannelIfConnectNoActive(channelId);
         }
 
-        public NettyChannel removeChannelIfConnectNoActive(String channelId) {
-            if (channelMap.containsKey(channelId) && !channelMap.get(channelId).isActive()) {
-                return channelMap.remove(channelId);
-            }
-
-            return null;
-        }
-
-        public String getUserIdByChannel(Channel channel) {
-            return getUserIdByChannel(channel.id().toString());
-        }
-
-        public String getUserIdByChannel(String channelId) {
-            if (channelMap.containsKey(channelId)) {
-                return channelMap.get(channelId).getUserId();
-            }
-
-            return null;
-        }
-        public boolean isOnline(String userId){
-            if (getActiveChannelByUserId(userId)!=null){
-                return true;
-            }else {
+        public boolean isOnline(String userId) {
+            if (channelMap.containsKey(userId)) {
+                Channel channel = channelMap.get(userId);
+                if (channel != null && channel.isActive()) {
+                    return true;
+                } else {
+                    channelMap.remove(userId);
+                    return false;
+                }
+            } else {
                 return false;
             }
-        }
-
-        public NettyChannel getActiveChannelByUserId(String userId) {
-            for (Map.Entry<String, NettyChannel> entry : channelMap.entrySet()) {
-                if (entry.getValue().getUserId().equals(userId) && entry.getValue().isActive()) {
-                    return entry.getValue();
-                }
-            }
-            return null;
-        }
-    }
-
-    public class NettyChannel {
-
-        private String userId;
-        private Channel channel;
-
-        public NettyChannel(String userId, Channel channel) {
-            this.userId = userId;
-            this.channel = channel;
-        }
-
-        public String getChannelId() {
-            return channel.id().toString();
-        }
-
-        public String getUserId() {
-            return userId;
-        }
-
-        public void setUserId(String userId) {
-            this.userId = userId;
-        }
-
-        public Channel getChannel() {
-            return channel;
-        }
-
-        public void setChannel(Channel channel) {
-            this.channel = channel;
-        }
-
-        public boolean isActive() {
-            return channel.isActive();
         }
     }
 }

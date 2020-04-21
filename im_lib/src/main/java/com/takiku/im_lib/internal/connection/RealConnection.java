@@ -46,7 +46,6 @@ public class RealConnection  implements Connection {
     private Channel channel;
     private final ConnectionPool connectionPool;
     private Bootstrap bootstrap;
-    private TcpStream tcpStream;
     private static volatile LRUMap<String,Object> lruMap;
     private com.google.protobuf.GeneratedMessageV3  heartBeatMsg;
     private int heartbeatInterval;
@@ -54,13 +53,14 @@ public class RealConnection  implements Connection {
     private InetSocketAddress inetSocketAddress;
     private LinkedHashMap<String, ChannelHandler> handlers;
     private EventListener eventListener;
-    private static volatile Map<String,OnResponseListener> onResponseListenerMap=new HashMap<>();
+    private volatile boolean reConnect;
+    private static volatile Map<String,OnResponseListener> onResponseListenerMap=new LRUMap<>(20);
 
     public RealConnection(ConnectionPool connectionPool, InetSocketAddress inetSocketAddress, EventListener eventListener){
         this.inetSocketAddress=inetSocketAddress;
         this.connectionPool=connectionPool;
         this.eventListener=eventListener;
-        lruMap=new LRUMap(10);
+        lruMap=new LRUMap(20);
         EventLoopGroup loopGroup = new NioEventLoopGroup(4);
         bootstrap = new Bootstrap();
         bootstrap.group(loopGroup).channel(NioSocketChannel.class);
@@ -68,8 +68,10 @@ public class RealConnection  implements Connection {
         bootstrap.option(ChannelOption.SO_KEEPALIVE, true);
         // 设置禁用nagle算法
         bootstrap.option(ChannelOption.TCP_NODELAY, true);
+        reConnect=true;
     }
-    public void release(){
+    public void release(boolean reConnect){
+        this.reConnect=reConnect;
         if (channel!=null){
             removeHandler(StatusChannelHandler.class.getSimpleName(),channel);
             removeHandler(LoginAuthChannelHandler.class.getSimpleName(),channel);
@@ -91,6 +93,9 @@ public class RealConnection  implements Connection {
         }
         connectionPool.destroyWorkLoopGroup();
         bootstrap=null;
+        eventListener.connectionReleased(this);
+        lruMap.clear();
+        onResponseListenerMap.clear();
         eventListener.connectionReleased(this);
     }
     /**
@@ -154,7 +159,7 @@ public class RealConnection  implements Connection {
                                 addHeartbeatHandler(connectionPool,heartBeatMsg,channel,connectionBrokenListener);
                             }
                         }else {
-                            release();
+                            release(false);
                         }
                     }
                 }));
@@ -274,6 +279,9 @@ public class RealConnection  implements Connection {
             onResponseListenerMap.put(tag,listener);
         }
 
+    }
+    public boolean isReConnect(){
+        return reConnect;
     }
 
    public   interface connectionBrokenListener{
