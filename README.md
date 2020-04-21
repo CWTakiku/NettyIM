@@ -2,6 +2,7 @@
 基于Netty+TCP+Protobuf+okhttp设计模式的SDK,让你拥有像Okhttp一样的使用体验，完全可定制化，内置断线重连，路由自动切换、消息重复、连接超时、读写超时、可定制化拦截器、消息回执(已读，撤回等)、可定制化protobuf等功能。
 
 ###使用方式
+```
     imClient=new IMClient.Builder()
                 .setCodec(new DefaultCodec()) //默认的编解码，开发者可以使用自己的protobuf编解码
                 .setShakeHands(getDefaultHands(),new DefaultShakeHandsHandler()) //设置握手认证，可选
@@ -17,6 +18,7 @@
                 .setAddress(new Address("192.168.69.32",8765,Address.Type.SOCKS)) //设置连接地址，可多地址
                 .setAddress(new Address("www.baidu.com",8765,Address.Type.HTTP))
                 .build();
+```
 ```
 imClient.startConnect();//建立连接
 ```
