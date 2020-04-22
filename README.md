@@ -12,6 +12,9 @@
                 .setConnectionRetryEnabled(true)//是否连接重试
                 .setSendTimeout(6,TimeUnit.SECONDS)//设置发送超时
                 .setHeartIntervalBackground(30,TimeUnit.SECONDS)//后台心跳间隔
+                .setHeartIntervalForeground(10,TimeUnit.SECONDS)//设置前台心跳间隔
+                //.addInterceptor()
+                //.addChannelHandler()
                 .setMessageRespHandler(new DefaultMessageRespHandler()) //消息响应接收器，开发者可自行定制实现MessageRespHandler接口即可
                 .setMessageReceiveHandler(new DefaultMessageReceiveHandler(onMessageArriveListener)) //客户端消息接收器
                 .setEventListener(new DefaultEventListener("user id1")) //事件监听，可选
@@ -31,7 +34,21 @@ imClient.disConnect();//主动断开连接，不会自动重连
 ```
  imClient.newCall(request).enqueue(callback);//发送消息，消息在子线程回调
 ```
+```
+ imClient.setBackground(background);//设置前后台切换，将会自动切换不同的心跳间隔
+```
+```
+  Request request=new Request.Builder(). //创建一个消息发送request
+              setRequestTag(appMessage.getHead().getMsgId()). //请求tag，对应回执tag
+              setNeedResponse(true).//需要消息回执
+              setSendRetry(true). //能发送重试
+              setBody(getMsgPack(appMessage.buildProto())). //body为protbuf
+              build();
+```
+
+
 ### 项目博客地址
 [简书](https://www.jianshu.com/p/5b01f4d6e4f4)
+
 如果使用过程遇到什么问题或者疑问都可以和我说,欢迎star!
 **联系方式**QQ916379012
