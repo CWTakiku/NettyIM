@@ -66,7 +66,7 @@ imClient.disConnect();//主动断开连接，不会自动重连
 可自行下载源码运行，先运行com.takiku.im_lib.NettyServerDemo类的服务端demo，再运行demo APP
 
 ### 四、项目博客地址
-[简书](https://www.jianshu.com/p/5b01f4d6e4f4)
+[简书](https://www.jianshu.com/p/5b01f4d6e4f4)  [CSDN](https://blog.csdn.net/smile__dream/article/details/105681018)
 
 如果使用过程遇到什么问题或者疑问都可以和我说,欢迎star!
 **联系方式**QQ916379012
