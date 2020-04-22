@@ -13,8 +13,8 @@
                 .setSendTimeout(6,TimeUnit.SECONDS)//设置发送超时
                 .setHeartIntervalBackground(30,TimeUnit.SECONDS)//后台心跳间隔
                 .setHeartIntervalForeground(10,TimeUnit.SECONDS)//设置前台心跳间隔
-                //.addInterceptor()
-                //.addChannelHandler()
+                //.addInterceptor() //添加你自己的拦截器
+                //.addChannelHandler() //添加你自己的channelHandler
                 .setMessageRespHandler(new DefaultMessageRespHandler()) //设置消息响应接收器，开发者可自行定制实现MessageRespHandler接口即可
                 .setMessageReceiveHandler(new DefaultMessageReceiveHandler(onMessageArriveListener)) //设置客户端消息接收器，开发者可自行定制实现接口即可
                 .setEventListener(new DefaultEventListener("user id1")) //事件监听，可选
