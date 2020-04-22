@@ -25,7 +25,7 @@ dependencies {
     <uses-permission android:name="android.permission.INTERNET" />
 ```
 ``` 
-//所以default都可以替换成开发者的实现，只要实现相应接口即可
+    //所以default都可以替换成开发者的实现，只要实现相应接口即可
     imClient=new IMClient.Builder()
                 .setCodec(new DefaultCodec()) //默认的编解码，开发者可以使用自己的protobuf编解码
                 .setShakeHands(getDefaultHands(),new DefaultShakeHandsHandler()) //设置握手认证，可选
