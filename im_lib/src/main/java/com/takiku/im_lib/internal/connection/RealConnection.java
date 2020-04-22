@@ -54,6 +54,7 @@ public class RealConnection  implements Connection {
     private LinkedHashMap<String, ChannelHandler> handlers;
     private EventListener eventListener;
     private volatile boolean reConnect;
+    private connectionBrokenListener connectionBrokenListener;
     private static volatile Map<String,OnResponseListener> onResponseListenerMap=new LRUMap<>(20);
 
     public RealConnection(ConnectionPool connectionPool, InetSocketAddress inetSocketAddress, EventListener eventListener){
@@ -121,11 +122,14 @@ public class RealConnection  implements Connection {
                                           final MessageRespHandler messageRespHandler,
                                           final MessageReceiveHandler messageReceiveHandler,
                                           final LinkedHashMap<String, ChannelHandler> handlers,
-                                          final connectionBrokenListener connectionBrokenListener) throws AuthException {
+                                          final int heartbeatInterval,
+                                          final connectionBrokenListener connectionBrokenListener
+                                         ) throws AuthException {
         if (hasInit){
             return;
         }
         this.heartBeatMsg=heartBeatMsg;
+        this.connectionBrokenListener=connectionBrokenListener;
         bootstrap.handler(new ChannelInitializer<Channel>() {
             @Override
             protected void initChannel(Channel channel ) throws Exception {
@@ -145,7 +149,7 @@ public class RealConnection  implements Connection {
                 if (shakeHandsMsg==null||shakeHandsHandler==null){ //如果没有握手消息且设置了心跳包，则直接添加心跳机制，否则等握手成功后添加心跳机制
                     if (heartBeatMsg!=null){
 //                        // 3次心跳没响应，代表连接已断开
-                       // addHeartbeatHandler(connectionPool,heartBeatMsg,channel);
+                        addHeartbeatHandler(connectionPool,heartbeatInterval);
 
                     }
                 }
@@ -156,7 +160,7 @@ public class RealConnection  implements Connection {
                     public void shakeHandsSuccess(boolean isSuccess) {
                         if (isSuccess){
                             if (heartBeatMsg!=null){ //握手成功且设置了心跳包，则里面启动心跳机制
-                                addHeartbeatHandler(connectionPool,heartBeatMsg,channel,connectionBrokenListener);
+                                addHeartbeatHandler(connectionPool,heartbeatInterval);
                             }
                         }else {
                             release(false);
@@ -186,7 +190,7 @@ public class RealConnection  implements Connection {
             }
         });
     }
-    public void addHeartbeatHandler(ConnectionPool connectionPool,com.google.protobuf.GeneratedMessageV3 heartBeatMsg,Channel channel,RealConnection.connectionBrokenListener connectionBrokenListener) {
+    public void addHeartbeatHandler(ConnectionPool connectionPool,int heartbeatInterval) {
         if (channel == null || channel.pipeline() == null) {
             return;
         }
@@ -246,8 +250,7 @@ public class RealConnection  implements Connection {
       }
     }
 
-    public TcpStream newStream(IMClient client,StreamAllocation streamAllocation,int heartbeatInterval){
-        this.heartbeatInterval=heartbeatInterval;
+    public TcpStream newStream(IMClient client,StreamAllocation streamAllocation){
         TcpStream tcpStream=new Stream(client,streamAllocation,channel);
         return tcpStream;
     }

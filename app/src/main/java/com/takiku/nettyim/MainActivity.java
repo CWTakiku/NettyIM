@@ -7,6 +7,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -98,6 +99,7 @@ public class MainActivity extends AppCompatActivity {
                 editText1.setText("");
                 appMessage.msgStatus=MSG_STATUS_SENDING;
                 addClient1Message(appMessage);
+                final Request request=createRequest(appMessage);
                 IMClientDemo.getInstance().sendMsg(createRequest(appMessage), new UICallback.OnResultListener<PackProtobuf.Pack>() {
                     @Override
                     public void onFailure(IOException e) {
@@ -108,6 +110,7 @@ public class MainActivity extends AppCompatActivity {
 
                     @Override
                     public void onResponse(PackProtobuf.Pack pack) {
+                        Log.i("客户端1收到 "+request.requestTag+ "的消息回执： ", pack.toString());
                             appMessage.msgStatus=pack.getReply().getStatusReport();  //收到服务端响应,即代表消息发送成功，更新UI
                             messageAdapter1.onItemChange(appMessage);
                     }
@@ -121,7 +124,7 @@ public class MainActivity extends AppCompatActivity {
                 editText2.setText("");
                 appMessage.msgStatus=MSG_STATUS_SENDING;
                 addClient2Message(appMessage);
-
+                final Request request=createRequest(appMessage);
                 IMClientDemo2.getInstance().sendMsg(createRequest(appMessage), new UICallback.OnResultListener<PackProtobuf.Pack>() {
                     @Override
                     public void onFailure(IOException e) {
@@ -131,6 +134,7 @@ public class MainActivity extends AppCompatActivity {
 
                     @Override
                     public void onResponse(PackProtobuf.Pack pack) {
+                        Log.i("客户端2收到 "+request.requestTag+ "的消息回执： ", pack.toString());
                         appMessage.msgStatus=pack.getReply().getStatusReport();
                         messageAdapter2.onItemChange(appMessage);
                     }

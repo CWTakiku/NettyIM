@@ -67,7 +67,7 @@ public class IMClient {
      private int resendCount;
      int connectTimeout;
      int sendTimeout;
-     boolean connectionRetryEnabled;
+     boolean connectionRetryEnabled;//能否连接重试
      int resendInterval;// 重发间隔
      int heartIntervalForeground;
      int heartIntervalBackground;
@@ -194,7 +194,17 @@ public class IMClient {
     public EventListener.Factory eventListenerFactory() {
         return eventListenerFactory;
     }
+
     public boolean connectionRetryEnabled(){return connectionRetryEnabled;}
+
+    /**
+     * 设置前后台，将自动切换心跳间隔
+     * @param isBackground
+     */
+    public void setBackground(boolean isBackground){
+         this.isBackground=isBackground;
+         connectionPool().changeHeartbeatInterval(heartInterval());
+    }
 
     public static final class Builder{
      Dispatcher dispatcher;

@@ -83,6 +83,14 @@ public class IMClientDemo2 {
     public void disConnect(){imClient.disConnect();}
 
     /**
+     * 设置前后台心跳包间隔切换
+     * @param background
+     */
+    public void setBackground(boolean background){
+        imClient.setBackground(background);
+    }
+
+    /**
      * 发送消息，回调在主线程
      * @param request
      * @param onResponseListener
