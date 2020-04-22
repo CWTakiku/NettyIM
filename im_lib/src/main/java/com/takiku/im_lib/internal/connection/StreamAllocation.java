@@ -78,7 +78,7 @@ public class StreamAllocation {
                         connection.ChannelInitializerHandler(client.codec(), client.loginAuthMsg(), client.heartBeatMsg(),
                                 client.shakeHandsHandler(), client.heartbeatRespHandler(),
                                 client.messageRespHandler(),client.messageReceiveHandler(),
-                                client.customChannelHandlerLinkedHashMap(), new RealConnection.connectionBrokenListener() {
+                                client.customChannelHandlerLinkedHashMap(),heartbeatInterval, new RealConnection.connectionBrokenListener() {
                                     @Override
                                     public void connectionBroken() {
                                         if (connection.isReConnect()){
@@ -92,11 +92,11 @@ public class StreamAllocation {
                                 });
                         connection.connect(connectTimeout);
                         Internal.instance.put(connectionPool,connection);
-                        TcpStream tcpStream=connection.newStream(client,this,client.heartInterval());
+                        TcpStream tcpStream=connection.newStream(client,this);
                         return tcpStream;
-                    }else {return connection.newStream(client,this,heartbeatInterval);}
+                    }else {return connection.newStream(client,this);}
             }else {
-                return connection.newStream(client,this,heartbeatInterval);
+                return connection.newStream(client,this);
             }
         }
     }

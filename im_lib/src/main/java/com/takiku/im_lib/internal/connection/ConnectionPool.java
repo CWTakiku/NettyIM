@@ -35,6 +35,16 @@ public final class ConnectionPool {
         assert (Thread.holdsLock(this));
         realConnection=connection;
     }
+    public void changeHeartbeatInterval(int heartbeatInterval){
+        if (realConnection==null||!realConnection.isHealth()){
+            try {
+                throw new Exception("changeHeartbeatInterval is failure,because connection broken");
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        realConnection.addHeartbeatHandler(this,heartbeatInterval);
+    }
 
 
 
