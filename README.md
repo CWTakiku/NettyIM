@@ -2,6 +2,22 @@
 基于Netty+TCP+Protobuf+okhttp设计模式的SDK,让你拥有像Okhttp一样的使用体验，完全可定制化，内置断线重连，路由自动切换、消息重复、连接超时、读写超时、可定制化拦截器、消息回执(已读，撤回等)、可定制化protobuf等功能。
 
 ### 使用方式
+Step 1. Add the JitPack repository to your build file
+Add it in your root build.gradle at the end of repositories:
+```
+	allprojects {
+		repositories {
+			...
+			maven { url 'https://jitpack.io' }
+		}
+	}
+```
+Step 2. Add the dependency
+```
+dependencies {
+	        implementation 'com.github.mrchengwenlong:NettyIM:1.0.0'
+	}
+```
 ``` //所以default都可以替换成开发者的实现，只要实现相应接口即可
     imClient=new IMClient.Builder()
                 .setCodec(new DefaultCodec()) //默认的编解码，开发者可以使用自己的protobuf编解码
