@@ -77,6 +77,6 @@ imClient.disConnect();//主动断开连接，不会自动重连
 如果使用过程遇到什么问题或者疑问都可以和我说,欢迎star!
 **联系方式**QQ916379012
 
-
 **Android IM交流群**
+
 ![image](https://github.com/mrchengwenlong/NettyIM/blob/master/50327b1d735eb106d6c94f40edfbbc7.jpg)
