@@ -38,7 +38,7 @@ public class CallServerInterceptor implements Interceptor {
         TimeoutTracker timer=new TimeoutTracker(realChain.sendTimeoutMillis());
         timer.startTrack();
         while (!timer.checkTimeout()){
-            response  =tcpStream.readResponse(request);  //如果规定时间内服务器应答了,收到了发送的消息，则马上注册后续消息状态监听
+            response  =tcpStream.readAck(request);  //如果规定时间内服务器应答了,收到了发送的消息，则马上注册后续消息状态监听
             if (response!=null){
                 tcpStream.subsequentResponse(request,subsequentCallback);
                 break;

@@ -89,6 +89,31 @@ public final class PackProtobuf {
      */
     ShakeHandsOrBuilder getShakeHandsOrBuilder();
 
+    /**
+     * <code>.Ack ack = 6;</code>
+     * @return Whether the ack field is set.
+     */
+    boolean hasAck();
+    /**
+     * <code>.Ack ack = 6;</code>
+     * @return The ack.
+     */
+    Ack getAck();
+    /**
+     * <code>.Ack ack = 6;</code>
+     */
+    AckOrBuilder getAckOrBuilder();
+
+    /**
+     * <pre>
+     *协议版本号
+     * </pre>
+     *
+     * <code>int32 version = 7;</code>
+     * @return The version.
+     */
+    int getVersion();
+
     public Pack.BodyCase getBodyCase();
   }
   /**
@@ -199,6 +224,25 @@ public final class PackProtobuf {
               bodyCase_ = 5;
               break;
             }
+            case 50: {
+              Ack.Builder subBuilder = null;
+              if (bodyCase_ == 6) {
+                subBuilder = ((Ack) body_).toBuilder();
+              }
+              body_ =
+                  input.readMessage(Ack.parser(), extensionRegistry);
+              if (subBuilder != null) {
+                subBuilder.mergeFrom((Ack) body_);
+                body_ = subBuilder.buildPartial();
+              }
+              bodyCase_ = 6;
+              break;
+            }
+            case 56: {
+
+              version_ = input.readInt32();
+              break;
+            }
             default: {
               if (!parseUnknownField(
                   input, unknownFields, extensionRegistry, tag)) {
@@ -252,6 +296,10 @@ public final class PackProtobuf {
        * <code>SHAKEHANDS = 3;</code>
        */
       SHAKEHANDS(3),
+      /**
+       * <code>ACK = 4;</code>
+       */
+      ACK(4),
       UNRECOGNIZED(-1),
       ;
 
@@ -271,6 +319,10 @@ public final class PackProtobuf {
        * <code>SHAKEHANDS = 3;</code>
        */
       public static final int SHAKEHANDS_VALUE = 3;
+      /**
+       * <code>ACK = 4;</code>
+       */
+      public static final int ACK_VALUE = 4;
 
 
       public final int getNumber() {
@@ -301,6 +353,7 @@ public final class PackProtobuf {
           case 1: return REPLY;
           case 2: return HEART;
           case 3: return SHAKEHANDS;
+          case 4: return ACK;
           default: return null;
         }
       }
@@ -362,6 +415,7 @@ public final class PackProtobuf {
       REPLY(3),
       HEART(4),
       SHAKEHANDS(5),
+      ACK(6),
       BODY_NOT_SET(0);
       private final int value;
       private BodyCase(int value) {
@@ -383,6 +437,7 @@ public final class PackProtobuf {
           case 3: return REPLY;
           case 4: return HEART;
           case 5: return SHAKEHANDS;
+          case 6: return ACK;
           case 0: return BODY_NOT_SET;
           default: return null;
         }
@@ -529,6 +584,48 @@ public final class PackProtobuf {
       return ShakeHands.getDefaultInstance();
     }
 
+    public static final int ACK_FIELD_NUMBER = 6;
+    /**
+     * <code>.Ack ack = 6;</code>
+     * @return Whether the ack field is set.
+     */
+    public boolean hasAck() {
+      return bodyCase_ == 6;
+    }
+    /**
+     * <code>.Ack ack = 6;</code>
+     * @return The ack.
+     */
+    public Ack getAck() {
+      if (bodyCase_ == 6) {
+         return (Ack) body_;
+      }
+      return Ack.getDefaultInstance();
+    }
+    /**
+     * <code>.Ack ack = 6;</code>
+     */
+    public AckOrBuilder getAckOrBuilder() {
+      if (bodyCase_ == 6) {
+         return (Ack) body_;
+      }
+      return Ack.getDefaultInstance();
+    }
+
+    public static final int VERSION_FIELD_NUMBER = 7;
+    private int version_;
+    /**
+     * <pre>
+     *协议版本号
+     * </pre>
+     *
+     * <code>int32 version = 7;</code>
+     * @return The version.
+     */
+    public int getVersion() {
+      return version_;
+    }
+
     private byte memoizedIsInitialized = -1;
     @Override
     public final boolean isInitialized() {
@@ -557,6 +654,12 @@ public final class PackProtobuf {
       }
       if (bodyCase_ == 5) {
         output.writeMessage(5, (ShakeHands) body_);
+      }
+      if (bodyCase_ == 6) {
+        output.writeMessage(6, (Ack) body_);
+      }
+      if (version_ != 0) {
+        output.writeInt32(7, version_);
       }
       unknownFields.writeTo(output);
     }
@@ -587,6 +690,14 @@ public final class PackProtobuf {
         size += com.google.protobuf.CodedOutputStream
           .computeMessageSize(5, (ShakeHands) body_);
       }
+      if (bodyCase_ == 6) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeMessageSize(6, (Ack) body_);
+      }
+      if (version_ != 0) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeInt32Size(7, version_);
+      }
       size += unknownFields.getSerializedSize();
       memoizedSize = size;
       return size;
@@ -603,6 +714,8 @@ public final class PackProtobuf {
       Pack other = (Pack) obj;
 
       if (packType_ != other.packType_) return false;
+      if (getVersion()
+          != other.getVersion()) return false;
       if (!getBodyCase().equals(other.getBodyCase())) return false;
       switch (bodyCase_) {
         case 2:
@@ -621,6 +734,10 @@ public final class PackProtobuf {
           if (!getShakeHands()
               .equals(other.getShakeHands())) return false;
           break;
+        case 6:
+          if (!getAck()
+              .equals(other.getAck())) return false;
+          break;
         case 0:
         default:
       }
@@ -637,6 +754,8 @@ public final class PackProtobuf {
       hash = (19 * hash) + getDescriptor().hashCode();
       hash = (37 * hash) + PACKTYPE_FIELD_NUMBER;
       hash = (53 * hash) + packType_;
+      hash = (37 * hash) + VERSION_FIELD_NUMBER;
+      hash = (53 * hash) + getVersion();
       switch (bodyCase_) {
         case 2:
           hash = (37 * hash) + MSG_FIELD_NUMBER;
@@ -653,6 +772,10 @@ public final class PackProtobuf {
         case 5:
           hash = (37 * hash) + SHAKEHANDS_FIELD_NUMBER;
           hash = (53 * hash) + getShakeHands().hashCode();
+          break;
+        case 6:
+          hash = (37 * hash) + ACK_FIELD_NUMBER;
+          hash = (53 * hash) + getAck().hashCode();
           break;
         case 0:
         default:
@@ -792,6 +915,8 @@ public final class PackProtobuf {
         super.clear();
         packType_ = 0;
 
+        version_ = 0;
+
         bodyCase_ = 0;
         body_ = null;
         return this;
@@ -849,6 +974,14 @@ public final class PackProtobuf {
             result.body_ = shakeHandsBuilder_.build();
           }
         }
+        if (bodyCase_ == 6) {
+          if (ackBuilder_ == null) {
+            result.body_ = body_;
+          } else {
+            result.body_ = ackBuilder_.build();
+          }
+        }
+        result.version_ = version_;
         result.bodyCase_ = bodyCase_;
         onBuilt();
         return result;
@@ -901,6 +1034,9 @@ public final class PackProtobuf {
         if (other.packType_ != 0) {
           setPackTypeValue(other.getPackTypeValue());
         }
+        if (other.getVersion() != 0) {
+          setVersion(other.getVersion());
+        }
         switch (other.getBodyCase()) {
           case MSG: {
             mergeMsg(other.getMsg());
@@ -916,6 +1052,10 @@ public final class PackProtobuf {
           }
           case SHAKEHANDS: {
             mergeShakeHands(other.getShakeHands());
+            break;
+          }
+          case ACK: {
+            mergeAck(other.getAck());
             break;
           }
           case BODY_NOT_SET: {
@@ -1568,6 +1708,186 @@ public final class PackProtobuf {
         bodyCase_ = 5;
         onChanged();;
         return shakeHandsBuilder_;
+      }
+
+      private com.google.protobuf.SingleFieldBuilderV3<
+          Ack, Ack.Builder, AckOrBuilder> ackBuilder_;
+      /**
+       * <code>.Ack ack = 6;</code>
+       * @return Whether the ack field is set.
+       */
+      public boolean hasAck() {
+        return bodyCase_ == 6;
+      }
+      /**
+       * <code>.Ack ack = 6;</code>
+       * @return The ack.
+       */
+      public Ack getAck() {
+        if (ackBuilder_ == null) {
+          if (bodyCase_ == 6) {
+            return (Ack) body_;
+          }
+          return Ack.getDefaultInstance();
+        } else {
+          if (bodyCase_ == 6) {
+            return ackBuilder_.getMessage();
+          }
+          return Ack.getDefaultInstance();
+        }
+      }
+      /**
+       * <code>.Ack ack = 6;</code>
+       */
+      public Builder setAck(Ack value) {
+        if (ackBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          body_ = value;
+          onChanged();
+        } else {
+          ackBuilder_.setMessage(value);
+        }
+        bodyCase_ = 6;
+        return this;
+      }
+      /**
+       * <code>.Ack ack = 6;</code>
+       */
+      public Builder setAck(
+          Ack.Builder builderForValue) {
+        if (ackBuilder_ == null) {
+          body_ = builderForValue.build();
+          onChanged();
+        } else {
+          ackBuilder_.setMessage(builderForValue.build());
+        }
+        bodyCase_ = 6;
+        return this;
+      }
+      /**
+       * <code>.Ack ack = 6;</code>
+       */
+      public Builder mergeAck(Ack value) {
+        if (ackBuilder_ == null) {
+          if (bodyCase_ == 6 &&
+              body_ != Ack.getDefaultInstance()) {
+            body_ = Ack.newBuilder((Ack) body_)
+                .mergeFrom(value).buildPartial();
+          } else {
+            body_ = value;
+          }
+          onChanged();
+        } else {
+          if (bodyCase_ == 6) {
+            ackBuilder_.mergeFrom(value);
+          }
+          ackBuilder_.setMessage(value);
+        }
+        bodyCase_ = 6;
+        return this;
+      }
+      /**
+       * <code>.Ack ack = 6;</code>
+       */
+      public Builder clearAck() {
+        if (ackBuilder_ == null) {
+          if (bodyCase_ == 6) {
+            bodyCase_ = 0;
+            body_ = null;
+            onChanged();
+          }
+        } else {
+          if (bodyCase_ == 6) {
+            bodyCase_ = 0;
+            body_ = null;
+          }
+          ackBuilder_.clear();
+        }
+        return this;
+      }
+      /**
+       * <code>.Ack ack = 6;</code>
+       */
+      public Ack.Builder getAckBuilder() {
+        return getAckFieldBuilder().getBuilder();
+      }
+      /**
+       * <code>.Ack ack = 6;</code>
+       */
+      public AckOrBuilder getAckOrBuilder() {
+        if ((bodyCase_ == 6) && (ackBuilder_ != null)) {
+          return ackBuilder_.getMessageOrBuilder();
+        } else {
+          if (bodyCase_ == 6) {
+            return (Ack) body_;
+          }
+          return Ack.getDefaultInstance();
+        }
+      }
+      /**
+       * <code>.Ack ack = 6;</code>
+       */
+      private com.google.protobuf.SingleFieldBuilderV3<
+          Ack, Ack.Builder, AckOrBuilder>
+          getAckFieldBuilder() {
+        if (ackBuilder_ == null) {
+          if (!(bodyCase_ == 6)) {
+            body_ = Ack.getDefaultInstance();
+          }
+          ackBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
+              Ack, Ack.Builder, AckOrBuilder>(
+                  (Ack) body_,
+                  getParentForChildren(),
+                  isClean());
+          body_ = null;
+        }
+        bodyCase_ = 6;
+        onChanged();;
+        return ackBuilder_;
+      }
+
+      private int version_ ;
+      /**
+       * <pre>
+       *协议版本号
+       * </pre>
+       *
+       * <code>int32 version = 7;</code>
+       * @return The version.
+       */
+      public int getVersion() {
+        return version_;
+      }
+      /**
+       * <pre>
+       *协议版本号
+       * </pre>
+       *
+       * <code>int32 version = 7;</code>
+       * @param value The version to set.
+       * @return This builder for chaining.
+       */
+      public Builder setVersion(int value) {
+        
+        version_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <pre>
+       *协议版本号
+       * </pre>
+       *
+       * <code>int32 version = 7;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearVersion() {
+        
+        version_ = 0;
+        onChanged();
+        return this;
       }
       @Override
       public final Builder setUnknownFields(
@@ -4875,7 +5195,7 @@ public final class PackProtobuf {
   }
   /**
    * <pre>
-   *通用回复
+   *消息回执
    * </pre>
    *
    * Protobuf type {@code Reply}
@@ -5266,7 +5586,7 @@ public final class PackProtobuf {
     }
     /**
      * <pre>
-     *通用回复
+     *消息回执
      * </pre>
      *
      * Protobuf type {@code Reply}
@@ -6297,6 +6617,572 @@ public final class PackProtobuf {
 
   }
 
+  public interface AckOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:Ack)
+      com.google.protobuf.MessageOrBuilder {
+
+    /**
+     * <code>string msgId = 1;</code>
+     * @return The msgId.
+     */
+    String getMsgId();
+    /**
+     * <code>string msgId = 1;</code>
+     * @return The bytes for msgId.
+     */
+    com.google.protobuf.ByteString
+        getMsgIdBytes();
+  }
+  /**
+   * Protobuf type {@code Ack}
+   */
+  public  static final class Ack extends
+      com.google.protobuf.GeneratedMessageV3 implements
+      // @@protoc_insertion_point(message_implements:Ack)
+      AckOrBuilder {
+  private static final long serialVersionUID = 0L;
+    // Use Ack.newBuilder() to construct.
+    private Ack(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+      super(builder);
+    }
+    private Ack() {
+      msgId_ = "";
+    }
+
+    @Override
+    @SuppressWarnings({"unused"})
+    protected Object newInstance(
+        UnusedPrivateParameter unused) {
+      return new Ack();
+    }
+
+    @Override
+    public final com.google.protobuf.UnknownFieldSet
+    getUnknownFields() {
+      return this.unknownFields;
+    }
+    private Ack(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      this();
+      if (extensionRegistry == null) {
+        throw new NullPointerException();
+      }
+      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+          com.google.protobuf.UnknownFieldSet.newBuilder();
+      try {
+        boolean done = false;
+        while (!done) {
+          int tag = input.readTag();
+          switch (tag) {
+            case 0:
+              done = true;
+              break;
+            case 10: {
+              String s = input.readStringRequireUtf8();
+
+              msgId_ = s;
+              break;
+            }
+            default: {
+              if (!parseUnknownField(
+                  input, unknownFields, extensionRegistry, tag)) {
+                done = true;
+              }
+              break;
+            }
+          }
+        }
+      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+        throw e.setUnfinishedMessage(this);
+      } catch (java.io.IOException e) {
+        throw new com.google.protobuf.InvalidProtocolBufferException(
+            e).setUnfinishedMessage(this);
+      } finally {
+        this.unknownFields = unknownFields.build();
+        makeExtensionsImmutable();
+      }
+    }
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return PackProtobuf.internal_static_Ack_descriptor;
+    }
+
+    @Override
+    protected FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return PackProtobuf.internal_static_Ack_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              Ack.class, Builder.class);
+    }
+
+    public static final int MSGID_FIELD_NUMBER = 1;
+    private volatile Object msgId_;
+    /**
+     * <code>string msgId = 1;</code>
+     * @return The msgId.
+     */
+    public String getMsgId() {
+      Object ref = msgId_;
+      if (ref instanceof String) {
+        return (String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        String s = bs.toStringUtf8();
+        msgId_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string msgId = 1;</code>
+     * @return The bytes for msgId.
+     */
+    public com.google.protobuf.ByteString
+        getMsgIdBytes() {
+      Object ref = msgId_;
+      if (ref instanceof String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (String) ref);
+        msgId_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    private byte memoizedIsInitialized = -1;
+    @Override
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    @Override
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      if (!getMsgIdBytes().isEmpty()) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 1, msgId_);
+      }
+      unknownFields.writeTo(output);
+    }
+
+    @Override
+    public int getSerializedSize() {
+      int size = memoizedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      if (!getMsgIdBytes().isEmpty()) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(1, msgId_);
+      }
+      size += unknownFields.getSerializedSize();
+      memoizedSize = size;
+      return size;
+    }
+
+    @Override
+    public boolean equals(final Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof Ack)) {
+        return super.equals(obj);
+      }
+      Ack other = (Ack) obj;
+
+      if (!getMsgId()
+          .equals(other.getMsgId())) return false;
+      if (!unknownFields.equals(other.unknownFields)) return false;
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptor().hashCode();
+      hash = (37 * hash) + MSGID_FIELD_NUMBER;
+      hash = (53 * hash) + getMsgId().hashCode();
+      hash = (29 * hash) + unknownFields.hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
+    public static Ack parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static Ack parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static Ack parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static Ack parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static Ack parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static Ack parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static Ack parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static Ack parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static Ack parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input);
+    }
+    public static Ack parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static Ack parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static Ack parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    @Override
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder() {
+      return DEFAULT_INSTANCE.toBuilder();
+    }
+    public static Builder newBuilder(Ack prototype) {
+      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    }
+    @Override
+    public Builder toBuilder() {
+      return this == DEFAULT_INSTANCE
+          ? new Builder() : new Builder().mergeFrom(this);
+    }
+
+    @Override
+    protected Builder newBuilderForType(
+        BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code Ack}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:Ack)
+        AckOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return PackProtobuf.internal_static_Ack_descriptor;
+      }
+
+      @Override
+      protected FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return PackProtobuf.internal_static_Ack_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                Ack.class, Builder.class);
+      }
+
+      // Construct using com.takiku.im_lib.protobuf.PackProtobuf.Ack.newBuilder()
+      private Builder() {
+        maybeForceBuilderInitialization();
+      }
+
+      private Builder(
+          BuilderParent parent) {
+        super(parent);
+        maybeForceBuilderInitialization();
+      }
+      private void maybeForceBuilderInitialization() {
+        if (com.google.protobuf.GeneratedMessageV3
+                .alwaysUseFieldBuilders) {
+        }
+      }
+      @Override
+      public Builder clear() {
+        super.clear();
+        msgId_ = "";
+
+        return this;
+      }
+
+      @Override
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return PackProtobuf.internal_static_Ack_descriptor;
+      }
+
+      @Override
+      public Ack getDefaultInstanceForType() {
+        return Ack.getDefaultInstance();
+      }
+
+      @Override
+      public Ack build() {
+        Ack result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      @Override
+      public Ack buildPartial() {
+        Ack result = new Ack(this);
+        result.msgId_ = msgId_;
+        onBuilt();
+        return result;
+      }
+
+      @Override
+      public Builder clone() {
+        return super.clone();
+      }
+      @Override
+      public Builder setField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          Object value) {
+        return super.setField(field, value);
+      }
+      @Override
+      public Builder clearField(
+          com.google.protobuf.Descriptors.FieldDescriptor field) {
+        return super.clearField(field);
+      }
+      @Override
+      public Builder clearOneof(
+          com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+        return super.clearOneof(oneof);
+      }
+      @Override
+      public Builder setRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          int index, Object value) {
+        return super.setRepeatedField(field, index, value);
+      }
+      @Override
+      public Builder addRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          Object value) {
+        return super.addRepeatedField(field, value);
+      }
+      @Override
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof Ack) {
+          return mergeFrom((Ack)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(Ack other) {
+        if (other == Ack.getDefaultInstance()) return this;
+        if (!other.getMsgId().isEmpty()) {
+          msgId_ = other.msgId_;
+          onChanged();
+        }
+        this.mergeUnknownFields(other.unknownFields);
+        onChanged();
+        return this;
+      }
+
+      @Override
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      @Override
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        Ack parsedMessage = null;
+        try {
+          parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          parsedMessage = (Ack) e.getUnfinishedMessage();
+          throw e.unwrapIOException();
+        } finally {
+          if (parsedMessage != null) {
+            mergeFrom(parsedMessage);
+          }
+        }
+        return this;
+      }
+
+      private Object msgId_ = "";
+      /**
+       * <code>string msgId = 1;</code>
+       * @return The msgId.
+       */
+      public String getMsgId() {
+        Object ref = msgId_;
+        if (!(ref instanceof String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          String s = bs.toStringUtf8();
+          msgId_ = s;
+          return s;
+        } else {
+          return (String) ref;
+        }
+      }
+      /**
+       * <code>string msgId = 1;</code>
+       * @return The bytes for msgId.
+       */
+      public com.google.protobuf.ByteString
+          getMsgIdBytes() {
+        Object ref = msgId_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (String) ref);
+          msgId_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string msgId = 1;</code>
+       * @param value The msgId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setMsgId(
+          String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  
+        msgId_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string msgId = 1;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearMsgId() {
+        
+        msgId_ = getDefaultInstance().getMsgId();
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string msgId = 1;</code>
+       * @param value The bytes for msgId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setMsgIdBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  checkByteStringIsUtf8(value);
+        
+        msgId_ = value;
+        onChanged();
+        return this;
+      }
+      @Override
+      public final Builder setUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.setUnknownFields(unknownFields);
+      }
+
+      @Override
+      public final Builder mergeUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.mergeUnknownFields(unknownFields);
+      }
+
+
+      // @@protoc_insertion_point(builder_scope:Ack)
+    }
+
+    // @@protoc_insertion_point(class_scope:Ack)
+    private static final Ack DEFAULT_INSTANCE;
+    static {
+      DEFAULT_INSTANCE = new Ack();
+    }
+
+    public static Ack getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    private static final com.google.protobuf.Parser<Ack>
+        PARSER = new com.google.protobuf.AbstractParser<Ack>() {
+      @Override
+      public Ack parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return new Ack(input, extensionRegistry);
+      }
+    };
+
+    public static com.google.protobuf.Parser<Ack> parser() {
+      return PARSER;
+    }
+
+    @Override
+    public com.google.protobuf.Parser<Ack> getParserForType() {
+      return PARSER;
+    }
+
+    @Override
+    public Ack getDefaultInstanceForType() {
+      return DEFAULT_INSTANCE;
+    }
+
+  }
+
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_Pack_descriptor;
   private static final 
@@ -6327,6 +7213,11 @@ public final class PackProtobuf {
   private static final 
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_Heart_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_Ack_descriptor;
+  private static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_Ack_fieldAccessorTable;
 
   public static com.google.protobuf.Descriptors.FileDescriptor
       getDescriptor() {
@@ -6336,22 +7227,24 @@ public final class PackProtobuf {
       descriptor;
   static {
     String[] descriptorData = {
-      "\n\npack.proto\"\325\001\n\004Pack\022 \n\010packType\030\001 \001(\0162" +
+      "\n\npack.proto\"\204\002\n\004Pack\022 \n\010packType\030\001 \001(\0162" +
       "\016.Pack.PackType\022\023\n\003msg\030\002 \001(\0132\004.MsgH\000\022\027\n\005" +
       "reply\030\003 \001(\0132\006.ReplyH\000\022\027\n\005heart\030\004 \001(\0132\006.H" +
       "eartH\000\022!\n\nshakeHands\030\005 \001(\0132\013.ShakeHandsH" +
-      "\000\"9\n\010PackType\022\007\n\003MSG\020\000\022\t\n\005REPLY\020\001\022\t\n\005HEA" +
-      "RT\020\002\022\016\n\nSHAKEHANDS\020\003B\006\n\004body\":\n\nShakeHan" +
-      "ds\022\r\n\005msgId\030\001 \001(\t\022\016\n\006userId\030\002 \001(\t\022\r\n\005tok" +
-      "en\030\003 \001(\t\"(\n\003Msg\022\023\n\004head\030\001 \001(\0132\005.Head\022\014\n\004" +
-      "body\030\002 \001(\t\"\215\001\n\004Head\022\r\n\005msgId\030\001 \001(\t\022\017\n\007ms" +
-      "gType\030\002 \001(\005\022\026\n\016msgContentType\030\003 \001(\005\022\016\n\006f" +
-      "romId\030\004 \001(\t\022\014\n\004toId\030\005 \001(\t\022\021\n\ttimestamp\030\006" +
-      " \001(\003\022\016\n\006extend\030\007 \001(\t\022\014\n\004auth\030\010 \001(\t\"O\n\005Re" +
-      "ply\022\021\n\treplyType\030\001 \001(\005\022\r\n\005msgId\030\002 \001(\t\022\016\n" +
-      "\006userId\030\003 \001(\t\022\024\n\014statusReport\030\004 \001(\005\"\027\n\005H" +
-      "eart\022\016\n\006userId\030\001 \001(\tB*\n\032com.takiku.im_li" +
-      "b.protobufB\014PackProtobufb\006proto3"
+      "\000\022\023\n\003ack\030\006 \001(\0132\004.AckH\000\022\017\n\007version\030\007 \001(\005\"" +
+      "B\n\010PackType\022\007\n\003MSG\020\000\022\t\n\005REPLY\020\001\022\t\n\005HEART" +
+      "\020\002\022\016\n\nSHAKEHANDS\020\003\022\007\n\003ACK\020\004B\006\n\004body\":\n\nS" +
+      "hakeHands\022\r\n\005msgId\030\001 \001(\t\022\016\n\006userId\030\002 \001(\t" +
+      "\022\r\n\005token\030\003 \001(\t\"(\n\003Msg\022\023\n\004head\030\001 \001(\0132\005.H" +
+      "ead\022\014\n\004body\030\002 \001(\t\"\215\001\n\004Head\022\r\n\005msgId\030\001 \001(" +
+      "\t\022\017\n\007msgType\030\002 \001(\005\022\026\n\016msgContentType\030\003 \001" +
+      "(\005\022\016\n\006fromId\030\004 \001(\t\022\014\n\004toId\030\005 \001(\t\022\021\n\ttime" +
+      "stamp\030\006 \001(\003\022\016\n\006extend\030\007 \001(\t\022\014\n\004auth\030\010 \001(" +
+      "\t\"O\n\005Reply\022\021\n\treplyType\030\001 \001(\005\022\r\n\005msgId\030\002" +
+      " \001(\t\022\016\n\006userId\030\003 \001(\t\022\024\n\014statusReport\030\004 \001" +
+      "(\005\"\027\n\005Heart\022\016\n\006userId\030\001 \001(\t\"\024\n\003Ack\022\r\n\005ms" +
+      "gId\030\001 \001(\tB*\n\032com.takiku.im_lib.protobufB" +
+      "\014PackProtobufb\006proto3"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
@@ -6362,7 +7255,7 @@ public final class PackProtobuf {
     internal_static_Pack_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_Pack_descriptor,
-        new String[] { "PackType", "Msg", "Reply", "Heart", "ShakeHands", "Body", });
+        new String[] { "PackType", "Msg", "Reply", "Heart", "ShakeHands", "Ack", "Version", "Body", });
     internal_static_ShakeHands_descriptor =
       getDescriptor().getMessageTypes().get(1);
     internal_static_ShakeHands_fieldAccessorTable = new
@@ -6393,6 +7286,12 @@ public final class PackProtobuf {
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_Heart_descriptor,
         new String[] { "UserId", });
+    internal_static_Ack_descriptor =
+      getDescriptor().getMessageTypes().get(6);
+    internal_static_Ack_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_Ack_descriptor,
+        new String[] { "MsgId", });
   }
 
   // @@protoc_insertion_point(outer_class_scope)

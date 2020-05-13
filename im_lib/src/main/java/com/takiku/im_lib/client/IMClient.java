@@ -14,16 +14,14 @@ import com.takiku.im_lib.dispatcher.Dispatcher;
 import com.takiku.im_lib.entity.base.Address;
 import com.takiku.im_lib.entity.base.Response;
 import com.takiku.im_lib.interceptor.Interceptor;
-import com.takiku.im_lib.codec.DefaultCodec;
 import com.takiku.im_lib.internal.Internal;
 import com.takiku.im_lib.internal.connection.ConnectionPool;
 import com.takiku.im_lib.internal.connection.RealConnection;
 import com.takiku.im_lib.internal.connection.StreamAllocation;
-import com.takiku.im_lib.internal.handler.HeartbeatRespHandler;
-import com.takiku.im_lib.internal.handler.InternalChannelHandler;
-import com.takiku.im_lib.internal.handler.MessageReceiveHandler;
-import com.takiku.im_lib.internal.handler.MessageRespHandler;
-import com.takiku.im_lib.internal.handler.ShakeHandsHandler;
+import com.takiku.im_lib.internal.handler.listener.MessageHandler;
+import com.takiku.im_lib.internal.MessageParser;
+import com.takiku.im_lib.internal.handler.listener.MessageSubsequentHandler;
+import com.takiku.im_lib.internal.handler.listener.MessageShakeHandsHandler;
 import com.takiku.im_lib.listener.EventListener;
 
 import java.io.IOException;
@@ -32,7 +30,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.ChannelHandler;
 
 public class IMClient {
@@ -56,9 +53,6 @@ public class IMClient {
             public void put(ConnectionPool pool, RealConnection connection) {
                 pool.put(connection);
             }
-
-
-
         };
     }
 
@@ -78,11 +72,10 @@ public class IMClient {
      LinkedHashMap<String , ChannelHandler> channelHandlerLinkedHashMap;
      com.google.protobuf.GeneratedMessageV3 loginAuthMsg;
      com.google.protobuf.GeneratedMessageV3 heartBeatMsg;
-     ShakeHandsHandler shakeHandsHandler;
-     HeartbeatRespHandler heartbeatRespHandler;
-     MessageRespHandler messageRespHandler;
-     MessageReceiveHandler messageReceiveHandler;
+     MessageShakeHandsHandler messageShakeHandsHandler;
+     MessageSubsequentHandler messageSubsequentHandler;
      List<Address> addressList;
+     MessageParser messageParser;
 
 
     public IMClient(){this(new Builder());}
@@ -99,15 +92,12 @@ public class IMClient {
        this.connectionRetryEnabled=builder.connectionRetryEnabled;
        this.codec=builder.codec;
        this.channelHandlerLinkedHashMap=builder.channelHandlerLinkedHashMap;
-       this.loginAuthMsg=builder.loginAuthMsg;
        this.heartBeatMsg=builder.heartBeatMsg;
-       this.shakeHandsHandler=builder.shakeHandsHandler;
-       this.messageRespHandler =builder.messageRespHandler;
-       this.heartbeatRespHandler=builder.heartbeatRespHandler;
        this.sendTimeout=builder.sendTimeout;
        this.addressList=builder.addressList;
        this.isBackground=builder.isBackground;
-       this.messageReceiveHandler=builder.messageReceiveHandler;
+
+       this.messageParser=builder.messageParser;
     }
 
     public void startConnect() {
@@ -152,7 +142,7 @@ public class IMClient {
 
     public List<Address> addressList(){ return addressList; }
 
-    public MessageReceiveHandler messageReceiveHandler(){return messageReceiveHandler;}
+    public MessageParser messageParser(){return messageParser;}
 
 
     /**
@@ -179,17 +169,7 @@ public class IMClient {
 
     public  LinkedHashMap<String , ChannelHandler> customChannelHandlerLinkedHashMap(){ return channelHandlerLinkedHashMap; }
 
-    public MessageRespHandler messageRespHandler(){
-        return messageRespHandler;
-    }
 
-    public ShakeHandsHandler shakeHandsHandler(){
-        return shakeHandsHandler;
-    }
-
-    public HeartbeatRespHandler heartbeatRespHandler(){
-        return heartbeatRespHandler;
-    }
 
     public EventListener.Factory eventListenerFactory() {
         return eventListenerFactory;
@@ -223,12 +203,9 @@ public class IMClient {
      List<Address> addressList;
      @Nullable Codec codec;
      LinkedHashMap<String , ChannelHandler> channelHandlerLinkedHashMap;
-     com.google.protobuf.GeneratedMessageV3 loginAuthMsg;
      com.google.protobuf.GeneratedMessageV3 heartBeatMsg;
-     ShakeHandsHandler shakeHandsHandler;
-     HeartbeatRespHandler heartbeatRespHandler;
-     MessageRespHandler messageRespHandler;
-     MessageReceiveHandler messageReceiveHandler;
+
+     MessageParser messageParser;
 
      public Builder(){
          dispatcher=new Dispatcher();
@@ -242,6 +219,7 @@ public class IMClient {
          addressList=new ArrayList<>();
          this.connectionPool=new ConnectionPool();
          eventListenerFactory = EventListener.factory(EventListener.NONE);
+         messageParser=new MessageParser();
      }
 
         public Builder setCodec(@Nullable Codec codec){
@@ -309,6 +287,10 @@ public class IMClient {
            this.connectionRetryEnabled=connectionRetryEnabled;
            return this;
         }
+        public Builder registerMessageHandler(MessageHandler messageHandler){
+             messageParser.registerMessageHandler(messageHandler);
+           return this;
+        }
 
         public Builder setBackground(boolean isBackground){
          this.isBackground=isBackground;
@@ -319,13 +301,12 @@ public class IMClient {
          return this;
         }
 
-        public Builder setShakeHands(com.google.protobuf.GeneratedMessageV3 shakeHands,ShakeHandsHandler shakeHandler){
-         this.loginAuthMsg=shakeHands;
-         this.shakeHandsHandler=shakeHandler;
+        public Builder setShakeHands( MessageShakeHandsHandler shakeHandler){
+         this.messageParser.registerMessageShakeHandsHandler(shakeHandler);
          return this;
         }
-        public Builder setMessageRespHandler(MessageRespHandler messageRespHandler){
-         this.messageRespHandler = messageRespHandler;
+        public Builder setMessageSubsequentHandler(MessageSubsequentHandler messageSubsequentHandler){
+         this.messageParser.registerMessageSubsequentHandler(messageSubsequentHandler);
          return this;
         }
 
@@ -334,15 +315,7 @@ public class IMClient {
          return this;
         }
 
-        public Builder setHeartbeatRespHandler(HeartbeatRespHandler heartbeatRespHandler){
-         this.heartbeatRespHandler=heartbeatRespHandler;
-         return this;
-        }
 
-        public Builder setMessageReceiveHandler(MessageReceiveHandler messageReceiveHandler){
-         this.messageReceiveHandler=messageReceiveHandler;
-         return this;
-        }
 
         public IMClient build(){return new IMClient(this);}
     }

@@ -10,7 +10,7 @@ public interface TcpStream {
     void finishRequest() throws IOException;
     void cancel();
     void writeRequest(Request request) throws IOException;
-    Response readResponse(Request request);
+    Response readAck(Request request);
     void subsequentResponse(Request request, SubsequentCallback callback);
 
 

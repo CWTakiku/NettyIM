@@ -44,8 +44,8 @@ public class Stream implements TcpStream {
     }
 
     @Override
-    public Response readResponse(Request request) {
-        LRUMap<String,Object> lruMap= streamAllocation.connection().lruMap();
+    public Response readAck(Request request) {
+        LRUMap<String,Object> lruMap= streamAllocation.connection().ackLruMap();
         if (lruMap.containsKey(request.requestTag)){
             Object object=lruMap.get(request.requestTag);
            return new Response.Builder().setCode(Response.SUCCESS).setRequest(request).setResponse((GeneratedMessageV3) object).build();
