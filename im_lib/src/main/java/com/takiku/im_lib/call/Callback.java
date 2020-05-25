@@ -4,7 +4,10 @@ import com.takiku.im_lib.entity.base.Response;
 
 import java.io.IOException;
 
-public interface Callback<T extends com.google.protobuf.GeneratedMessageV3 > {
-    void onFailure(Call call, IOException e);
-    void onResponse(Call call, Response<T> response) throws IOException;
+/**
+ * 发送结果回调
+ */
+public interface Callback {
+    void onFailure(Call call, IOException e); //发送失败
+    void onResponse(Call call, Response response);//发送成功
 }

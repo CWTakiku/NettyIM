@@ -10,6 +10,7 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.takiku.im_lib.entity.AppMessage;
+import com.takiku.im_lib.entity.ReplyMessage;
 import com.takiku.nettyim.R;
 
 import java.util.ArrayList;
@@ -19,6 +20,7 @@ import static com.takiku.nettyim.Constants.MSG_STATUS_FAILED;
 import static com.takiku.nettyim.Constants.MSG_STATUS_READ;
 import static com.takiku.nettyim.Constants.MSG_STATUS_SEND;
 import static com.takiku.nettyim.Constants.MSG_STATUS_SENDING;
+import static com.takiku.nettyim.Constants.MSG_STATUS_WITHDRAW;
 
 
 public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
@@ -47,7 +49,7 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
         this.list=messageList;
     }
     public void addMessage(AppMessage appMessage){
-        for (int i=0;i<list.size();i++){
+        for (int i=list.size()-1;i>=0;i--){
             AppMessage target=list.get(i);
             if (target.getHead().getMsgId().equals(appMessage.getHead().getMsgId())){
                 target=appMessage;
@@ -58,33 +60,81 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
         notifyItemChanged(getItemCount()-1);
 
     }
+    public void updateMessage(ReplyMessage replyMessage){
+        for (int i=list.size()-1;i>=0;i--){
+            AppMessage target=list.get(i);
+            if (target.getHead().getMsgId().equals(replyMessage.getMsgId())){
+                target.msgStatus=replyMessage.getStatusReport();
+                notifyItemChanged(i);
+                return;
+            }
+        }
+    }
 
     @Override
-    public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
+    public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, final int position) {
         if (holder instanceof FrameReceiveHolder) {
             FrameReceiveHolder receiveHolder = (FrameReceiveHolder) holder;
             receiveHolder.contentView.setText(list.get(position).getBody());
-            switch (list.get(position).msgStatus) {
-                case MSG_STATUS_SEND:
-                    receiveHolder.errorView.setVisibility(View.GONE);
-                    receiveHolder.statusView.setText("已发送");
-                    break;
-                case MSG_STATUS_FAILED:
-                    receiveHolder.errorView.setVisibility(View.VISIBLE);
-                    receiveHolder.statusView.setText("发送失败");
+            receiveHolder.contentView.setVisibility(View.VISIBLE);
+            receiveHolder.contentView.setOnLongClickListener(new View.OnLongClickListener() {
+                @Override
+                public boolean onLongClick(View v) {
+                    MenuItemPopWindow menuItemPopWindow=  MenuItemPopWindow.builder(v.getContext(), new MenuItemPopWindow.MenuItemListenr() {
+                        @Override
+                        public void onItem(int flag) {
+                            AppMessage appMessage=list.get(position);
+                            switch (flag){
+                                case MenuItemPopWindow.MENU_TYPE_READ:
+                                    receiveHolder.statusView.setText("已读");
+                                    if (operationMessageListener!=null){
+                                        operationMessageListener.operationMessage(appMessage,flag);
+                                    }
+                                    break;
+                            }
 
-                case MSG_STATUS_READ:
+                        }
+                    },false);
+                    menuItemPopWindow.showAsDropDown(receiveHolder.contentView,0,-100);
+                    return true;
+                }
+            });
+            receiveHolder.statusView.setText("");
+            switch (list.get(position).msgStatus) {
+                case MSG_STATUS_WITHDRAW:
                     receiveHolder.errorView.setVisibility(View.GONE);
-                    receiveHolder.statusView.setText("已读");
-                    break;
-                case MSG_STATUS_SENDING:
-                    receiveHolder.errorView.setVisibility(View.GONE);
-                    receiveHolder.statusView.setText("发送中...");
+                    receiveHolder.statusView.setText("消息被撤回...");
+                    receiveHolder.contentView.setVisibility(View.INVISIBLE);
                     break;
             }
         } else if (holder instanceof FrameSendHolder) {
-            FrameSendHolder frameSendHolder= (FrameSendHolder) holder;
+            final FrameSendHolder frameSendHolder= (FrameSendHolder) holder;
             frameSendHolder.contentView.setText(list.get(position).getBody());
+            frameSendHolder.contentView.setOnLongClickListener(new View.OnLongClickListener() {
+                @Override
+                public boolean onLongClick(View v) {
+                 MenuItemPopWindow menuItemPopWindow=  MenuItemPopWindow.builder(v.getContext(), new MenuItemPopWindow.MenuItemListenr() {
+                       @Override
+                       public void onItem(int flag) {
+                           AppMessage appMessage=list.get(position);
+                          switch (flag){
+                              case MenuItemPopWindow.MENU_TYPE_RECALL:
+                                  frameSendHolder.contentView.setVisibility(View.INVISIBLE);
+                                  frameSendHolder.statusView.setText("已撤回");
+                                  if (operationMessageListener!=null){
+                                      operationMessageListener.operationMessage(appMessage,flag);
+                                  }
+                                  break;
+                          }
+
+                       }
+                   },true);
+                 menuItemPopWindow.showAsDropDown(frameSendHolder.contentView,0,-100);
+                    return true;
+                }
+            });
+            frameSendHolder.contentView.setVisibility(View.VISIBLE);
+            frameSendHolder.statusView.setText("发送中...");
             switch (list.get(position).msgStatus) {
                 case MSG_STATUS_SEND:
                     frameSendHolder.errorView.setVisibility(View.GONE);
@@ -93,14 +143,13 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
                 case MSG_STATUS_FAILED:
                     frameSendHolder.errorView.setVisibility(View.VISIBLE);
                     frameSendHolder.statusView.setText("发送失败");
-
-                case MSG_STATUS_READ:
-                    frameSendHolder.errorView.setVisibility(View.GONE);
-                    frameSendHolder.statusView.setText("已读");
                     break;
                 case MSG_STATUS_SENDING:
                     frameSendHolder.errorView.setVisibility(View.GONE);
                     frameSendHolder.statusView.setText("发送中...");
+                case MSG_STATUS_READ:
+                    frameSendHolder.errorView.setVisibility(View.GONE);
+                    frameSendHolder.statusView.setText("已读");
                     break;
             }
         }
@@ -161,5 +210,12 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
             contentView=itemView.findViewById(R.id.chat_item_content_text);
             statusView=itemView.findViewById(R.id.chat_item_content_status);
         }
+    }
+    public interface OperationMessageListener{
+     void   operationMessage(AppMessage appMessage, int  flag);
+    }
+    private OperationMessageListener operationMessageListener;
+    public void setOperationMessageListener(OperationMessageListener operationMessageListener){
+        this.operationMessageListener=operationMessageListener;
     }
 }

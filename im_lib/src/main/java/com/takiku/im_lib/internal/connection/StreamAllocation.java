@@ -75,10 +75,9 @@ public class StreamAllocation {
                     if(connection==null||!connection.isHealth()){
                         connection= new RealConnection(connectionPool, routeSelector.lastInetSocketAddress(), eventListener);
 
-                        connection.ChannelInitializerHandler(client.codec(), client.loginAuthMsg(), client.heartBeatMsg(),
-                                client.shakeHandsHandler(), client.heartbeatRespHandler(),
-                                client.messageRespHandler(),client.messageReceiveHandler(),
-                                client.customChannelHandlerLinkedHashMap(),heartbeatInterval, new RealConnection.connectionBrokenListener() {
+                        connection.ChannelInitializerHandler(client.codec(), client.heartBeatMsg(),
+                                client.customChannelHandlerLinkedHashMap(),heartbeatInterval,client.messageParser()
+                                ,new RealConnection.connectionBrokenListener() {
                                     @Override
                                     public void connectionBroken() {
                                         if (connection.isReConnect()){

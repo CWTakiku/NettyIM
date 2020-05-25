@@ -1,4 +1,4 @@
-package com.takiku.im_lib.internal.handler;
+package com.takiku.im_lib.internal.handler.internalhandler;
 
 import com.takiku.im_lib.exception.AuthError;
 import com.takiku.im_lib.exception.AuthException;

@@ -15,6 +15,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.channel.ChannelInitializer;
@@ -29,11 +30,10 @@ import io.netty.handler.codec.LengthFieldPrepender;
 import io.netty.handler.codec.protobuf.ProtobufDecoder;
 import io.netty.handler.codec.protobuf.ProtobufEncoder;
 
-import static com.takiku.im_lib.NettyServerDemo.HEART_REPLY_TYPE;
+
+import static com.takiku.im_lib.NettyServerDemo.MSG_ACK_TYPE;
 import static com.takiku.im_lib.NettyServerDemo.MSG_REPLY_TYPE;
-import static com.takiku.im_lib.NettyServerDemo.SHAKE_HANDS_REPLY_TYPE;
-import static com.takiku.im_lib.NettyServerDemo.SHAKE_HANDS_REPLY_TYPE;
-import static com.takiku.im_lib.NettyServerDemo.SHAKE_HANDS_REPLY_TYPE;
+import static com.takiku.im_lib.NettyServerDemo.SHAKE_HANDS_ACK_TYPE;
 import static com.takiku.im_lib.NettyServerDemo.SHAKE_HANDS_STATUS_FAILED;
 import static com.takiku.im_lib.NettyServerDemo.SHAKE_HANDS_STATUS_SUCCESS;
 import static com.takiku.im_lib.NettyServerDemo.offLine;
@@ -46,16 +46,18 @@ import static com.takiku.im_lib.NettyServerDemo.userMap;
 public class NettyServerDemo {
 
     public static final int MSG_REPLY_TYPE=0x10;
-    public static final int HEART_REPLY_TYPE=0x11;
-    public static final int SHAKE_HANDS_REPLY_TYPE=0x12;
+    public static final int HEART_ACK_TYPE=0x11;
+    public static final int SHAKE_HANDS_ACK_TYPE=0x12;
+    public static final int MSG_ACK_TYPE=0x13;
 
     public static final int SHAKE_HANDS_STATUS_SUCCESS=1;
     public static final int SHAKE_HANDS_STATUS_FAILED=0;
-    public static final int MSG_STATUS_SEND=1;
+    public static final int MSG_STATUS_SEND=1;//发送成功
     public static final int MSG_STATUS_READ=2;
 
     public static Map<String,String>  userMap=new HashMap<>();
     public static Map<String, List<PackProtobuf.Pack>> offLine=new HashMap<>();
+
 
     @Test
     public  void Server() {
@@ -100,7 +102,7 @@ public class NettyServerDemo {
             bootstrap.childOption(ChannelOption.TCP_NODELAY, true);
 
             //绑定端口
-            ChannelFuture future = bootstrap.bind(8765).sync();
+            ChannelFuture future = bootstrap.bind(8766).sync();
             System.out.println("server start ...... ");
 
             //等待服务端监听端口关闭
@@ -120,8 +122,10 @@ public class NettyServerDemo {
         userMap.put("user id2","token2");
     }
 }
-
+@ChannelHandler.Sharable
 class ServerHandler extends ChannelInboundHandlerAdapter {
+
+    private final SessionManager sessionManager = SessionManager.getInstance();
 
     private static final String TAG = ServerHandler.class.getSimpleName();
 
@@ -134,8 +138,9 @@ class ServerHandler extends ChannelInboundHandlerAdapter {
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
         super.channelInactive(ctx);
-      System.out.println("channelInactive");
-       ctx.channel().close();
+        String sessionId = Session.buildId(ctx.channel());
+        Session session = sessionManager.removeBySessionId(sessionId);
+        System.out.println("ServerHandler channelInactive() userId "+session.getUserId());
     }
 
     @Override
@@ -153,6 +158,7 @@ class ServerHandler extends ChannelInboundHandlerAdapter {
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         PackProtobuf.Pack pack = (PackProtobuf.Pack) msg;
+        Session session=   sessionManager.getBySessionId(ctx.channel().id().asLongText());
         switch (pack.getPackType()){
             case SHAKEHANDS:
                 PackProtobuf.ShakeHands shakeHands=pack.getShakeHands();
@@ -162,8 +168,13 @@ class ServerHandler extends ChannelInboundHandlerAdapter {
                 System.out.println("收到连接认证消息，该用户的id: "+userId+" 该用户的token: "+token );
 
                 if (userMap.containsKey(userId)&&token.equals(userMap.get(userId))){ //连接认证成功
-                    ctx.channel().writeAndFlush(createShakeHandsResp(msgId,userId,SHAKE_HANDS_STATUS_SUCCESS));
-                    ChannelContainer.getInstance().saveChannel(userId,ctx.channel());
+                    ctx.channel().writeAndFlush(createAck(msgId,SHAKE_HANDS_ACK_TYPE,SHAKE_HANDS_STATUS_SUCCESS));
+
+                    Session newSession = Session.buildSession(ctx.channel(),userId);
+                    if (session!=null){
+                        //TODO 通知别的登录设备下线，这里最好和新的设备比较是否是同一个设备ID，如果一样就不要通知下线，不同的设备才去通知下线
+                    }
+                    sessionManager.put(newSession.getId(),newSession);
                     sendOfflineMsg(userId);
                 }else {
                     ctx.channel().writeAndFlush(createShakeHandsResp(msgId,userId,SHAKE_HANDS_STATUS_FAILED));
@@ -172,21 +183,29 @@ class ServerHandler extends ChannelInboundHandlerAdapter {
                 break;
             case HEART:
                 PackProtobuf.Heart heart=pack.getHeart();
-                System.out.println("收到客户端心跳消息,该用户id："+heart.getUserId());
-                ChannelContainer.getInstance().getChannelByUserId(heart.getUserId()).writeAndFlush(createHeartResp(heart.getUserId()));
+
+                if (session!=null){
+                    System.out.println("收到客户端 "+ session.getUserId()+" 心跳消息,该消息id："+heart.getMsgId());
+                    session.writeAndFlush(createAck(heart.getMsgId(), NettyServerDemo.HEART_ACK_TYPE,0));
+                }
                 break;
             case MSG:
                 PackProtobuf.Msg message=pack.getMsg();
                 System.out.println("收到发送方客户端发送过来的消息:"+message.toString());
-                ChannelContainer.getInstance().getChannelByUserId(message.getHead().getFromId())//回给发送端消息回执已经发送
-                        .writeAndFlush(createMsgReply(message.getHead().getFromId(),message.getHead().getMsgId(),MSG_REPLY_TYPE, NettyServerDemo.MSG_STATUS_SEND));
-                if (ChannelContainer.getInstance().isOnline(message.getHead().getToId())){ //如果接受发在线
-                    ChannelContainer.getInstance().getChannelByUserId(message.getHead().getToId()) //转发给接受端
-                            .writeAndFlush(pack);
-                }else { //如果对方离线，缓存起来，等用户上线立马发送
+                if (session!=null){
+                    System.out.println("服务端发送ACK给发送端");
+                    session.writeAndFlush(createAck(message.getHead().getMsgId(),MSG_ACK_TYPE, NettyServerDemo.MSG_STATUS_SEND));//服务端发送Ack给发送端
+                }else { //发送端已经下线了
+                    System.out.println("ACK 回执失败");
+                }
+                Session targetSession =sessionManager.getByUserId(message.getHead().getToId());
+                if (targetSession!=null){ //如果接受端在线
+                    System.out.println("转发给接受端了");
+                    targetSession.writeAndFlush(pack);//转发给接受端
+                }else {  //如果对方离线，缓存起来，等用户上线立马发送
+                    System.out.println("接受端离线");
                     putOffLienMessage(message.getHead().getToId(),pack);
                 }
-
 
                 break;
             case REPLY:
@@ -195,13 +214,13 @@ class ServerHandler extends ChannelInboundHandlerAdapter {
                 switch (receiveReply.getReplyType()){
                     case MSG_REPLY_TYPE://消息状态回复，转发给发送方是被送达了，还是被阅读了等
                         System.out.println("转发消息状态给发送方"+receiveReply.getUserId());
-                        if (ChannelContainer.getInstance().isOnline(receiveReply.getUserId())) {
-                            ChannelContainer.getInstance().getChannelByUserId(receiveReply.getUserId()).writeAndFlush(pack);
+                        Session replyTargetSession =sessionManager.getByUserId(receiveReply.getUserId());
+                        if (replyTargetSession!=null) {
+                            replyTargetSession.writeAndFlush(pack);
                         }else {//对方离线,消息回执就不要转发了，等用户上线主动来获取消息状态
 
                         }
                         break;
-
                 }
                 break;
         }
@@ -213,14 +232,14 @@ class ServerHandler extends ChannelInboundHandlerAdapter {
      */
     private void sendOfflineMsg(String userId) {
         if (offLine.containsKey(userId)){
-            Channel channel=ChannelContainer.getInstance().getChannelByUserId(userId);
-            if (channel==null){
+            Session session=sessionManager.getByUserId(userId);
+            if (session==null){
                 return;
             }
             List<PackProtobuf.Pack> list=offLine.get(userId);
             List<PackProtobuf.Pack> removeList=new ArrayList<>();
             for (PackProtobuf.Pack pack:list){
-                channel.writeAndFlush(pack);
+                session.writeAndFlush(pack);
                 removeList.add(pack);
             }
             list.removeAll(removeList);
@@ -238,17 +257,11 @@ class ServerHandler extends ChannelInboundHandlerAdapter {
         }
     }
 
-    private PackProtobuf.Pack createHeartResp(String userId){
-        PackProtobuf.Pack pack=    PackProtobuf.Pack.newBuilder().setPackType(PackProtobuf.Pack.PackType.REPLY)
-                .setReply(PackProtobuf.Reply.newBuilder().setReplyType(HEART_REPLY_TYPE).setUserId(userId).build())
-                .build();
-                return pack;
-    }
     private PackProtobuf.Pack createShakeHandsResp(String msgId,String userId,int status){
        return PackProtobuf.Pack.newBuilder()
-                .setPackType(PackProtobuf.Pack.PackType.REPLY)
-                .setReply(PackProtobuf.Reply.newBuilder()
-                        .setReplyType(SHAKE_HANDS_REPLY_TYPE).setMsgId(msgId).setUserId(userId).setStatusReport(status).build())
+                .setPackType(PackProtobuf.Pack.PackType.ACK)
+                .setAck(PackProtobuf.Ack.newBuilder()
+                        .setAckType(SHAKE_HANDS_ACK_TYPE).setMsgId(msgId).setResult(status).build())
                 .build();
     }
     private PackProtobuf.Pack createMsgReply(String userId,String msgId,int replyType,int status){
@@ -257,79 +270,11 @@ class ServerHandler extends ChannelInboundHandlerAdapter {
                 .setReply( PackProtobuf.Reply.newBuilder().setUserId(userId).setReplyType(replyType).setMsgId(msgId).setStatusReport(status).build())
                 .build();
     }
-
-
-    /**
-     * 模拟其他用户发消息
-     */
-    private void mockOtherClientSendMsg() {
-        PackProtobuf.Msg mockOtherClientMsg=PackProtobuf.Msg.newBuilder()
-                .setHead(PackProtobuf.Head.newBuilder().setFromId("other userId").setToId("your userId").build())
-                .setBody("other给你发送消息了")
+    private PackProtobuf.Pack createAck(String msgId,int ackType,int result){
+        return PackProtobuf.Pack.newBuilder()
+                .setPackType(PackProtobuf.Pack.PackType.ACK)
+                .setAck(PackProtobuf.Ack.newBuilder()
+                        .setAckType(ackType).setMsgId(msgId).setResult(result).build())
                 .build();
-        PackProtobuf.Pack otherMsgPack=PackProtobuf.Pack.newBuilder()
-                .setPackType(PackProtobuf.Pack.PackType.MSG)
-                .setMsg(mockOtherClientMsg)
-                .build();
-
-        ChannelContainer.getInstance().getChannelByUserId(mockOtherClientMsg.getHead().getToId()).writeAndFlush(otherMsgPack);
-    }
-
-
-    public static class ChannelContainer {
-
-        private ChannelContainer() {
-
-        }
-
-        private static final ChannelContainer INSTANCE = new ChannelContainer();
-
-        public static ChannelContainer getInstance() {
-            return INSTANCE;
-        }
-
-        private final Map<String, Channel> channelMap = new ConcurrentHashMap<>();
-
-        public void saveChannel(String userId, Channel channel) {
-            if (channel == null || !channel.isActive()) {
-                return;
-            }
-            channelMap.put(userId, channel);
-        }
-
-        public void removeChannel(String userId) {
-            if (channelMap.containsKey(userId)) {
-                channelMap.remove(userId);
-            }
-        }
-
-
-        public Channel getChannelByUserId(String userId) {
-            if (channelMap.containsKey(userId)) {
-                Channel channel = channelMap.get(userId);
-                if (channel != null && channel.isActive()) {
-                    return channel;
-                } else {
-                    channelMap.remove(userId);
-                    return null;
-                }
-            } else {
-                return null;
-            }
-        }
-
-        public boolean isOnline(String userId) {
-            if (channelMap.containsKey(userId)) {
-                Channel channel = channelMap.get(userId);
-                if (channel != null && channel.isActive()) {
-                    return true;
-                } else {
-                    channelMap.remove(userId);
-                    return false;
-                }
-            } else {
-                return false;
-            }
-        }
     }
 }

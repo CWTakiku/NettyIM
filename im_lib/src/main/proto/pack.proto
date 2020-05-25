@@ -9,6 +9,7 @@ enum PackType{
     REPLY=1;
     HEART=2;
     SHAKEHANDS=3;
+    ACK=4;
 
 }
     PackType packType=1;
@@ -17,7 +18,9 @@ enum PackType{
       Reply reply=3;
       Heart heart=4;
       ShakeHands shakeHands=5;
+      Ack ack=6;
     }
+     int32 version=7; //协议版本号
 }
 
 message ShakeHands{ //握手认证
@@ -46,5 +49,10 @@ message Reply{ //消息回执
   int32 statusReport=4;//状态
 }
 message Heart{ //心跳
-  string userId=1;
+  string msgId=1;
+}
+message Ack{
+    string ackMsgId=1;
+    int32 ackType=2;
+    int32 result=3;
 }

@@ -1,4 +1,4 @@
-package com.takiku.im_lib.internal.handler;
+package com.takiku.im_lib.internal.handler.internalhandler;
 
 import com.takiku.im_lib.internal.connection.ConnectionPool;
 import com.takiku.im_lib.internal.connection.RealConnection;

@@ -2,6 +2,7 @@ package com.takiku.im_lib.entity.base;
 
 import android.telecom.StatusHints;
 
+import com.google.protobuf.ByteOutput;
 import com.google.protobuf.GeneratedMessageV3;
 
 public  class Request {
@@ -11,10 +12,10 @@ public  class Request {
   public static final int PACK_HANDS_TYPE=3;
   public static final int PACK_CONNECT_TYPE=4;
 
- public String requestTag;//请求tag，与应答的tag对呀
+ public String requestTag;//请求tag，这个tag能确定唯一的request
  public Address address; //暂时未用到，为预留字段
  public boolean sendRetry;//失败是否重试
- public boolean needResponse;//是否需要响应
+ public boolean needACK=true;//是否需要确认
  public com.google.protobuf.GeneratedMessageV3 requestBody;
 
   Request(Builder builder) {
@@ -22,26 +23,24 @@ public  class Request {
      this.requestBody=builder.body;
      this.requestTag=builder.requestTag;
      this.sendRetry=builder.sendRetry;
-     this.needResponse=builder.needResponse;
+     this.needACK=builder.needACK;
   }
     public static class Builder {
     Address address;
     com.google.protobuf.GeneratedMessageV3 body;
     String requestTag;
-    boolean sendRetry=true;
-    public boolean needResponse;//是否需要响应
-
+    boolean sendRetry;
+    boolean needACK;
 
     public Builder() {
-     needResponse=true;
-     sendRetry=true;
+        sendRetry=true;
+        needACK=true;
     }
     Builder(Request request) {
       this.address=request.address;
       this.body = request.requestBody;
       this.requestTag=request.requestTag;
       this.sendRetry= request.sendRetry;
-      this.needResponse=request.needResponse;
     }
     public Builder setAddress(Address address){
       this.address=address;
@@ -59,8 +58,9 @@ public  class Request {
         this.sendRetry=sendRetry;
         return this;
     }
-    public Builder setNeedResponse(boolean needResponse){
-        this.needResponse=needResponse;
+
+    public Builder setNeedACK(boolean needAck){
+        this.needACK=needAck;
         return this;
     }
     public Request build(){

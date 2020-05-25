@@ -1,7 +1,6 @@
-package com.takiku.im_lib.internal;
+package com.takiku.im_lib.defaultImpl;
 
-import com.google.protobuf.GeneratedMessageV3;
-import com.takiku.im_lib.internal.handler.MessageReceiveHandler;
+import com.takiku.im_lib.internal.handler.listener.MessageHandler;
 import com.takiku.im_lib.protobuf.PackProtobuf;
 
 /**
@@ -9,7 +8,7 @@ import com.takiku.im_lib.protobuf.PackProtobuf;
  * Description:  默认的消息接收器，只针对用户发送的消息，其他类型的消息不在这处理
  * Date:2020/4/18
  */
-public class DefaultMessageReceiveHandler implements MessageReceiveHandler<PackProtobuf.Pack> {
+public class DefaultMessageReceiveHandler implements MessageHandler<PackProtobuf.Pack> {
 
     private onMessageArriveListener onMessageArriveListener;
     public DefaultMessageReceiveHandler(onMessageArriveListener onMessageArriveListener){
@@ -17,18 +16,17 @@ public class DefaultMessageReceiveHandler implements MessageReceiveHandler<PackP
     }
 
     @Override
-    public boolean isClientMessage(Object msg) {
+    public boolean isFocusMsg(Object msg) {
         PackProtobuf.Pack pack= (PackProtobuf.Pack) msg;
         return pack.getPackType()==PackProtobuf.Pack.PackType.MSG;
     }
 
     @Override
-    public void receiveMessage(PackProtobuf.Pack pack) {
-        //System.out.println("收到其他客户端发来的消息："+pack.toString());
+    public void handleMsg(PackProtobuf.Pack pack) {
         onMessageArriveListener.onMessageArrive(pack);
     }
 
-   public interface onMessageArriveListener{
+    public interface onMessageArriveListener{
         void onMessageArrive(PackProtobuf.Pack pack);
    }
 

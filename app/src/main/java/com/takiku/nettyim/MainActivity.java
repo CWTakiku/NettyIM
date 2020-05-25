@@ -5,6 +5,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.os.Bundle;
+import android.os.Debug;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
@@ -12,23 +13,33 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 
-import com.takiku.im_lib.call.UICallback;
+import com.google.protobuf.GeneratedMessageV3;
+import com.takiku.im_lib.call.Call;
+import com.takiku.im_lib.call.Callback;
+import com.takiku.im_lib.call.Consumer;
+import com.takiku.im_lib.client.IMClient;
+import com.takiku.nettyim.callbcak.UICallback;
 import com.takiku.im_lib.entity.AppMessage;
 import com.takiku.im_lib.entity.ReplyMessage;
 import com.takiku.im_lib.entity.base.Request;
-import com.takiku.im_lib.internal.DefaultMessageReceiveHandler;
+import com.takiku.im_lib.entity.base.Response;
+import com.takiku.im_lib.defaultImpl.DefaultMessageReceiveHandler;
 import com.takiku.im_lib.protobuf.PackProtobuf;
 import com.takiku.nettyim.clientdemo.IMClientDemo;
 import com.takiku.nettyim.clientdemo.IMClientDemo2;
+import com.takiku.nettyim.widget.MenuItemPopWindow;
 import com.takiku.nettyim.widget.MessageAdapter;
 
 import java.io.IOException;
 import java.util.UUID;
 
+import static com.takiku.nettyim.Constants.MSG_ACK_TYPE;
 import static com.takiku.nettyim.Constants.MSG_REPLY_TYPE;
 import static com.takiku.nettyim.Constants.MSG_STATUS_FAILED;
 import static com.takiku.nettyim.Constants.MSG_STATUS_READ;
+import static com.takiku.nettyim.Constants.MSG_STATUS_SEND;
 import static com.takiku.nettyim.Constants.MSG_STATUS_SENDING;
+import static com.takiku.nettyim.Constants.MSG_STATUS_WITHDRAW;
 
 /**
  * create by cwl
@@ -61,36 +72,12 @@ public class MainActivity extends AppCompatActivity {
         initView();
         initAdapter();
         this.mDeliveryHandler = new Handler(Looper.getMainLooper());
-        IMClientDemo.getInstance(new DefaultMessageReceiveHandler.onMessageArriveListener() { //回调在子线程
-            @Override
-            public void onMessageArrive(final PackProtobuf.Pack pack) {
-                final AppMessage appMessage=AppMessage.buildAppMessage(pack.getMsg());
-                IMClientDemo.getInstance().sendReply(getReplyRequest(appMessage.getHead().getMsgId(),appMessage.getHead().getFromId())); //如果有消息到达，马上告诉服务端消息已读 ，此消息应该设置为无需回应
-                mDeliveryHandler.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        addClient1Message(appMessage); //UI显示刚发送的一条消息
-                    }
-                });
-
-            }
-        }).startConnect();
-
-        IMClientDemo2.getInstance(new DefaultMessageReceiveHandler.onMessageArriveListener() {
-            @Override
-            public void onMessageArrive(final PackProtobuf.Pack pack) {
-                final AppMessage appMessage=AppMessage.buildAppMessage(pack.getMsg());
-                IMClientDemo2.getInstance().sendReply(getReplyRequest(appMessage.getHead().getMsgId(),appMessage.getHead().getFromId())); //如果有消息到达，马上告诉服务端消息已读，此消息应该设置为无需回应
-                mDeliveryHandler.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        addClient2Message(appMessage); //UI显示
-                    }
-                });
-
-            }
-        }).startConnect();
-
+        IMClientDemo.getInstance().startConnect();
+        IMClientDemo.getInstance().registerMessageReceive(appMessage->{addClient1Message(appMessage);});
+        IMClientDemo.getInstance().registerReplyReceive(replyMessage ->{updateClient1MessageStatus(replyMessage);});
+        IMClientDemo2.getInstance().startConnect();
+        IMClientDemo2.getInstance().registerMessageReceive(appMessage->{addClient2Message(appMessage);});
+        IMClientDemo2.getInstance().registerReplyReceive(replyMessage ->{updateClient2MessageStatus(replyMessage);});
 
         btn1.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -99,20 +86,17 @@ public class MainActivity extends AppCompatActivity {
                 editText1.setText("");
                 appMessage.msgStatus=MSG_STATUS_SENDING;
                 addClient1Message(appMessage);
-                final Request request=createRequest(appMessage);
-                IMClientDemo.getInstance().sendMsg(createRequest(appMessage), new UICallback.OnResultListener<PackProtobuf.Pack>() {
+                IMClientDemo.getInstance().sendMsgUICallback(createRequest(appMessage), new Callback() {
                     @Override
-                    public void onFailure(IOException e) {
+                    public void onFailure(Call call, IOException e) {
                         appMessage.msgStatus = MSG_STATUS_FAILED;
                         messageAdapter1.onItemChange(appMessage); //更新一条消息状态
-
                     }
 
                     @Override
-                    public void onResponse(PackProtobuf.Pack pack) {
-                        Log.i("客户端1收到 "+request.requestTag+ "的消息回执： ", pack.toString());
-                            appMessage.msgStatus=pack.getReply().getStatusReport();  //收到服务端响应,即代表消息发送成功，更新UI
-                            messageAdapter1.onItemChange(appMessage);
+                    public void onResponse(Call call, Response response) {
+                        appMessage.msgStatus=MSG_STATUS_SEND;
+                        messageAdapter1.onItemChange(appMessage); //更新一条消息状态
                     }
                 });
             }
@@ -124,19 +108,17 @@ public class MainActivity extends AppCompatActivity {
                 editText2.setText("");
                 appMessage.msgStatus=MSG_STATUS_SENDING;
                 addClient2Message(appMessage);
-                final Request request=createRequest(appMessage);
-                IMClientDemo2.getInstance().sendMsg(createRequest(appMessage), new UICallback.OnResultListener<PackProtobuf.Pack>() {
+                IMClientDemo2.getInstance().sendMsgUICallback(createRequest(appMessage), new Callback() {
                     @Override
-                    public void onFailure(IOException e) {
-                        appMessage.msgStatus=MSG_STATUS_FAILED; //发送失败，指规定时间内服务器无应答且进行了发送重试依然没有响应
+                    public void onFailure(Call call, IOException e) {
+                        appMessage.msgStatus = MSG_STATUS_FAILED; //发送失败，指规定时间内服务器无应答且进行了发送重试依然没有响应
                         messageAdapter2.onItemChange(appMessage);
                     }
 
                     @Override
-                    public void onResponse(PackProtobuf.Pack pack) {
-                        Log.i("客户端2收到 "+request.requestTag+ "的消息回执： ", pack.toString());
-                        appMessage.msgStatus=pack.getReply().getStatusReport();
-                        messageAdapter2.onItemChange(appMessage);
+                    public void onResponse(Call call, Response response) {
+                        appMessage.msgStatus=MSG_STATUS_SEND;
+                        messageAdapter2.onItemChange(appMessage); //更新一条消息状态
                     }
                 });
             }
@@ -182,10 +164,65 @@ public class MainActivity extends AppCompatActivity {
         recyclerView2.scrollToPosition(messageAdapter2.getItemCount()-1);
 
     }
+    public void updateClient1MessageStatus(ReplyMessage replyMessage){
+        messageAdapter1.updateMessage(replyMessage);
+    }
+    public void updateClient2MessageStatus(ReplyMessage replyMessage){
+        messageAdapter2.updateMessage(replyMessage);
+    }
 
     private void initAdapter() {
         messageAdapter1=new MessageAdapter(client1UserId);
         messageAdapter2=new MessageAdapter(client2UserId);
+        messageAdapter1.setOperationMessageListener(((appMessage, flag) -> {
+            int status=-1;
+            switch (flag){
+                case MenuItemPopWindow.MENU_TYPE_READ:
+                    status=MSG_STATUS_READ;
+                    break;
+                    case MenuItemPopWindow.MENU_TYPE_RECALL:
+                     status=MSG_STATUS_WITHDRAW;
+                     break;
+
+            }
+            if (status!=-1){
+                IMClientDemo.getInstance().sendMsg(createReplyRequest(appMessage.getHead().getMsgId(), client2UserId, status), new Callback() {
+                    @Override
+                    public void onFailure(Call call, IOException e) {
+                        //消息发送失败
+                    }
+
+                    @Override
+                    public void onResponse(Call call, Response response) {
+                        //消息发送成功
+                    }
+                });
+            }
+        }));
+        messageAdapter2.setOperationMessageListener(((appMessage, flag) -> {
+            int status=-1;
+            switch (flag){
+                case MenuItemPopWindow.MENU_TYPE_READ:
+                    status=MSG_STATUS_READ;
+                    break;
+                case MenuItemPopWindow.MENU_TYPE_RECALL:
+                    status=MSG_STATUS_WITHDRAW;
+                    break;
+            }
+            if (status!=-1){
+                IMClientDemo2.getInstance().sendMsg(createReplyRequest(appMessage.getHead().getMsgId(), client1UserId, status), new Callback() {
+                    @Override
+                    public void onFailure(Call call, IOException e) {
+                        //消息发送失败
+                    }
+
+                    @Override
+                    public void onResponse(Call call, Response response) {
+                        //消息发送成功
+                    }
+                });
+            }
+        }));
         recyclerView1.setAdapter(messageAdapter1);
         recyclerView2.setAdapter(messageAdapter2);
         LinearLayoutManager linearLayoutManager1 = new LinearLayoutManager(this);
@@ -225,6 +262,7 @@ public class MainActivity extends AppCompatActivity {
     private Request createRequest(AppMessage appMessage){
 
         Request request=new Request.Builder().
+                setNeedACK(true).
                 setRequestTag(appMessage.getHead().getMsgId()).
                 setBody(getMsgPack(appMessage.buildProto())).
                 build();
@@ -243,19 +281,19 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /**
-     * 构建通用回复
+     * 构建消息状态回复请求
      * @param msgId
      * @param userId
      * @return
      */
-    public Request getReplyRequest(String msgId,String userId){
+    public Request createReplyRequest(String msgId,String userId,int status){
         ReplyMessage replyMessage=new ReplyMessage();
         replyMessage.setMsgId(msgId);
         replyMessage.setUserId(userId);
         replyMessage.setReplyType(MSG_REPLY_TYPE);
-        replyMessage.setStatusReport(MSG_STATUS_READ); //已读
+        replyMessage.setStatusReport(status); //已读
         Request replyRequest=  new Request.Builder()
-                .setNeedResponse(false) //设置为不需要应答
+                .setNeedACK(false) //设置为不需要应答
                 .setBody(getReplyPack(replyMessage.buildProto()))
                 .build();
         return replyRequest;
@@ -285,5 +323,14 @@ public class MainActivity extends AppCompatActivity {
                 .build();
     }
 
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        IMClientDemo.getInstance().unregisterMessageReceive();
+        IMClientDemo.getInstance().unregisterReplyReceive();
 
+        IMClientDemo2.getInstance().unregisterMessageReceive();
+        IMClientDemo2.getInstance().unregisterReplyReceive();
+
+    }
 }

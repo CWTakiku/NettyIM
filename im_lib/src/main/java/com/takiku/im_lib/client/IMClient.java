@@ -2,6 +2,7 @@ package com.takiku.im_lib.client;
 
 import androidx.annotation.Nullable;
 
+import com.takiku.im_lib.call.Consumer;
 import com.takiku.im_lib.codec.Codec;
 import com.takiku.im_lib.authenticator.Authenticator;
 import com.takiku.im_lib.cache.Cache;
@@ -14,16 +15,13 @@ import com.takiku.im_lib.dispatcher.Dispatcher;
 import com.takiku.im_lib.entity.base.Address;
 import com.takiku.im_lib.entity.base.Response;
 import com.takiku.im_lib.interceptor.Interceptor;
-import com.takiku.im_lib.codec.DefaultCodec;
 import com.takiku.im_lib.internal.Internal;
 import com.takiku.im_lib.internal.connection.ConnectionPool;
 import com.takiku.im_lib.internal.connection.RealConnection;
 import com.takiku.im_lib.internal.connection.StreamAllocation;
-import com.takiku.im_lib.internal.handler.HeartbeatRespHandler;
-import com.takiku.im_lib.internal.handler.InternalChannelHandler;
-import com.takiku.im_lib.internal.handler.MessageReceiveHandler;
-import com.takiku.im_lib.internal.handler.MessageRespHandler;
-import com.takiku.im_lib.internal.handler.ShakeHandsHandler;
+import com.takiku.im_lib.internal.handler.listener.MessageHandler;
+import com.takiku.im_lib.internal.MessageParser;
+import com.takiku.im_lib.internal.handler.listener.MessageShakeHandsHandler;
 import com.takiku.im_lib.listener.EventListener;
 
 import java.io.IOException;
@@ -32,9 +30,11 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.ChannelHandler;
 
+/**
+ * IMClient IM客户端SDK
+ */
 public class IMClient {
 
 
@@ -56,33 +56,26 @@ public class IMClient {
             public void put(ConnectionPool pool, RealConnection connection) {
                 pool.put(connection);
             }
-
-
-
         };
     }
 
-     Dispatcher dispatcher;
-     List<Interceptor> interceptors;
-     private int resendCount;
-     int connectTimeout;
-     int sendTimeout;
+     Dispatcher dispatcher;//消息分发器
+     List<Interceptor> interceptors;//拦截器
+     private int resendCount;//消息发送失败，重复次数
+     int connectTimeout;//连接超时
+     int sendTimeout;//发送超时，该时间段没收到ACK即认定为超时，会触发超时重发（如果设置为超时重发）
      boolean connectionRetryEnabled;//能否连接重试
-     int resendInterval;// 重发间隔
-     int heartIntervalForeground;
-     int heartIntervalBackground;
+     int heartIntervalForeground;//前台心跳间隔
+     int heartIntervalBackground;//后台心跳间隔
      boolean isBackground;//是否处于后台
      EventListener.Factory eventListenerFactory;
      ConnectionPool connectionPool;
-     Codec codec;
-     LinkedHashMap<String , ChannelHandler> channelHandlerLinkedHashMap;
-     com.google.protobuf.GeneratedMessageV3 loginAuthMsg;
-     com.google.protobuf.GeneratedMessageV3 heartBeatMsg;
-     ShakeHandsHandler shakeHandsHandler;
-     HeartbeatRespHandler heartbeatRespHandler;
-     MessageRespHandler messageRespHandler;
-     MessageReceiveHandler messageReceiveHandler;
-     List<Address> addressList;
+     Codec codec;//编解码器
+     LinkedHashMap<String , ChannelHandler> channelHandlerLinkedHashMap;//channelhandler，开发者可以添加自己的channelhandler
+     com.google.protobuf.GeneratedMessageV3 heartBeatMsg;//心跳包
+     List<Address> addressList;//连接地址列表，连接失败会自动切换
+     MessageParser messageParser;//消息解析器
+     Consumer ackConsumer;//消息ACK机制，开发者需要设置自己的ACKConsumer， Observable返回的是否是该请求的ACK包
 
 
     public IMClient(){this(new Builder());}
@@ -99,15 +92,12 @@ public class IMClient {
        this.connectionRetryEnabled=builder.connectionRetryEnabled;
        this.codec=builder.codec;
        this.channelHandlerLinkedHashMap=builder.channelHandlerLinkedHashMap;
-       this.loginAuthMsg=builder.loginAuthMsg;
        this.heartBeatMsg=builder.heartBeatMsg;
-       this.shakeHandsHandler=builder.shakeHandsHandler;
-       this.messageRespHandler =builder.messageRespHandler;
-       this.heartbeatRespHandler=builder.heartbeatRespHandler;
        this.sendTimeout=builder.sendTimeout;
        this.addressList=builder.addressList;
        this.isBackground=builder.isBackground;
-       this.messageReceiveHandler=builder.messageReceiveHandler;
+       this.messageParser=builder.messageParser;
+       this.ackConsumer=builder.ackConsumer;
     }
 
     public void startConnect() {
@@ -120,7 +110,7 @@ public class IMClient {
           }
 
           @Override
-          public void onResponse(Call call, Response response) throws IOException {
+          public void onResponse(Call call, Response response)  {
 
           }
       });
@@ -152,7 +142,7 @@ public class IMClient {
 
     public List<Address> addressList(){ return addressList; }
 
-    public MessageReceiveHandler messageReceiveHandler(){return messageReceiveHandler;}
+    public MessageParser messageParser(){return messageParser;}
 
 
     /**
@@ -165,9 +155,11 @@ public class IMClient {
     }
 
 
-    public com.google.protobuf.GeneratedMessageV3 loginAuthMsg(){ return loginAuthMsg; }
+
 
     public com.google.protobuf.GeneratedMessageV3 heartBeatMsg(){ return heartBeatMsg; }
+
+    public Consumer ackConsumer(){return ackConsumer;}
 
     public int heartInterval(){
         if (isBackground){
@@ -179,17 +171,7 @@ public class IMClient {
 
     public  LinkedHashMap<String , ChannelHandler> customChannelHandlerLinkedHashMap(){ return channelHandlerLinkedHashMap; }
 
-    public MessageRespHandler messageRespHandler(){
-        return messageRespHandler;
-    }
 
-    public ShakeHandsHandler shakeHandsHandler(){
-        return shakeHandsHandler;
-    }
-
-    public HeartbeatRespHandler heartbeatRespHandler(){
-        return heartbeatRespHandler;
-    }
 
     public EventListener.Factory eventListenerFactory() {
         return eventListenerFactory;
@@ -209,11 +191,11 @@ public class IMClient {
     public static final class Builder{
      Dispatcher dispatcher;
      final List<Interceptor> interceptors = new ArrayList<>();
-     int connectTimeout;//连接超时
-     int sendTimeout;//发送超时,规定时间内需服务端响应
-     int resendCount;//消息发送失败，重发次数
-     boolean connectionRetryEnabled;//是否连接失败、连接重试
-     int heartIntervalForeground;//前台心跳间隔
+     int connectTimeout;
+     int sendTimeout;
+     int resendCount;
+     boolean connectionRetryEnabled;
+     int heartIntervalForeground;
      int heartIntervalBackground;
      boolean isBackground;
      EventListener.Factory eventListenerFactory;
@@ -223,12 +205,9 @@ public class IMClient {
      List<Address> addressList;
      @Nullable Codec codec;
      LinkedHashMap<String , ChannelHandler> channelHandlerLinkedHashMap;
-     com.google.protobuf.GeneratedMessageV3 loginAuthMsg;
      com.google.protobuf.GeneratedMessageV3 heartBeatMsg;
-     ShakeHandsHandler shakeHandsHandler;
-     HeartbeatRespHandler heartbeatRespHandler;
-     MessageRespHandler messageRespHandler;
-     MessageReceiveHandler messageReceiveHandler;
+     MessageParser messageParser;
+     Consumer ackConsumer;;
 
      public Builder(){
          dispatcher=new Dispatcher();
@@ -242,6 +221,7 @@ public class IMClient {
          addressList=new ArrayList<>();
          this.connectionPool=new ConnectionPool();
          eventListenerFactory = EventListener.factory(EventListener.NONE);
+         messageParser=new MessageParser();
      }
 
         public Builder setCodec(@Nullable Codec codec){
@@ -310,22 +290,33 @@ public class IMClient {
            return this;
         }
 
+        /**
+         * 注册消息处理器
+         * @param messageHandler
+         * @return
+         */
+        public Builder registerMessageHandler(MessageHandler messageHandler){
+             messageParser.registerMessageHandler(messageHandler);
+           return this;
+        }
+
         public Builder setBackground(boolean isBackground){
          this.isBackground=isBackground;
          return this;
         }
+
+        /**
+         * 设置事件监听
+         * @param eventListener
+         * @return
+         */
         public Builder setEventListener(EventListener eventListener){
          this.eventListenerFactory=EventListener.factory(eventListener);
          return this;
         }
 
-        public Builder setShakeHands(com.google.protobuf.GeneratedMessageV3 shakeHands,ShakeHandsHandler shakeHandler){
-         this.loginAuthMsg=shakeHands;
-         this.shakeHandsHandler=shakeHandler;
-         return this;
-        }
-        public Builder setMessageRespHandler(MessageRespHandler messageRespHandler){
-         this.messageRespHandler = messageRespHandler;
+        public Builder setShakeHands(MessageShakeHandsHandler shakeHandler){
+         this.messageParser.registerMessageShakeHandsHandler(shakeHandler);
          return this;
         }
 
@@ -334,15 +325,17 @@ public class IMClient {
          return this;
         }
 
-        public Builder setHeartbeatRespHandler(HeartbeatRespHandler heartbeatRespHandler){
-         this.heartbeatRespHandler=heartbeatRespHandler;
+        /**
+         * 设置ACK机制,如果设置了，在request里有needACK,则必须收到ACK包 不然会回调onFailure
+         * @param ackConsumer
+         * @return
+         */
+        public Builder setAckConsumer(Consumer ackConsumer){
+         this.ackConsumer=ackConsumer;
          return this;
         }
 
-        public Builder setMessageReceiveHandler(MessageReceiveHandler messageReceiveHandler){
-         this.messageReceiveHandler=messageReceiveHandler;
-         return this;
-        }
+
 
         public IMClient build(){return new IMClient(this);}
     }

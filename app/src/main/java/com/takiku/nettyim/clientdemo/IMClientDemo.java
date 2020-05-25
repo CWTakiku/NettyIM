@@ -1,24 +1,40 @@
 package com.takiku.nettyim.clientdemo;
 
+import android.os.Handler;
+import android.os.Looper;
+
 import com.google.protobuf.GeneratedMessageV3;
 import com.takiku.im_lib.call.Call;
 import com.takiku.im_lib.call.Callback;
-import com.takiku.im_lib.call.UICallback;
+import com.takiku.im_lib.call.Consumer;
+import com.takiku.im_lib.call.Disposable;
+import com.takiku.im_lib.defaultImpl.DefaultAckConsumer;
+import com.takiku.im_lib.defaultImpl.DefaultReplyReceiveHandler;
+import com.takiku.im_lib.entity.AppMessage;
+import com.takiku.im_lib.entity.ReplyMessage;
+import com.takiku.im_lib.entity.base.Response;
+import com.takiku.nettyim.R;
+import com.takiku.nettyim.callbcak.UICallback;
 import com.takiku.im_lib.client.IMClient;
-import com.takiku.im_lib.codec.DefaultCodec;
+import com.takiku.im_lib.defaultImpl.DefaultCodec;
 import com.takiku.im_lib.entity.ShakeHandsMessage;
 import com.takiku.im_lib.entity.base.Address;
 import com.takiku.im_lib.entity.base.Request;
-import com.takiku.im_lib.entity.base.Response;
-import com.takiku.im_lib.internal.DefaultMessageReceiveHandler;
-import com.takiku.im_lib.internal.DefaultMessageRespHandler;
-import com.takiku.im_lib.internal.DefaultShakeHandsHandler;
-import com.takiku.im_lib.internal.connection.RealConnection;
-import com.takiku.im_lib.listener.DefaultEventListener;
+import com.takiku.im_lib.defaultImpl.DefaultHeartbeatRespHandler;
+import com.takiku.im_lib.defaultImpl.DefaultMessageReceiveHandler;
+import com.takiku.im_lib.defaultImpl.DefaultMessageShakeHandsHandler;
+import com.takiku.im_lib.defaultImpl.DefaultEventListener;
 import com.takiku.im_lib.protobuf.PackProtobuf;
+import com.takiku.nettyim.callbcak.UIConsumerCallback;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+
+import static com.takiku.nettyim.Constants.MSG_ACK_TYPE;
 
 /**
  * author:chengwl
@@ -29,57 +45,86 @@ public class IMClientDemo {
 
     private static IMClientDemo instance;
     private IMClient imClient;
-    private IMClientDemo(){
-        imClient=new IMClient.Builder()
-                .setCodec(new DefaultCodec()) //默认的编解码，开发者可以使用自己的protobuf编解码
-                .setShakeHands(getDefaultHands(),new DefaultShakeHandsHandler()) //设置握手认证，可选
-                .setHeartBeatMsg(getDefaultHeart()) //设置心跳,可选
-                .setMessageRespHandler(new DefaultMessageRespHandler()) //消息响应，开发者可自行定制实现MessageRespHandler接口即可
-             //   .setMessageReceiveHandler(new DefaultMessageReceiveHandler())
-                .setEventListener(new DefaultEventListener("user id1")) //可选
-                .setAddress(new Address("192.168.69.32",8765,Address.Type.SOCKS))
-                .setAddress(new Address("192.168.8.154",8765,Address.Type.SOCKS))
-                .setAddress(new Address("www.baidu.com",8765,Address.Type.HTTP))
-                .build();
+    private Handler mHandler;
+    private OnMessageReceiveListener onMessageReceiveListener;
+    private OnReplyReceiveListener onReplyReceiveListener;
+
+    private DefaultMessageReceiveHandler.onMessageArriveListener onMessageArriveListener=new DefaultMessageReceiveHandler.onMessageArriveListener() {
+        @Override
+        public void onMessageArrive(PackProtobuf.Pack pack) {
+            final AppMessage appMessage=AppMessage.buildAppMessage(pack.getMsg());
+             sendAck(appMessage.getHead().getMsgId());//发送ACK 给服务端
+            if (onMessageReceiveListener!=null){
+                mHandler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        onMessageReceiveListener.onMessageReceive(appMessage);
+                    }
+                });
+            }
+        }
+    };
+    public DefaultReplyReceiveHandler.OnReplyArriveListener onReplyListener=new DefaultReplyReceiveHandler.OnReplyArriveListener() {
+        @Override
+        public void onReplyArrive(PackProtobuf.Pack pack) {
+            final ReplyMessage replyMessage=ReplyMessage.buildReplyMessage(pack.getReply());
+             if (onReplyReceiveListener!=null){
+                 mHandler.post(new Runnable() {
+                     @Override
+                     public void run() {
+                         onReplyReceiveListener.onReplyReceive(replyMessage);
+                     }
+                 });
+             }
+        }
+    };
+
+
+    public void registerMessageReceive(OnMessageReceiveListener onMessageReceiveListener){
+        this.onMessageReceiveListener=onMessageReceiveListener;
+    }
+    public void unregisterMessageReceive(){
+        this.onMessageReceiveListener=null;
+    }
+
+    public void registerReplyReceive(OnReplyReceiveListener onReplyReceiveListener){
+        this.onReplyReceiveListener=onReplyReceiveListener;
+    }
+    public void unregisterReplyReceive(){
+        this.onReplyReceiveListener=null;
     }
 
     /**
      * IMCient
-     * @param onMessageArriveListener //主要消息接受监听，单一职责
+     * @param  //主要消息接受监听，
      */
-    private IMClientDemo(DefaultMessageReceiveHandler.onMessageArriveListener onMessageArriveListener){
+    private IMClientDemo(){
+
+        mHandler=new Handler(Looper.getMainLooper());
         imClient=new IMClient.Builder()
                 .setCodec(new DefaultCodec()) //默认的编解码，开发者可以使用自己的protobuf编解码
-                .setShakeHands(getDefaultHands(),new DefaultShakeHandsHandler()) //设置握手认证，可选
+                .setShakeHands(new DefaultMessageShakeHandsHandler(getDefaultHands())) //设置握手认证，可选
                 .setHeartBeatMsg(getDefaultHeart()) //设置心跳,可选
-                .setConnectTimeout(10, TimeUnit.SECONDS)
+                .setAckConsumer(new DefaultAckConsumer()) //设置心跳机制
+                .setConnectTimeout(10, TimeUnit.SECONDS) //设置连接超时
                 .setResendCount(3)//设置失败重试数
                 .setConnectionRetryEnabled(true)//是否连接重试
                 .setSendTimeout(6,TimeUnit.SECONDS)//设置发送超时
                 .setHeartIntervalBackground(30,TimeUnit.SECONDS)//后台心跳间隔
-                .setMessageRespHandler(new DefaultMessageRespHandler()) //消息响应，开发者可自行定制实现MessageRespHandler接口即可
-                .setMessageReceiveHandler(new DefaultMessageReceiveHandler(onMessageArriveListener)) //客户端消息接收器
+                .registerMessageHandler(new DefaultMessageReceiveHandler(onMessageArriveListener)) //消息接收处理器
+                .registerMessageHandler(new DefaultReplyReceiveHandler(onReplyListener)) //消息状态接收处理器
+                .registerMessageHandler(new DefaultHeartbeatRespHandler()) //心跳接收处理器
                 .setEventListener(new DefaultEventListener("user id1")) //事件监听，可选
-                .setAddress(new Address("192.168.69.32",8765,Address.Type.SOCKS))
-                .setAddress(new Address("www.baidu.com",8765,Address.Type.HTTP))
+                .setAddress(new Address("192.168.69.32",8766,Address.Type.SOCKS))
+                .setAddress(new Address("www.baidu.com",8766,Address.Type.HTTP))
                 .build();
     }
+
     public static IMClientDemo getInstance(){
         if (instance==null){
             synchronized (IMClientDemo.class){
                 if (instance==null){
                     instance=new IMClientDemo();
-                }
-            }
-            return instance;
-        }
-        return instance;
-    }
-    public static IMClientDemo getInstance(DefaultMessageReceiveHandler.onMessageArriveListener onMessageArriveListener){
-        if (instance==null){
-            synchronized (IMClientDemo.class){
-                if (instance==null){
-                    instance=new IMClientDemo(onMessageArriveListener);
                 }
             }
             return instance;
@@ -100,14 +145,7 @@ public class IMClientDemo {
      */
     public void disConnect(){imClient.disConnect();}
 
-    /**
-     * 发送消息，回调在子线程
-     * @param request
-     * @param callback
-     */
-    public void sendMsg(Request request,Callback callback){
-        imClient.newCall(request).enqueue(callback);
-    }
+
 
     /**
      * 设置前后台心跳包间隔切换
@@ -118,36 +156,63 @@ public class IMClientDemo {
     }
 
     /**
-     * 发送消息，回调在主线程
+     * 发送消息，回调在子线程 ,不需要回执
      * @param request
-     * @param onResponseListener
+     * @param callback
      */
-    public void sendMsg(Request request, UICallback.OnResultListener onResponseListener){
-        imClient.newCall(request).enqueue(new UICallback(onResponseListener));
+    public void sendMsg(Request request,Callback callback){
+        imClient.newCall(request).enqueue(callback);
     }
 
-    public void sendReply(Request request){
-        imClient.newCall(request).enqueue(new Callback() {
+
+    /**
+     * 收到服务端消息后马上发送ACK
+     * @param msgId
+     */
+    public void sendAck(String msgId){
+        imClient.newCall(createAckRequest(msgId)).enqueue(new Callback() {
             @Override
             public void onFailure(Call call, IOException e) {
 
             }
 
             @Override
-            public void onResponse(Call call, Response response) throws IOException {
+            public void onResponse(Call call, Response response) {
 
             }
         });
     }
 
-    /**
-     * 发送状态回复 在UI线程，这里与发送消息并无二异，只是request设置无需要服务端响应
-     * @param request
-     */
-    public void sendReplyUI(Request request){
-        imClient.newCall(request).enqueue(new UICallback(null));
+    private Request createAckRequest(String msgId) {
+        return new  Request.Builder().setBody(getDefaultAck(msgId))
+                .setNeedACK(false)
+                .build();
     }
 
+    /**
+     * 发送消息回调在UI线程，不需要回执
+     * @param request
+     * @param callback
+     */
+    public void sendMsgUICallback(Request request,Callback callback){
+        imClient.newCall(request).enqueue(new UICallback(callback,mHandler));
+    }
+
+    /**
+     * 发送消息，会订阅特定的消息
+     * @param request
+     * @param callback
+     * @return Disposable 不需要订阅了 一定要调用 Disposable.disposable()
+     */
+    public Disposable sendMsgAndConsumer(Request request, Callback callback,Consumer ...consumers){
+        List<Consumer> consumersList= Arrays.asList(consumers);
+        List<Consumer> uiConsumerCallback=new ArrayList<>();
+        for (Consumer consumer:consumersList){
+            uiConsumerCallback.add(new UIConsumerCallback(consumer,mHandler));
+        }
+     Disposable disposable=   imClient.newCall(request).enqueue(new UICallback(callback,mHandler)).subscribe(uiConsumerCallback);
+     return disposable;
+    }
 
 
     /**
@@ -157,7 +222,7 @@ public class IMClientDemo {
     private GeneratedMessageV3 getDefaultHeart() {
         return PackProtobuf.Pack.newBuilder()
                 .setPackType(PackProtobuf.Pack.PackType.HEART)
-                .setHeart(PackProtobuf.Heart.newBuilder().setUserId("user id1").build())
+                .setHeart(PackProtobuf.Heart.newBuilder().setMsgId(UUID.randomUUID().toString()).build())
                 .build();
     }
 
@@ -165,7 +230,7 @@ public class IMClientDemo {
      * 构建握手proto，开发者可自行定制自己的握手包，但需实现ShakeHandsHandler接口
      * @return
      */
-    private GeneratedMessageV3 getDefaultHands() {
+    private  PackProtobuf.Pack getDefaultHands() {
         ShakeHandsMessage shakeHandsMessage =new ShakeHandsMessage();
         shakeHandsMessage.setToken("token1");
         shakeHandsMessage.setUserId("user id1");
@@ -174,6 +239,24 @@ public class IMClientDemo {
                 .setPackType(PackProtobuf.Pack.PackType.SHAKEHANDS)
                 .setShakeHands(shakeHandsMessage.buildProto())
                 .build();
+    }
+
+    /**
+     * 默认确认包
+     * @param msgId
+     * @return
+     */
+    private PackProtobuf.Pack getDefaultAck(String msgId){
+        return PackProtobuf.Pack.newBuilder()
+                .setPackType(PackProtobuf.Pack.PackType.ACK)
+                .setAck(PackProtobuf.Ack.newBuilder().setMsgId(msgId).setAckType(MSG_ACK_TYPE).setResult(0).build())
+                .build();
+    }
+    public interface OnMessageReceiveListener{
+        void onMessageReceive(AppMessage appMessage);
+    }
+    public interface OnReplyReceiveListener{
+        void  onReplyReceive(ReplyMessage replyMessage);
     }
 
 

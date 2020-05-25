@@ -1,26 +1,22 @@
 package com.takiku.im_lib.internal.connection;
 
+import com.takiku.im_lib.call.Consumer;
+import com.takiku.im_lib.call.OnResponseListener;
 import com.takiku.im_lib.codec.Codec;
 import com.takiku.im_lib.client.IMClient;
 import com.takiku.im_lib.dispatcher.Connection;
+import com.takiku.im_lib.entity.base.Request;
+import com.takiku.im_lib.entity.base.Response;
 import com.takiku.im_lib.exception.AuthException;
-import com.takiku.im_lib.internal.handler.HeartbeatChannelHandler;
-import com.takiku.im_lib.internal.handler.HeartbeatRespHandler;
-import com.takiku.im_lib.internal.handler.HeartbeatRespChannelHandler;
-import com.takiku.im_lib.internal.handler.LoginAuthChannelHandler;
-import com.takiku.im_lib.internal.handler.MessageReceiveChannelHandler;
-import com.takiku.im_lib.internal.handler.MessageReceiveHandler;
-import com.takiku.im_lib.internal.handler.MessageRespHandler;
-import com.takiku.im_lib.internal.handler.MessageRespChannelHandler;
-import com.takiku.im_lib.internal.handler.ShakeHandsHandler;
-import com.takiku.im_lib.internal.handler.StatusChannelHandler;
+import com.takiku.im_lib.internal.handler.internalhandler.HeartbeatChannelHandler;
+import com.takiku.im_lib.internal.handler.internalhandler.MessageChannelHandler;
+import com.takiku.im_lib.internal.MessageParser;
+import com.takiku.im_lib.internal.handler.internalhandler.StatusChannelHandler;
 import com.takiku.im_lib.listener.EventListener;
 import com.takiku.im_lib.util.LRUMap;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -46,22 +42,21 @@ public class RealConnection  implements Connection {
     private Channel channel;
     private final ConnectionPool connectionPool;
     private Bootstrap bootstrap;
-    private static volatile LRUMap<String,Object> lruMap;
     private com.google.protobuf.GeneratedMessageV3  heartBeatMsg;
-    private int heartbeatInterval;
+    private MessageParser messageParser;
     private boolean hasInit=false;
     private InetSocketAddress inetSocketAddress;
     private LinkedHashMap<String, ChannelHandler> handlers;
     private EventListener eventListener;
     private volatile boolean reConnect;
     private connectionBrokenListener connectionBrokenListener;
-    private static volatile Map<String,OnResponseListener> onResponseListenerMap=new LRUMap<>(20);
+    private volatile LRUMap<String,Response> responseLRUMap;
+
 
     public RealConnection(ConnectionPool connectionPool, InetSocketAddress inetSocketAddress, EventListener eventListener){
         this.inetSocketAddress=inetSocketAddress;
         this.connectionPool=connectionPool;
         this.eventListener=eventListener;
-        lruMap=new LRUMap(20);
         EventLoopGroup loopGroup = new NioEventLoopGroup(4);
         bootstrap = new Bootstrap();
         bootstrap.group(loopGroup).channel(NioSocketChannel.class);
@@ -70,15 +65,14 @@ public class RealConnection  implements Connection {
         // 设置禁用nagle算法
         bootstrap.option(ChannelOption.TCP_NODELAY, true);
         reConnect=true;
+        responseLRUMap=new LRUMap<>(30);
     }
     public void release(boolean reConnect){
         this.reConnect=reConnect;
         if (channel!=null){
             removeHandler(StatusChannelHandler.class.getSimpleName(),channel);
-            removeHandler(LoginAuthChannelHandler.class.getSimpleName(),channel);
             removeHandler(HeartbeatChannelHandler.class.getSimpleName(),channel);
-            removeHandler(MessageReceiveChannelHandler.class.getSimpleName(),channel);
-            removeHandler(MessageRespChannelHandler.class.getSimpleName(),channel);
+            removeHandler(MessageChannelHandler.class.getSimpleName(),channel);
 
             if (handlers!=null){
                 for (String key : handlers.keySet()) {
@@ -94,9 +88,6 @@ public class RealConnection  implements Connection {
         }
         connectionPool.destroyWorkLoopGroup();
         bootstrap=null;
-        eventListener.connectionReleased(this);
-        lruMap.clear();
-        onResponseListenerMap.clear();
         eventListener.connectionReleased(this);
     }
     /**
@@ -117,19 +108,20 @@ public class RealConnection  implements Connection {
         }
     }
 
-    public void ChannelInitializerHandler(final Codec codec, final com.google.protobuf.GeneratedMessageV3 shakeHandsMsg, final com.google.protobuf.GeneratedMessageV3 heartBeatMsg,
-                                          final ShakeHandsHandler shakeHandsHandler, final HeartbeatRespHandler heartbeatRespHandler,
-                                          final MessageRespHandler messageRespHandler,
-                                          final MessageReceiveHandler messageReceiveHandler,
+    public void ChannelInitializerHandler(final Codec codec,
+                                          final com.google.protobuf.GeneratedMessageV3 heartBeatMsg,
                                           final LinkedHashMap<String, ChannelHandler> handlers,
                                           final int heartbeatInterval,
+                                          final MessageParser messageParser,
                                           final connectionBrokenListener connectionBrokenListener
                                          ) throws AuthException {
         if (hasInit){
             return;
         }
+        this.handlers=handlers;
         this.heartBeatMsg=heartBeatMsg;
         this.connectionBrokenListener=connectionBrokenListener;
+        this.messageParser=messageParser;
         bootstrap.handler(new ChannelInitializer<Channel>() {
             @Override
             protected void initChannel(Channel channel ) throws Exception {
@@ -142,22 +134,9 @@ public class RealConnection  implements Connection {
                 if (codec==null){
                     throw new  IllegalArgumentException("codec is null");
                 }
-
-                pipeline.addLast(codec.EnCoder().getClass().getSimpleName(),codec.EnCoder());
-                pipeline.addLast(codec.DeCoder().getClass().getSimpleName(),codec.DeCoder());
-
-                if (shakeHandsMsg==null||shakeHandsHandler==null){ //如果没有握手消息且设置了心跳包，则直接添加心跳机制，否则等握手成功后添加心跳机制
-                    if (heartBeatMsg!=null){
-//                        // 3次心跳没响应，代表连接已断开
-                        addHeartbeatHandler(connectionPool,heartbeatInterval);
-
-                    }
-                }
-                pipeline.addLast(StatusChannelHandler.class.getSimpleName(),new StatusChannelHandler(eventListener,connectionBrokenListener));
-
-                pipeline.addLast(LoginAuthChannelHandler.class.getSimpleName(),new LoginAuthChannelHandler(shakeHandsMsg, shakeHandsHandler, new LoginAuthChannelHandler.ShakeHandsListener() {
+                messageParser.addShakeResultListener(new MessageParser.onShakeHandsResultListener() {
                     @Override
-                    public void shakeHandsSuccess(boolean isSuccess) {
+                    public void shakeHandsResult(boolean isSuccess) {
                         if (isSuccess){
                             if (heartBeatMsg!=null){ //握手成功且设置了心跳包，则里面启动心跳机制
                                 addHeartbeatHandler(connectionPool,heartbeatInterval);
@@ -166,26 +145,25 @@ public class RealConnection  implements Connection {
                             release(false);
                         }
                     }
-                }));
+                });
 
-                pipeline.addLast(HeartbeatRespChannelHandler.class.getSimpleName(),new HeartbeatRespChannelHandler(heartbeatRespHandler));
+                pipeline.addLast(codec.EnCoder().getClass().getSimpleName(),codec.EnCoder());
+                pipeline.addLast(codec.DeCoder().getClass().getSimpleName(),codec.DeCoder());
 
-                pipeline.addLast(MessageReceiveChannelHandler.class.getSimpleName(),new MessageReceiveChannelHandler(messageReceiveHandler));
+                if (messageParser.getMessageShakeHandsHandler()==null){ //如果没有握手消息且设置了心跳包，则直接添加心跳机制，否则等握手成功后添加心跳机制
+                    if (heartBeatMsg!=null){
+//                        // 3次心跳没响应，代表连接已断开
+                        addHeartbeatHandler(connectionPool,heartbeatInterval);
 
-                pipeline.addLast(MessageRespChannelHandler.class.getSimpleName(),new MessageRespChannelHandler(messageRespHandler,new MessageRespChannelHandler.onResponseListener() {
-                    @Override
-                    public void onResponse(String tag,Object msg) throws IOException {
-                        putResponse(tag,msg);
                     }
-                }));
-
+                }
+                pipeline.addLast(StatusChannelHandler.class.getSimpleName(),new StatusChannelHandler(eventListener,connectionBrokenListener));
+                pipeline.addLast(MessageChannelHandler.class.getSimpleName(),new MessageChannelHandler(messageParser));
                 if (handlers!=null){
                     for (String key : handlers.keySet()) {
                         pipeline.addLast(key, handlers.get(key));
                     }
                 }
-
-
                 hasInit=true;
             }
         });
@@ -256,33 +234,37 @@ public class RealConnection  implements Connection {
     }
 
 
-
-    public synchronized static    LRUMap<String,Object> lruMap(){
-        return lruMap;
-    }
-
-
-    private synchronized void  putResponse(String tag,Object o) throws IOException {
-        synchronized (lruMap()){
-            lruMap.put(tag,o);
-            if (onResponseListenerMap.containsKey(tag)){
-                onResponseListenerMap.get(tag).onResponseArrive(tag,o);
-            }
-        }
+    public synchronized LRUMap<String,Response> responseLRUMap(){
+        return responseLRUMap;
     }
 
     /**
-     * 注册后续消息状态的监听，例如已读、撤回、等状态
-     * @param tag
-     * @param listener
+     * 注册消息消费者
+     * @param request
+     * @param consumers
      */
-    public void registerAttentionResponse(String tag,OnResponseListener listener){
-
-        synchronized (onResponseListenerMap){
-            onResponseListenerMap.put(tag,listener);
-        }
-
+    public void registerConsumer(final Request request, List<Consumer> consumers){
+        messageParser.registerConsumer(request.requestTag, consumers);
     }
+    public void registerAckConsumer(final Request request,Consumer ackConsumer){
+        if (ackConsumer!=null){
+            messageParser.registerAckConsumer(request.requestTag,ackConsumer ,new OnResponseListener() {
+                @Override
+                public void onResponseArrive(Response response) {
+                    response.request=request;
+                    responseLRUMap.put(request.requestTag,response);
+                }
+            });
+        }
+    }
+
+    public void unRegisterConsumer(final  Request request){
+        messageParser.unRegisterConsumer(request.requestTag);
+    }
+    public boolean isRegister(final  Request request){
+       return    messageParser.isRegisterConsumer(request.requestTag);
+    }
+
     public boolean isReConnect(){
         return reConnect;
     }
@@ -291,9 +273,6 @@ public class RealConnection  implements Connection {
         void connectionBroken();
     }
 
-    public interface OnResponseListener{
-       void onResponseArrive(String tag,Object o) throws IOException;
-    }
 
 
 }
