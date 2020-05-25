@@ -1,4 +1,4 @@
-package com.takiku.im_lib.internal;
+package com.takiku.im_lib.defaultImpl;
 
 import com.takiku.im_lib.internal.handler.listener.MessageHandler;
 import com.takiku.im_lib.protobuf.PackProtobuf;

@@ -1,8 +1,12 @@
 package com.takiku.im_lib.internal.connection;
 
+import com.takiku.im_lib.call.Consumer;
+import com.takiku.im_lib.call.OnResponseListener;
 import com.takiku.im_lib.codec.Codec;
 import com.takiku.im_lib.client.IMClient;
 import com.takiku.im_lib.dispatcher.Connection;
+import com.takiku.im_lib.entity.base.Request;
+import com.takiku.im_lib.entity.base.Response;
 import com.takiku.im_lib.exception.AuthException;
 import com.takiku.im_lib.internal.handler.internalhandler.HeartbeatChannelHandler;
 import com.takiku.im_lib.internal.handler.internalhandler.MessageChannelHandler;
@@ -14,6 +18,7 @@ import com.takiku.im_lib.util.LRUMap;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -37,23 +42,21 @@ public class RealConnection  implements Connection {
     private Channel channel;
     private final ConnectionPool connectionPool;
     private Bootstrap bootstrap;
-    private static volatile LRUMap<String,Object> subsequentLruMap; //后续消息回复，一般指，该消息被读、被撤回等状态
-    private static volatile LRUMap<String,Object> ackLruMap;//消息被确认，即代表消息发送成功
     private com.google.protobuf.GeneratedMessageV3  heartBeatMsg;
+    private MessageParser messageParser;
     private boolean hasInit=false;
     private InetSocketAddress inetSocketAddress;
     private LinkedHashMap<String, ChannelHandler> handlers;
     private EventListener eventListener;
     private volatile boolean reConnect;
     private connectionBrokenListener connectionBrokenListener;
-    private static volatile Map<String,OnSubsequentResponseListener> onSubsequentResponseListenerMap=new LRUMap<>(20);
+    private volatile LRUMap<String,Response> responseLRUMap;
+
 
     public RealConnection(ConnectionPool connectionPool, InetSocketAddress inetSocketAddress, EventListener eventListener){
         this.inetSocketAddress=inetSocketAddress;
         this.connectionPool=connectionPool;
         this.eventListener=eventListener;
-        subsequentLruMap=new LRUMap(20);
-        ackLruMap=new LRUMap<>(20);
         EventLoopGroup loopGroup = new NioEventLoopGroup(4);
         bootstrap = new Bootstrap();
         bootstrap.group(loopGroup).channel(NioSocketChannel.class);
@@ -62,6 +65,7 @@ public class RealConnection  implements Connection {
         // 设置禁用nagle算法
         bootstrap.option(ChannelOption.TCP_NODELAY, true);
         reConnect=true;
+        responseLRUMap=new LRUMap<>(30);
     }
     public void release(boolean reConnect){
         this.reConnect=reConnect;
@@ -84,10 +88,6 @@ public class RealConnection  implements Connection {
         }
         connectionPool.destroyWorkLoopGroup();
         bootstrap=null;
-        eventListener.connectionReleased(this);
-        subsequentLruMap.clear();
-        ackLruMap.clear();
-        onSubsequentResponseListenerMap.clear();
         eventListener.connectionReleased(this);
     }
     /**
@@ -121,6 +121,7 @@ public class RealConnection  implements Connection {
         this.handlers=handlers;
         this.heartBeatMsg=heartBeatMsg;
         this.connectionBrokenListener=connectionBrokenListener;
+        this.messageParser=messageParser;
         bootstrap.handler(new ChannelInitializer<Channel>() {
             @Override
             protected void initChannel(Channel channel ) throws Exception {
@@ -145,13 +146,6 @@ public class RealConnection  implements Connection {
                         }
                     }
                 });
-                messageParser.addSubsequentReplyListener(new MessageParser.onSubsequentReplyListener() {
-                    @Override
-                    public void subsequentReply(String tag, Object msg) {
-                         putSubsequentMsg(tag,msg);
-                    }
-                });
-
 
                 pipeline.addLast(codec.EnCoder().getClass().getSimpleName(),codec.EnCoder());
                 pipeline.addLast(codec.DeCoder().getClass().getSimpleName(),codec.DeCoder());
@@ -240,34 +234,37 @@ public class RealConnection  implements Connection {
     }
 
 
-
-    public  static  LRUMap<String,Object> ackMsgLruMap(){
-        return ackLruMap;
+    public synchronized LRUMap<String,Response> responseLRUMap(){
+        return responseLRUMap;
     }
-
-
-    private  void  putAck(String tag,Object o) throws IOException {
-        synchronized (ackMsgLruMap()){
-            ackLruMap.put(tag,o);
-        }
-    }
-    private  void putSubsequentMsg(String tag,Object o){
-      if (onSubsequentResponseListenerMap.containsKey(tag)){
-          onSubsequentResponseListenerMap.get(tag).onSubsequentResponseArrive(tag,o);
-      }
-    }
-
-
 
     /**
-     * 注册后续消息状态的监听，例如已读、撤回、等状态
-     * @param tag
-     * @param listener
+     * 注册消息消费者
+     * @param request
+     * @param consumers
      */
-    public void registerSubsequentResponse(String tag,OnSubsequentResponseListener listener){
-            onSubsequentResponseListenerMap.put(tag,listener);
-
+    public void registerConsumer(final Request request, List<Consumer> consumers){
+        messageParser.registerConsumer(request.requestTag, consumers);
     }
+    public void registerAckConsumer(final Request request,Consumer ackConsumer){
+        if (ackConsumer!=null){
+            messageParser.registerAckConsumer(request.requestTag,ackConsumer ,new OnResponseListener() {
+                @Override
+                public void onResponseArrive(Response response) {
+                    response.request=request;
+                    responseLRUMap.put(request.requestTag,response);
+                }
+            });
+        }
+    }
+
+    public void unRegisterConsumer(final  Request request){
+        messageParser.unRegisterConsumer(request.requestTag);
+    }
+    public boolean isRegister(final  Request request){
+       return    messageParser.isRegisterConsumer(request.requestTag);
+    }
+
     public boolean isReConnect(){
         return reConnect;
     }
@@ -276,9 +273,6 @@ public class RealConnection  implements Connection {
         void connectionBroken();
     }
 
-    public interface OnSubsequentResponseListener{
-       void onSubsequentResponseArrive(String tag,Object o);
-    }
 
 
 }

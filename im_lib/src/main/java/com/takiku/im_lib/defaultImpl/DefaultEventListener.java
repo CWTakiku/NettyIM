@@ -1,9 +1,10 @@
-package com.takiku.im_lib.listener;
+package com.takiku.im_lib.defaultImpl;
 
 import android.telecom.StatusHints;
 
 import com.takiku.im_lib.call.Call;
 import com.takiku.im_lib.dispatcher.Connection;
+import com.takiku.im_lib.listener.EventListener;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -37,7 +38,7 @@ public class DefaultEventListener extends EventListener {
     @Override
     public void sendMsgStart(Call call) {
         super.sendMsgStart(call);
-        System.out.println(userId+" sendMsgStart");
+        System.out.println(userId+" sendMsgStart "+call.request().requestBody.toString());
     }
 
     @Override
@@ -49,13 +50,13 @@ public class DefaultEventListener extends EventListener {
     @Override
     public void connectionException(Throwable throwable) {
         super.connectionException(throwable);
-        System.out.println(userId+" connectionException");
+        System.out.println(userId+" connectionException "+throwable.toString());
     }
 
     @Override
     public void sendMsgFailed(Call call) {
         super.sendMsgFailed(call);
-        System.out.println(userId +" sendMsgFailed");
+        System.out.println(userId +" sendMsgFailed "+call.request().requestBody.toString());
     }
 
     @Override

@@ -6048,16 +6048,16 @@ public final class PackProtobuf {
       com.google.protobuf.MessageOrBuilder {
 
     /**
-     * <code>string userId = 1;</code>
-     * @return The userId.
+     * <code>string msgId = 1;</code>
+     * @return The msgId.
      */
-    String getUserId();
+    String getMsgId();
     /**
-     * <code>string userId = 1;</code>
-     * @return The bytes for userId.
+     * <code>string msgId = 1;</code>
+     * @return The bytes for msgId.
      */
     com.google.protobuf.ByteString
-        getUserIdBytes();
+        getMsgIdBytes();
   }
   /**
    * <pre>
@@ -6076,7 +6076,7 @@ public final class PackProtobuf {
       super(builder);
     }
     private Heart() {
-      userId_ = "";
+      msgId_ = "";
     }
 
     @Override
@@ -6112,7 +6112,7 @@ public final class PackProtobuf {
             case 10: {
               String s = input.readStringRequireUtf8();
 
-              userId_ = s;
+              msgId_ = s;
               break;
             }
             default: {
@@ -6147,36 +6147,36 @@ public final class PackProtobuf {
               Heart.class, Builder.class);
     }
 
-    public static final int USERID_FIELD_NUMBER = 1;
-    private volatile Object userId_;
+    public static final int MSGID_FIELD_NUMBER = 1;
+    private volatile Object msgId_;
     /**
-     * <code>string userId = 1;</code>
-     * @return The userId.
+     * <code>string msgId = 1;</code>
+     * @return The msgId.
      */
-    public String getUserId() {
-      Object ref = userId_;
+    public String getMsgId() {
+      Object ref = msgId_;
       if (ref instanceof String) {
         return (String) ref;
       } else {
         com.google.protobuf.ByteString bs = 
             (com.google.protobuf.ByteString) ref;
         String s = bs.toStringUtf8();
-        userId_ = s;
+        msgId_ = s;
         return s;
       }
     }
     /**
-     * <code>string userId = 1;</code>
-     * @return The bytes for userId.
+     * <code>string msgId = 1;</code>
+     * @return The bytes for msgId.
      */
     public com.google.protobuf.ByteString
-        getUserIdBytes() {
-      Object ref = userId_;
+        getMsgIdBytes() {
+      Object ref = msgId_;
       if (ref instanceof String) {
         com.google.protobuf.ByteString b = 
             com.google.protobuf.ByteString.copyFromUtf8(
                 (String) ref);
-        userId_ = b;
+        msgId_ = b;
         return b;
       } else {
         return (com.google.protobuf.ByteString) ref;
@@ -6197,8 +6197,8 @@ public final class PackProtobuf {
     @Override
     public void writeTo(com.google.protobuf.CodedOutputStream output)
                         throws java.io.IOException {
-      if (!getUserIdBytes().isEmpty()) {
-        com.google.protobuf.GeneratedMessageV3.writeString(output, 1, userId_);
+      if (!getMsgIdBytes().isEmpty()) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 1, msgId_);
       }
       unknownFields.writeTo(output);
     }
@@ -6209,8 +6209,8 @@ public final class PackProtobuf {
       if (size != -1) return size;
 
       size = 0;
-      if (!getUserIdBytes().isEmpty()) {
-        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(1, userId_);
+      if (!getMsgIdBytes().isEmpty()) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(1, msgId_);
       }
       size += unknownFields.getSerializedSize();
       memoizedSize = size;
@@ -6227,8 +6227,8 @@ public final class PackProtobuf {
       }
       Heart other = (Heart) obj;
 
-      if (!getUserId()
-          .equals(other.getUserId())) return false;
+      if (!getMsgId()
+          .equals(other.getMsgId())) return false;
       if (!unknownFields.equals(other.unknownFields)) return false;
       return true;
     }
@@ -6240,8 +6240,8 @@ public final class PackProtobuf {
       }
       int hash = 41;
       hash = (19 * hash) + getDescriptor().hashCode();
-      hash = (37 * hash) + USERID_FIELD_NUMBER;
-      hash = (53 * hash) + getUserId().hashCode();
+      hash = (37 * hash) + MSGID_FIELD_NUMBER;
+      hash = (53 * hash) + getMsgId().hashCode();
       hash = (29 * hash) + unknownFields.hashCode();
       memoizedHashCode = hash;
       return hash;
@@ -6379,7 +6379,7 @@ public final class PackProtobuf {
       @Override
       public Builder clear() {
         super.clear();
-        userId_ = "";
+        msgId_ = "";
 
         return this;
       }
@@ -6407,7 +6407,7 @@ public final class PackProtobuf {
       @Override
       public Heart buildPartial() {
         Heart result = new Heart(this);
-        result.userId_ = userId_;
+        result.msgId_ = msgId_;
         onBuilt();
         return result;
       }
@@ -6456,8 +6456,8 @@ public final class PackProtobuf {
 
       public Builder mergeFrom(Heart other) {
         if (other == Heart.getDefaultInstance()) return this;
-        if (!other.getUserId().isEmpty()) {
-          userId_ = other.userId_;
+        if (!other.getMsgId().isEmpty()) {
+          msgId_ = other.msgId_;
           onChanged();
         }
         this.mergeUnknownFields(other.unknownFields);
@@ -6489,78 +6489,78 @@ public final class PackProtobuf {
         return this;
       }
 
-      private Object userId_ = "";
+      private Object msgId_ = "";
       /**
-       * <code>string userId = 1;</code>
-       * @return The userId.
+       * <code>string msgId = 1;</code>
+       * @return The msgId.
        */
-      public String getUserId() {
-        Object ref = userId_;
+      public String getMsgId() {
+        Object ref = msgId_;
         if (!(ref instanceof String)) {
           com.google.protobuf.ByteString bs =
               (com.google.protobuf.ByteString) ref;
           String s = bs.toStringUtf8();
-          userId_ = s;
+          msgId_ = s;
           return s;
         } else {
           return (String) ref;
         }
       }
       /**
-       * <code>string userId = 1;</code>
-       * @return The bytes for userId.
+       * <code>string msgId = 1;</code>
+       * @return The bytes for msgId.
        */
       public com.google.protobuf.ByteString
-          getUserIdBytes() {
-        Object ref = userId_;
+          getMsgIdBytes() {
+        Object ref = msgId_;
         if (ref instanceof String) {
           com.google.protobuf.ByteString b = 
               com.google.protobuf.ByteString.copyFromUtf8(
                   (String) ref);
-          userId_ = b;
+          msgId_ = b;
           return b;
         } else {
           return (com.google.protobuf.ByteString) ref;
         }
       }
       /**
-       * <code>string userId = 1;</code>
-       * @param value The userId to set.
+       * <code>string msgId = 1;</code>
+       * @param value The msgId to set.
        * @return This builder for chaining.
        */
-      public Builder setUserId(
+      public Builder setMsgId(
           String value) {
         if (value == null) {
     throw new NullPointerException();
   }
   
-        userId_ = value;
+        msgId_ = value;
         onChanged();
         return this;
       }
       /**
-       * <code>string userId = 1;</code>
+       * <code>string msgId = 1;</code>
        * @return This builder for chaining.
        */
-      public Builder clearUserId() {
+      public Builder clearMsgId() {
         
-        userId_ = getDefaultInstance().getUserId();
+        msgId_ = getDefaultInstance().getMsgId();
         onChanged();
         return this;
       }
       /**
-       * <code>string userId = 1;</code>
-       * @param value The bytes for userId to set.
+       * <code>string msgId = 1;</code>
+       * @param value The bytes for msgId to set.
        * @return This builder for chaining.
        */
-      public Builder setUserIdBytes(
+      public Builder setMsgIdBytes(
           com.google.protobuf.ByteString value) {
         if (value == null) {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
         
-        userId_ = value;
+        msgId_ = value;
         onChanged();
         return this;
       }
@@ -6632,6 +6632,18 @@ public final class PackProtobuf {
      */
     com.google.protobuf.ByteString
         getMsgIdBytes();
+
+    /**
+     * <code>int32 ackType = 2;</code>
+     * @return The ackType.
+     */
+    int getAckType();
+
+    /**
+     * <code>int32 result = 3;</code>
+     * @return The result.
+     */
+    int getResult();
   }
   /**
    * Protobuf type {@code Ack}
@@ -6683,6 +6695,16 @@ public final class PackProtobuf {
               String s = input.readStringRequireUtf8();
 
               msgId_ = s;
+              break;
+            }
+            case 16: {
+
+              ackType_ = input.readInt32();
+              break;
+            }
+            case 24: {
+
+              result_ = input.readInt32();
               break;
             }
             default: {
@@ -6753,6 +6775,26 @@ public final class PackProtobuf {
       }
     }
 
+    public static final int ACKTYPE_FIELD_NUMBER = 2;
+    private int ackType_;
+    /**
+     * <code>int32 ackType = 2;</code>
+     * @return The ackType.
+     */
+    public int getAckType() {
+      return ackType_;
+    }
+
+    public static final int RESULT_FIELD_NUMBER = 3;
+    private int result_;
+    /**
+     * <code>int32 result = 3;</code>
+     * @return The result.
+     */
+    public int getResult() {
+      return result_;
+    }
+
     private byte memoizedIsInitialized = -1;
     @Override
     public final boolean isInitialized() {
@@ -6770,6 +6812,12 @@ public final class PackProtobuf {
       if (!getMsgIdBytes().isEmpty()) {
         com.google.protobuf.GeneratedMessageV3.writeString(output, 1, msgId_);
       }
+      if (ackType_ != 0) {
+        output.writeInt32(2, ackType_);
+      }
+      if (result_ != 0) {
+        output.writeInt32(3, result_);
+      }
       unknownFields.writeTo(output);
     }
 
@@ -6781,6 +6829,14 @@ public final class PackProtobuf {
       size = 0;
       if (!getMsgIdBytes().isEmpty()) {
         size += com.google.protobuf.GeneratedMessageV3.computeStringSize(1, msgId_);
+      }
+      if (ackType_ != 0) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeInt32Size(2, ackType_);
+      }
+      if (result_ != 0) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeInt32Size(3, result_);
       }
       size += unknownFields.getSerializedSize();
       memoizedSize = size;
@@ -6799,6 +6855,10 @@ public final class PackProtobuf {
 
       if (!getMsgId()
           .equals(other.getMsgId())) return false;
+      if (getAckType()
+          != other.getAckType()) return false;
+      if (getResult()
+          != other.getResult()) return false;
       if (!unknownFields.equals(other.unknownFields)) return false;
       return true;
     }
@@ -6812,6 +6872,10 @@ public final class PackProtobuf {
       hash = (19 * hash) + getDescriptor().hashCode();
       hash = (37 * hash) + MSGID_FIELD_NUMBER;
       hash = (53 * hash) + getMsgId().hashCode();
+      hash = (37 * hash) + ACKTYPE_FIELD_NUMBER;
+      hash = (53 * hash) + getAckType();
+      hash = (37 * hash) + RESULT_FIELD_NUMBER;
+      hash = (53 * hash) + getResult();
       hash = (29 * hash) + unknownFields.hashCode();
       memoizedHashCode = hash;
       return hash;
@@ -6947,6 +7011,10 @@ public final class PackProtobuf {
         super.clear();
         msgId_ = "";
 
+        ackType_ = 0;
+
+        result_ = 0;
+
         return this;
       }
 
@@ -6974,6 +7042,8 @@ public final class PackProtobuf {
       public Ack buildPartial() {
         Ack result = new Ack(this);
         result.msgId_ = msgId_;
+        result.ackType_ = ackType_;
+        result.result_ = result_;
         onBuilt();
         return result;
       }
@@ -7025,6 +7095,12 @@ public final class PackProtobuf {
         if (!other.getMsgId().isEmpty()) {
           msgId_ = other.msgId_;
           onChanged();
+        }
+        if (other.getAckType() != 0) {
+          setAckType(other.getAckType());
+        }
+        if (other.getResult() != 0) {
+          setResult(other.getResult());
         }
         this.mergeUnknownFields(other.unknownFields);
         onChanged();
@@ -7127,6 +7203,66 @@ public final class PackProtobuf {
   checkByteStringIsUtf8(value);
         
         msgId_ = value;
+        onChanged();
+        return this;
+      }
+
+      private int ackType_ ;
+      /**
+       * <code>int32 ackType = 2;</code>
+       * @return The ackType.
+       */
+      public int getAckType() {
+        return ackType_;
+      }
+      /**
+       * <code>int32 ackType = 2;</code>
+       * @param value The ackType to set.
+       * @return This builder for chaining.
+       */
+      public Builder setAckType(int value) {
+        
+        ackType_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>int32 ackType = 2;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearAckType() {
+        
+        ackType_ = 0;
+        onChanged();
+        return this;
+      }
+
+      private int result_ ;
+      /**
+       * <code>int32 result = 3;</code>
+       * @return The result.
+       */
+      public int getResult() {
+        return result_;
+      }
+      /**
+       * <code>int32 result = 3;</code>
+       * @param value The result to set.
+       * @return This builder for chaining.
+       */
+      public Builder setResult(int value) {
+        
+        result_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>int32 result = 3;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearResult() {
+        
+        result_ = 0;
         onChanged();
         return this;
       }
@@ -7242,9 +7378,10 @@ public final class PackProtobuf {
       "stamp\030\006 \001(\003\022\016\n\006extend\030\007 \001(\t\022\014\n\004auth\030\010 \001(" +
       "\t\"O\n\005Reply\022\021\n\treplyType\030\001 \001(\005\022\r\n\005msgId\030\002" +
       " \001(\t\022\016\n\006userId\030\003 \001(\t\022\024\n\014statusReport\030\004 \001" +
-      "(\005\"\027\n\005Heart\022\016\n\006userId\030\001 \001(\t\"\024\n\003Ack\022\r\n\005ms" +
-      "gId\030\001 \001(\tB*\n\032com.takiku.im_lib.protobufB" +
-      "\014PackProtobufb\006proto3"
+      "(\005\"\026\n\005Heart\022\r\n\005msgId\030\001 \001(\t\"5\n\003Ack\022\r\n\005msg" +
+      "Id\030\001 \001(\t\022\017\n\007ackType\030\002 \001(\005\022\016\n\006result\030\003 \001(" +
+      "\005B*\n\032com.takiku.im_lib.protobufB\014PackPro" +
+      "tobufb\006proto3"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
@@ -7285,13 +7422,13 @@ public final class PackProtobuf {
     internal_static_Heart_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_Heart_descriptor,
-        new String[] { "UserId", });
+        new String[] { "MsgId", });
     internal_static_Ack_descriptor =
       getDescriptor().getMessageTypes().get(6);
     internal_static_Ack_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_Ack_descriptor,
-        new String[] { "MsgId", });
+        new String[] { "MsgId", "AckType", "Result", });
   }
 
   // @@protoc_insertion_point(outer_class_scope)

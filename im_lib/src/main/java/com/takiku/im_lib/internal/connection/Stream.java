@@ -1,13 +1,13 @@
 package com.takiku.im_lib.internal.connection;
 
-import com.google.protobuf.GeneratedMessageV3;
-import com.takiku.im_lib.call.SubsequentCallback;
+import com.takiku.im_lib.call.Consumer;
 import com.takiku.im_lib.entity.base.Request;
 import com.takiku.im_lib.client.IMClient;
 import com.takiku.im_lib.entity.base.Response;
 import com.takiku.im_lib.util.LRUMap;
 
 import java.io.IOException;
+import java.util.List;
 
 import io.netty.channel.Channel;
 
@@ -43,29 +43,50 @@ public class Stream implements TcpStream {
 
     }
 
-    @Override
-    public Response readAck(Request request) {
-        LRUMap<String,Object> lruMap= streamAllocation.connection().ackLruMap();
-        if (lruMap.containsKey(request.requestTag)){
-            Object object=lruMap.get(request.requestTag);
-           return new Response.Builder().setCode(Response.SUCCESS).setRequest(request).setResponse((GeneratedMessageV3) object).build();
-        }
 
-        return null;
+    @Override
+    public void registerConsumers(Request request, List<Consumer> consumers) {
+        streamAllocation.connection().registerConsumer(request,consumers);
     }
 
     @Override
-    public void subsequentResponse(Request request, SubsequentCallback callback) {
-         streamAllocation.connection().registerAttentionResponse(request.requestTag, new RealConnection.OnResponseListener() {
-            @Override
-            public void onResponseArrive(String tag, Object o) throws IOException {
-              Response response=   new Response.Builder().setCode(Response.SUCCESS).setRequest(request).setResponse((GeneratedMessageV3) o).build();
-                callback.onSubsequentResponse(response);
-            }
-        });
-    };
+    public void registerAckConsumer(Request request) {
+        streamAllocation.connection().registerAckConsumer(request,imClient.ackConsumer());
+    }
 
 
 
+//    @Override
+//    public Response readAck(Request request) {
+//        LRUMap<String,Object> lruMap= streamAllocation.connection().ackMsgLruMap();
+//        if (lruMap.containsKey(request.requestTag)){
+//            Object object=lruMap.get(request.requestTag);
+//           return new Response.Builder().setCode(Response.SUCCESS).setRequest(request).setResponse((GeneratedMessageV3) object).build();
+//        }
+//
+//        return null;
+//    }
+//
+//    @Override
+//    public void subsequentResponse(Request request, List<Consumer> consumers) {
+//         streamAllocation.connection().registerSubsequentResponse(request.requestTag, new RealConnection.OnSubsequentResponseListener() {
+//             @Override
+//             public void onSubsequentResponseArrive(String tag, Object o) {
+//                 Response response=   new Response.Builder().setCode(Response.SUCCESS).setRequest(request).setResponse((GeneratedMessageV3) o).build();
+//                 callback.onSubsequentResponse(response);
+//             }
+//
+//        });
+//    }
+
+    @Override
+    public Response readResponse(Request request) {
+        LRUMap<String,Response> lruMap= streamAllocation.connection().responseLRUMap();
+        if (lruMap.containsKey(request.requestTag)){
+            return lruMap.get(request.requestTag);
+        }else {
+            return null;
+        }
+    }
 
 }

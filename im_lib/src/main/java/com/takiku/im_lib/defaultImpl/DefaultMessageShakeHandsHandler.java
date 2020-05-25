@@ -1,4 +1,4 @@
-package com.takiku.im_lib.internal;
+package com.takiku.im_lib.defaultImpl;
 
 import com.google.protobuf.GeneratedMessageV3;
 import com.takiku.im_lib.entity.ShakeHandsMessage;
@@ -10,36 +10,30 @@ import com.takiku.im_lib.protobuf.PackProtobuf;
  */
 public class DefaultMessageShakeHandsHandler implements MessageShakeHandsHandler<PackProtobuf.Pack,PackProtobuf.Pack> {
 
-   public static final int SHAKE_HANDS_REPLY_TYPE=0x12;
+   public static final int SHAKE_HANDS_ACK_TYPE=0x12;
     public static final int SHAKE_HANDS_STATUS_SUCCESS=1;
     public static final int SHAKE_HANDS_STATUS_FAILED=0;
 
-
-    private PackProtobuf.Pack getDefaultHands() {
-        ShakeHandsMessage shakeHandsMessage =new ShakeHandsMessage();
-        shakeHandsMessage.setToken("token1");
-        shakeHandsMessage.setUserId("user id1");
-        shakeHandsMessage.setMsgId("1111");
-        return PackProtobuf.Pack.newBuilder()
-                .setPackType(PackProtobuf.Pack.PackType.SHAKEHANDS)
-                .setShakeHands(shakeHandsMessage.buildProto())
-                .build();
+    private PackProtobuf.Pack shakeHands;
+    public DefaultMessageShakeHandsHandler(PackProtobuf.Pack shakeHands){
+        this.shakeHands=shakeHands;
     }
+
     @Override
     public PackProtobuf.Pack ShakeHands() {
-        return getDefaultHands();
+        return shakeHands;
     }
 
     @Override
     public boolean isShakeHands(Object msg) {
         PackProtobuf.Pack pack= (PackProtobuf.Pack) msg;
-        return pack.getPackType()==PackProtobuf.Pack.PackType.REPLY
-                &&pack.getReply().getReplyType()==SHAKE_HANDS_REPLY_TYPE;
+        return pack.getPackType()==PackProtobuf.Pack.PackType.ACK
+                &&pack.getAck().getAckType()==SHAKE_HANDS_ACK_TYPE;
     }
 
     @Override
     public boolean isShakeHandsOk(PackProtobuf.Pack pack) {
-        if (pack.getReply().getStatusReport()== SHAKE_HANDS_STATUS_SUCCESS ){
+        if (pack.getAck().getResult()== SHAKE_HANDS_STATUS_SUCCESS ){
             return true;
         }else {
             return false;

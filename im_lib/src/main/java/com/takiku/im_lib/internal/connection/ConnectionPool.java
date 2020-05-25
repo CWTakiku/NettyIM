@@ -23,6 +23,9 @@ public final class ConnectionPool {
     public ConnectionPool(){
 
     }
+    public RealConnection realConnection(){
+        return realConnection;
+    }
 
 
     public void deduplicate(){

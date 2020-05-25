@@ -12,10 +12,13 @@ import com.takiku.im_lib.interceptor.ConnectInterceptor;
 import com.takiku.im_lib.interceptor.Interceptor;
 import com.takiku.im_lib.interceptor.RealInterceptorChain;
 import com.takiku.im_lib.interceptor.RetryAndFollowUpInterceptor;
+import com.takiku.im_lib.internal.Internal;
+import com.takiku.im_lib.internal.connection.RealConnection;
 import com.takiku.im_lib.listener.EventListener;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class RealCall implements Call {
@@ -24,6 +27,7 @@ public class RealCall implements Call {
     final RetryAndFollowUpInterceptor retryAndFollowUpInterceptor;
     private EventListener eventListener;
     private boolean executed;
+    private List<Consumer> consumers;
     public RealCall(IMClient client, Request originalRequest){
      this.client=client;
      this.originalRequest=originalRequest;
@@ -37,13 +41,19 @@ public class RealCall implements Call {
     }
 
     @Override
-    public void enqueue(Callback responseCallback) {
+    public Call enqueue(Callback responseCallback) {
         synchronized (this) {
             if (executed) throw new IllegalStateException("Already Executed");
             executed = true;
         }
         client.dispatcher().enqueue(new AsyncCall(responseCallback));
+        return this;
     }
+
+
+
+
+
     static RealCall newRealCall(IMClient client, Request originalRequest) {
         // Safely publish the Call instance to the EventListener.
         RealCall call = new RealCall(client, originalRequest);
@@ -54,7 +64,37 @@ public class RealCall implements Call {
     public Call clone() {
         return RealCall.newRealCall(client, originalRequest);
     }
-   public final class AsyncCall extends NamedRunnable {
+
+
+
+    @Override
+    public Disposable subscribe(Consumer... consumers) {
+        this.consumers= Arrays.asList(consumers);
+        return new MessageSubscriber(this);
+    }
+
+    @Override
+    public Disposable subscribe(List<Consumer> consumerList) {
+        return new MessageSubscriber(this);
+    }
+
+
+    protected void dispose(){
+        RealConnection realConnection= client.connectionPool().realConnection();
+        if (realConnection!=null){
+            realConnection.unRegisterConsumer(request());
+        }
+    }
+    protected boolean isDisposed(){
+        RealConnection realConnection= client.connectionPool().realConnection();
+        if (realConnection!=null){
+          return   realConnection.isRegister(request());
+        }else {
+            return true;
+        }
+    }
+
+    public final class AsyncCall extends NamedRunnable {
         private final Callback responseCallback;
 
         AsyncCall(Callback responseCallback) {
@@ -73,12 +113,7 @@ public class RealCall implements Call {
         protected void execute() {
             boolean signalledCallback = false;
          try{
-             Response response = getResponseWithInterceptorChain(new SubsequentCallback() {
-                 @Override
-                 public void onSubsequentResponse(Response subsequentResponse) throws IOException {
-                     responseCallback.onResponse(RealCall.this,subsequentResponse);
-                 }
-             });
+             Response response = getResponseWithInterceptorChain(consumers);
              if (retryAndFollowUpInterceptor.isCanceled()){
                  signalledCallback = true;
 
@@ -113,7 +148,7 @@ public class RealCall implements Call {
 
     }
 
-    Response getResponseWithInterceptorChain(SubsequentCallback callback) throws IOException, InterruptedException, AuthException, SendTimeoutException {
+    Response getResponseWithInterceptorChain(List<Consumer> consumers) throws IOException, InterruptedException, AuthException, SendTimeoutException {
         // Build a full stack of interceptors.
         List<Interceptor> interceptors = new ArrayList<>();
         if (client.interceptors()!=null&&client.interceptors().size()>0){
@@ -123,7 +158,7 @@ public class RealCall implements Call {
         interceptors.add(new BridgeInterceptor(client));
        // interceptors.add(new CacheInterceptor());
         interceptors.add(new ConnectInterceptor(client));
-        interceptors.add(new CallServerInterceptor(callback));
+        interceptors.add(new CallServerInterceptor(consumers));
 
 
         Interceptor.Chain chain = new RealInterceptorChain(

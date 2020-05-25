@@ -19,6 +19,15 @@ public class ReplyMessage extends AbstractPack {
     String userId;
     int replyType;
 
+    public static ReplyMessage buildReplyMessage(PackProtobuf.Reply reply) {
+        ReplyMessage replyMessage=new ReplyMessage();
+        replyMessage.setReplyType(reply.getReplyType());
+        replyMessage.setUserId(reply.getUserId());
+        replyMessage.setMsgId(reply.getMsgId());
+        replyMessage.setStatusReport(reply.getStatusReport());
+        return replyMessage;
+    }
+
 
     public PackProtobuf.Reply buildProto() {
         return PackProtobuf.Reply.newBuilder()

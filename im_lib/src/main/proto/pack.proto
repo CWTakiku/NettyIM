@@ -49,8 +49,10 @@ message Reply{ //消息回执
   int32 statusReport=4;//状态
 }
 message Heart{ //心跳
-  string userId=1;
+  string msgId=1;
 }
 message Ack{
-    string msgId=1;
+    string ackMsgId=1;
+    int32 ackType=2;
+    int32 result=3;
 }

@@ -31,7 +31,7 @@
             android:layout_width="0dp"
             android:layout_weight="1"
             android:id="@+id/et_content1"
-            android:hint="client1"
+            android:hint="client1 消息长按可更改消息为撤回、已读"
             android:background="@null"
             android:layout_height="wrap_content"/>
         <Button
@@ -65,7 +65,7 @@
                 android:layout_width="0dp"
                 android:layout_weight="1"
                 android:id="@+id/et_content2"
-                android:hint="client2"
+                android:hint="client2 消息长按可更改消息为撤回、已读"
                 android:background="@null"
                 android:layout_height="wrap_content"/>
             <Button
