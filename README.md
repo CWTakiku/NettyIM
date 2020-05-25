@@ -15,7 +15,7 @@ Add it in your root build.gradle at the end of repositories:
 Step 2. Add the dependency
 ```
 dependencies {
-	        implementation 'com.github.mrchengwenlong:NettyIM:1.0.0'
+	        implementation 'com.github.mrchengwenlong:NettyIM:1.0.1'
 	}
 ```
 ### 二、使用方式
@@ -26,23 +26,22 @@ dependencies {
 ```
 ``` 
     //所以default都可以替换成开发者的实现，只要实现相应接口即可
-    imClient=new IMClient.Builder()
+        imClient=new IMClient.Builder()
                 .setCodec(new DefaultCodec()) //默认的编解码，开发者可以使用自己的protobuf编解码
-                .setShakeHands(getDefaultHands(),new DefaultShakeHandsHandler()) //设置握手认证，可选
+                .setShakeHands(new DefaultMessageShakeHandsHandler(getDefaultHands())) //设置握手认证，可选
                 .setHeartBeatMsg(getDefaultHeart()) //设置心跳,可选
-                 .setConnectTimeout(10, TimeUnit.SECONDS)//设置连接超时
+                .setAckConsumer(new DefaultAckConsumer()) //设置心跳机制
+                .setConnectTimeout(10, TimeUnit.SECONDS) //设置连接超时
                 .setResendCount(3)//设置失败重试数
                 .setConnectionRetryEnabled(true)//是否连接重试
                 .setSendTimeout(6,TimeUnit.SECONDS)//设置发送超时
                 .setHeartIntervalBackground(30,TimeUnit.SECONDS)//后台心跳间隔
-                .setHeartIntervalForeground(10,TimeUnit.SECONDS)//设置前台心跳间隔
-                //.addInterceptor() //添加你自己的拦截器
-                //.addChannelHandler() //添加你自己的channelHandler
-                .setMessageRespHandler(new DefaultMessageRespHandler()) //设置消息响应接收器，开发者可自行定制实现MessageRespHandler接口即可
-                .setMessageReceiveHandler(new DefaultMessageReceiveHandler(onMessageArriveListener)) //设置客户端消息接收器，开发者可自行定制实现接口即可
+                .registerMessageHandler(new DefaultMessageReceiveHandler(onMessageArriveListener)) //消息接收处理器
+                .registerMessageHandler(new DefaultReplyReceiveHandler(onReplyListener)) //消息状态接收处理器
+                .registerMessageHandler(new DefaultHeartbeatRespHandler()) //心跳接收处理器
                 .setEventListener(new DefaultEventListener("user id1")) //事件监听，可选
-                .setAddress(new Address("192.168.69.32",8765,Address.Type.SOCKS)) //设置连接地址，可多地址
-                .setAddress(new Address("www.baidu.com",8765,Address.Type.HTTP))
+                .setAddress(new Address("192.168.69.32",8766,Address.Type.SOCKS))
+                .setAddress(new Address("www.baidu.com",8766,Address.Type.HTTP))
                 .build();
 ```
 ```
@@ -52,22 +51,23 @@ imClient.startConnect();//建立连接
 imClient.disConnect();//主动断开连接，不会自动重连
 ```
 ```
- imClient.newCall(request).enqueue(new UICallback(onResponseListener)); //发送消息，消息回执在主线程回调
+  Request request=new Request.Builder(). //创建一个消息发送request
+              setRequestTag(appMessage.getHead().getMsgId()). //请求tag
+              setNeedACK(true).//需要ACK
+              setSendRetry(true). //能发送重试
+              setBody(getMsgPack(appMessage.buildProto())). //body为protbuf
+              build();
 ```
 ```
  imClient.newCall(request).enqueue(callback);//发送消息，消息在子线程回调
 ```
 ```
+Disposable disposable=   imClient.newCall(request).enqueue(callback).subscribe(consumer); //发送消息，会订阅特定的消息处理
+```
+```
  imClient.setBackground(background);//设置前后台切换，将会自动切换不同的心跳间隔
 ```
-```
-  Request request=new Request.Builder(). //创建一个消息发送request
-              setRequestTag(appMessage.getHead().getMsgId()). //请求tag，对应回执tag
-              setNeedResponse(true).//需要消息回执
-              setSendRetry(true). //能发送重试
-              setBody(getMsgPack(appMessage.buildProto())). //body为protbuf
-              build();
-```
+
 ### 三、详细使用
 可自行下载源码运行，先运行com.takiku.im_lib.NettyServerDemo类的服务端demo，再运行demo APP
 
