@@ -33,8 +33,8 @@ public  class Request {
     boolean needACK;
 
     public Builder() {
-        sendRetry=true;
-        needACK=true;
+        sendRetry = true;
+        needACK = true;
     }
     Builder(Request request) {
       this.address=request.address;
@@ -50,17 +50,18 @@ public  class Request {
       this.body=body;
       return this;
     }
-    public Builder setRequestTag(String tag){
-        this.requestTag=tag;
-        return this;
-    }
+
     public Builder setSendRetry(boolean sendRetry){
         this.sendRetry=sendRetry;
         return this;
     }
-
-    public Builder setNeedACK(boolean needAck){
-        this.needACK=needAck;
+        public Builder setNoNeedACK(){
+            this.needACK = false;
+            return this;
+        }
+    public Builder setNoNeedACK(String requestTag){
+        this.needACK = true;
+        this.requestTag = requestTag;
         return this;
     }
     public Request build(){

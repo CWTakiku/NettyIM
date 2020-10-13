@@ -38,5 +38,5 @@ dependencies {
     api "com.google.protobuf:protobuf-java:${cfgs.protobufVersion}"
     compileOnly files('libs/netty-tcp-4.1.33-1.0.jar')
 
-
 }
+

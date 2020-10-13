@@ -11,7 +11,7 @@ public class DefaultAckConsumer implements Consumer<PackProtobuf.Pack> {
     public boolean Observable(PackProtobuf.Pack pack, String requestTag) {
         return pack.getPackType()==PackProtobuf.Pack.PackType.ACK
                 &&pack.getAck().getAckType()==MSG_ACK_TYPE
-                &&pack.getAck().getMsgId().equals(requestTag);
+                &&pack.getAck().getAckMsgId().equals(requestTag);
     }
 
     @Override

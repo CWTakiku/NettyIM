@@ -4,7 +4,10 @@ package com.takiku.im_lib.entity;
 import com.takiku.im_lib.entity.base.Request;
 import com.takiku.im_lib.entity.base.AbstractPack;
 import com.takiku.im_lib.protobuf.PackProtobuf;
+import com.takiku.im_lib.util.IdWorker;
 import com.takiku.im_lib.util.StringUtil;
+
+import java.io.Serializable;
 
 public  class AppMessage extends AbstractPack {
 
@@ -83,7 +86,7 @@ public  class AppMessage extends AbstractPack {
 
     }
 
-    public PackProtobuf.Msg buildProto() {
+    public PackProtobuf.Msg buildProto(long netId) {
         PackProtobuf.Msg.Builder builder = PackProtobuf.Msg.newBuilder();
         PackProtobuf.Head.Builder headBuilder = PackProtobuf.Head.newBuilder();
         headBuilder.setMsgType(getHead().getMsgType());
@@ -100,6 +103,7 @@ public  class AppMessage extends AbstractPack {
             headBuilder.setExtend(getHead().getExtend());
         if (!StringUtil.isEmpty(getBody()))
             builder.setBody(getBody());
+        builder.setSerial( netId);
         builder.setHead(headBuilder);
         return builder.build();
     }

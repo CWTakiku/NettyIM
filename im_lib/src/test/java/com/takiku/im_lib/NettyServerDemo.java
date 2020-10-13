@@ -46,7 +46,7 @@ import static com.takiku.im_lib.NettyServerDemo.userMap;
 public class NettyServerDemo {
 
     public static final int MSG_REPLY_TYPE=0x10;
-    public static final int HEART_ACK_TYPE=0x11;
+        public static final int HEART_ACK_TYPE=0x11;
     public static final int SHAKE_HANDS_ACK_TYPE=0x12;
     public static final int MSG_ACK_TYPE=0x13;
 
@@ -102,7 +102,7 @@ public class NettyServerDemo {
             bootstrap.childOption(ChannelOption.TCP_NODELAY, true);
 
             //绑定端口
-            ChannelFuture future = bootstrap.bind(8766).sync();
+            ChannelFuture future = bootstrap.bind(9081).sync();
             System.out.println("server start ...... ");
 
             //等待服务端监听端口关闭
@@ -118,8 +118,8 @@ public class NettyServerDemo {
     }
 
     private void initUserDb() {
-        userMap.put("user id1","token1");
-        userMap.put("user id2","token2");
+        userMap.put("userid1","token1");
+        userMap.put("userid2","token2");
     }
 }
 @ChannelHandler.Sharable
@@ -261,7 +261,7 @@ class ServerHandler extends ChannelInboundHandlerAdapter {
        return PackProtobuf.Pack.newBuilder()
                 .setPackType(PackProtobuf.Pack.PackType.ACK)
                 .setAck(PackProtobuf.Ack.newBuilder()
-                        .setAckType(SHAKE_HANDS_ACK_TYPE).setMsgId(msgId).setResult(status).build())
+                        .setAckType(SHAKE_HANDS_ACK_TYPE).setAckMsgId(msgId).setResult(status).build())
                 .build();
     }
     private PackProtobuf.Pack createMsgReply(String userId,String msgId,int replyType,int status){
@@ -274,7 +274,7 @@ class ServerHandler extends ChannelInboundHandlerAdapter {
         return PackProtobuf.Pack.newBuilder()
                 .setPackType(PackProtobuf.Pack.PackType.ACK)
                 .setAck(PackProtobuf.Ack.newBuilder()
-                        .setAckType(ackType).setMsgId(msgId).setResult(result).build())
+                        .setAckType(ackType).setAckMsgId(msgId).setResult(result).build())
                 .build();
     }
 }

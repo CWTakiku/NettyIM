@@ -46,12 +46,14 @@ public class CallServerInterceptor implements Interceptor {
         }else {
             timer = new TimeoutTracker(realChain.sendTimeoutMillis());
             timer.startTrack();
+          //  System.out.println(System.currentTimeMillis());
             while (!timer.checkTimeout()) {
                 response = tcpStream.readResponse(request); //如果规定时间内服务器应答了,收到了发送的消息，则马上注册后续消息状态监听
                 if (response != null) {
                     break;
                 }
             }
+          //  System.out.println(System.currentTimeMillis());
             if (response == null) {
                 // throw new  RouteException()
                 throw new SendTimeoutException("Service not responding");

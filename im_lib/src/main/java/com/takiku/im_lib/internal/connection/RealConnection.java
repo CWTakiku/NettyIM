@@ -1,5 +1,7 @@
 package com.takiku.im_lib.internal.connection;
 
+import android.util.Log;
+
 import com.takiku.im_lib.call.Consumer;
 import com.takiku.im_lib.call.OnResponseListener;
 import com.takiku.im_lib.codec.Codec;
@@ -16,11 +18,13 @@ import com.takiku.im_lib.listener.EventListener;
 import com.takiku.im_lib.util.LRUMap;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.net.InetSocketAddress;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
@@ -38,6 +42,7 @@ import io.netty.handler.timeout.IdleStateHandler;
 
 public class RealConnection  implements Connection {
 
+    private static final AtomicLong NETID_GENERATOR = new AtomicLong(0);
 
     private Channel channel;
     private final ConnectionPool connectionPool;
@@ -51,6 +56,7 @@ public class RealConnection  implements Connection {
     private volatile boolean reConnect;
     private connectionBrokenListener connectionBrokenListener;
     private volatile LRUMap<String,Response> responseLRUMap;
+    private Serializable netId;
 
 
     public RealConnection(ConnectionPool connectionPool, InetSocketAddress inetSocketAddress, EventListener eventListener){
@@ -66,6 +72,7 @@ public class RealConnection  implements Connection {
         bootstrap.option(ChannelOption.TCP_NODELAY, true);
         reConnect=true;
         responseLRUMap=new LRUMap<>(30);
+        netId = NETID_GENERATOR.getAndIncrement();
     }
     public void release(boolean reConnect){
         this.reConnect=reConnect;
@@ -150,7 +157,7 @@ public class RealConnection  implements Connection {
                 pipeline.addLast(codec.EnCoder().getClass().getSimpleName(),codec.EnCoder());
                 pipeline.addLast(codec.DeCoder().getClass().getSimpleName(),codec.DeCoder());
 
-                if (messageParser.getMessageShakeHandsHandler()==null){ //如果没有握手消息且设置了心跳包，则直接添加心跳机制，否则等握手成功后添加心跳机制
+                if (messageParser.getMessageShakeHandsHandler() == null){ //如果没有握手消息且设置了心跳包，则直接添加心跳机制，否则等握手成功后添加心跳机制
                     if (heartBeatMsg!=null){
 //                        // 3次心跳没响应，代表连接已断开
                         addHeartbeatHandler(connectionPool,heartbeatInterval);
@@ -206,8 +213,14 @@ public class RealConnection  implements Connection {
         return inetSocketAddress;
     }
 
+    @Override
+    public Serializable generateNetId() {
+        return netId;
+    }
 
-    public void connect( int connectTimeout) throws InterruptedException {
+
+
+    public void connect(int connectTimeout) throws InterruptedException {
           eventListener.connectStart(inetSocketAddress);
         // 设置连接超时时长
           bootstrap.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, connectTimeout);
@@ -218,7 +231,8 @@ public class RealConnection  implements Connection {
               ip=inetSocketAddress.getHostName();
           }
           int port=inetSocketAddress.getPort();
-         channel=  bootstrap.connect(ip,port).sync().channel();
+          channel=  bootstrap.connect(ip,port).sync().channel();
+
     }
     public boolean isHealth(){
       if (channel!=null&&channel.isActive()){

@@ -96,4 +96,6 @@ public abstract class EventListener {
      */
     public void sendMsgFailed(Call call){}
 
+    public void sendHeartStart(Call call){}
+
 }

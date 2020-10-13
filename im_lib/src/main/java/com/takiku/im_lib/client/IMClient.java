@@ -1,6 +1,9 @@
 package com.takiku.im_lib.client;
 
+import android.os.Build;
+
 import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
 
 import com.takiku.im_lib.call.Consumer;
 import com.takiku.im_lib.codec.Codec;
@@ -23,6 +26,7 @@ import com.takiku.im_lib.internal.handler.listener.MessageHandler;
 import com.takiku.im_lib.internal.MessageParser;
 import com.takiku.im_lib.internal.handler.listener.MessageShakeHandsHandler;
 import com.takiku.im_lib.listener.EventListener;
+import com.takiku.im_lib.util.IdWorker;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -117,6 +121,14 @@ public class IMClient {
     }
     public void disConnect(){
        Internal.instance.deduplicate(connectionPool);
+    }
+
+
+    public Long getMsgSerialId(){
+        if (connectionPool == null||connectionPool.realConnection() == null||!connectionPool.realConnection().isHealth()){
+            return 0L;
+        }
+        return IdWorker.nextId(connectionPool.realConnection().generateNetId());
     }
 
     public Dispatcher dispatcher() {

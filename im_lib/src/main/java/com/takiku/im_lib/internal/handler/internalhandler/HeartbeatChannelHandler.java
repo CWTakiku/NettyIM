@@ -1,5 +1,7 @@
 package com.takiku.im_lib.internal.handler.internalhandler;
 
+import android.util.Log;
+
 import com.takiku.im_lib.internal.connection.ConnectionPool;
 import com.takiku.im_lib.internal.connection.RealConnection;
 
@@ -28,6 +30,7 @@ public class HeartbeatChannelHandler extends ChannelInboundHandlerAdapter {
             IdleState state = ((IdleStateEvent) evt).state();
             switch (state) {
                 case READER_IDLE: {
+                    Log.i("TAG", "userEventTriggered:READER_IDLE ");
                     connectionBrokenListener.connectionBroken();
                     break;
                 }

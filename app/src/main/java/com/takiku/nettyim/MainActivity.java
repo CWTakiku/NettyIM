@@ -5,7 +5,6 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.os.Bundle;
-import android.os.Debug;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
@@ -13,17 +12,12 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 
-import com.google.protobuf.GeneratedMessageV3;
 import com.takiku.im_lib.call.Call;
 import com.takiku.im_lib.call.Callback;
-import com.takiku.im_lib.call.Consumer;
-import com.takiku.im_lib.client.IMClient;
-import com.takiku.nettyim.callbcak.UICallback;
 import com.takiku.im_lib.entity.AppMessage;
 import com.takiku.im_lib.entity.ReplyMessage;
 import com.takiku.im_lib.entity.base.Request;
 import com.takiku.im_lib.entity.base.Response;
-import com.takiku.im_lib.defaultImpl.DefaultMessageReceiveHandler;
 import com.takiku.im_lib.protobuf.PackProtobuf;
 import com.takiku.nettyim.clientdemo.IMClientDemo;
 import com.takiku.nettyim.clientdemo.IMClientDemo2;
@@ -33,7 +27,6 @@ import com.takiku.nettyim.widget.MessageAdapter;
 import java.io.IOException;
 import java.util.UUID;
 
-import static com.takiku.nettyim.Constants.MSG_ACK_TYPE;
 import static com.takiku.nettyim.Constants.MSG_REPLY_TYPE;
 import static com.takiku.nettyim.Constants.MSG_STATUS_FAILED;
 import static com.takiku.nettyim.Constants.MSG_STATUS_READ;
@@ -60,8 +53,8 @@ public class MainActivity extends AppCompatActivity {
     private MessageAdapter messageAdapter2;
 
 
-    public static final String client1UserId="user id1";
-    public static final String client2UserId="user id2";
+    public static final String client1UserId="userid1";
+    public static final String client2UserId="userid2";
     private boolean client1Online=true;
     private boolean client2Online=true;
 
@@ -86,7 +79,7 @@ public class MainActivity extends AppCompatActivity {
                 editText1.setText("");
                 appMessage.msgStatus=MSG_STATUS_SENDING;
                 addClient1Message(appMessage);
-                IMClientDemo.getInstance().sendMsgUICallback(createRequest(appMessage), new Callback() {
+                IMClientDemo.getInstance().sendMsgUICallback(createRequest(appMessage,1), new Callback() {
                     @Override
                     public void onFailure(Call call, IOException e) {
                         appMessage.msgStatus = MSG_STATUS_FAILED;
@@ -108,7 +101,7 @@ public class MainActivity extends AppCompatActivity {
                 editText2.setText("");
                 appMessage.msgStatus=MSG_STATUS_SENDING;
                 addClient2Message(appMessage);
-                IMClientDemo2.getInstance().sendMsgUICallback(createRequest(appMessage), new Callback() {
+                IMClientDemo2.getInstance().sendMsgUICallback(createRequest(appMessage,2), new Callback() {
                     @Override
                     public void onFailure(Call call, IOException e) {
                         appMessage.msgStatus = MSG_STATUS_FAILED; //发送失败，指规定时间内服务器无应答且进行了发送重试依然没有响应
@@ -165,6 +158,7 @@ public class MainActivity extends AppCompatActivity {
 
     }
     public void updateClient1MessageStatus(ReplyMessage replyMessage){
+        Log.i("TAG", "updateClient1MessageStatus: "+replyMessage.getReplyType());
         messageAdapter1.updateMessage(replyMessage);
     }
     public void updateClient2MessageStatus(ReplyMessage replyMessage){
@@ -186,7 +180,7 @@ public class MainActivity extends AppCompatActivity {
 
             }
             if (status!=-1){
-                IMClientDemo.getInstance().sendMsg(createReplyRequest(appMessage.getHead().getMsgId(), client2UserId, status), new Callback() {
+                IMClientDemo.getInstance().sendMsg(createReplyRequest(appMessage.getHead().getMsgId(), client2UserId, status,1), new Callback() {
                     @Override
                     public void onFailure(Call call, IOException e) {
                         //消息发送失败
@@ -210,7 +204,7 @@ public class MainActivity extends AppCompatActivity {
                     break;
             }
             if (status!=-1){
-                IMClientDemo2.getInstance().sendMsg(createReplyRequest(appMessage.getHead().getMsgId(), client1UserId, status), new Callback() {
+                IMClientDemo2.getInstance().sendMsg(createReplyRequest(appMessage.getHead().getMsgId(), client1UserId, status,2), new Callback() {
                     @Override
                     public void onFailure(Call call, IOException e) {
                         //消息发送失败
@@ -259,13 +253,13 @@ public class MainActivity extends AppCompatActivity {
      * @param appMessage
      * @return
      */
-    private Request createRequest(AppMessage appMessage){
+    private Request createRequest(AppMessage appMessage,int clientNum){
 
         Request request=new Request.Builder().
-                setNeedACK(true).
-                setRequestTag(appMessage.getHead().getMsgId()).
-                setBody(getMsgPack(appMessage.buildProto())).
-                build();
+                setNoNeedACK(appMessage.getHead().getMsgId())
+                .setBody(getMsgPack(appMessage.buildProto(clientNum == 1?IMClientDemo.getInstance().getMsgSerialID():IMClientDemo2.getInstance().getMsgSerialID())))
+                .setSendRetry(false)
+                .build();
         return request;
     }
 
@@ -286,15 +280,15 @@ public class MainActivity extends AppCompatActivity {
      * @param userId
      * @return
      */
-    public Request createReplyRequest(String msgId,String userId,int status){
+    public Request createReplyRequest(String msgId,String userId,int status,int clientNum){
         ReplyMessage replyMessage=new ReplyMessage();
         replyMessage.setMsgId(msgId);
         replyMessage.setUserId(userId);
         replyMessage.setReplyType(MSG_REPLY_TYPE);
         replyMessage.setStatusReport(status); //已读
         Request replyRequest=  new Request.Builder()
-                .setNeedACK(false) //设置为不需要应答
-                .setBody(getReplyPack(replyMessage.buildProto()))
+                .setNoNeedACK(msgId) //设置为不需要应答
+                .setBody(getReplyPack(replyMessage.buildProto(clientNum == 1?IMClientDemo.getInstance().getMsgSerialID():IMClientDemo2.getInstance().getMsgSerialID())))
                 .build();
         return replyRequest;
     }

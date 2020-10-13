@@ -2817,27 +2817,33 @@ public final class PackProtobuf {
       com.google.protobuf.MessageOrBuilder {
 
     /**
-     * <code>.Head head = 1;</code>
+     * <code>int64 serial = 1;</code>
+     * @return The serial.
+     */
+    long getSerial();
+
+    /**
+     * <code>.Head head = 2;</code>
      * @return Whether the head field is set.
      */
     boolean hasHead();
     /**
-     * <code>.Head head = 1;</code>
+     * <code>.Head head = 2;</code>
      * @return The head.
      */
     Head getHead();
     /**
-     * <code>.Head head = 1;</code>
+     * <code>.Head head = 2;</code>
      */
     HeadOrBuilder getHeadOrBuilder();
 
     /**
-     * <code>string body = 2;</code>
+     * <code>string body = 3;</code>
      * @return The body.
      */
     String getBody();
     /**
-     * <code>string body = 2;</code>
+     * <code>string body = 3;</code>
      * @return The bytes for body.
      */
     com.google.protobuf.ByteString
@@ -2889,7 +2895,12 @@ public final class PackProtobuf {
             case 0:
               done = true;
               break;
-            case 10: {
+            case 8: {
+
+              serial_ = input.readInt64();
+              break;
+            }
+            case 18: {
               Head.Builder subBuilder = null;
               if (head_ != null) {
                 subBuilder = head_.toBuilder();
@@ -2902,7 +2913,7 @@ public final class PackProtobuf {
 
               break;
             }
-            case 18: {
+            case 26: {
               String s = input.readStringRequireUtf8();
 
               body_ = s;
@@ -2940,33 +2951,43 @@ public final class PackProtobuf {
               Msg.class, Builder.class);
     }
 
-    public static final int HEAD_FIELD_NUMBER = 1;
+    public static final int SERIAL_FIELD_NUMBER = 1;
+    private long serial_;
+    /**
+     * <code>int64 serial = 1;</code>
+     * @return The serial.
+     */
+    public long getSerial() {
+      return serial_;
+    }
+
+    public static final int HEAD_FIELD_NUMBER = 2;
     private Head head_;
     /**
-     * <code>.Head head = 1;</code>
+     * <code>.Head head = 2;</code>
      * @return Whether the head field is set.
      */
     public boolean hasHead() {
       return head_ != null;
     }
     /**
-     * <code>.Head head = 1;</code>
+     * <code>.Head head = 2;</code>
      * @return The head.
      */
     public Head getHead() {
       return head_ == null ? Head.getDefaultInstance() : head_;
     }
     /**
-     * <code>.Head head = 1;</code>
+     * <code>.Head head = 2;</code>
      */
     public HeadOrBuilder getHeadOrBuilder() {
       return getHead();
     }
 
-    public static final int BODY_FIELD_NUMBER = 2;
+    public static final int BODY_FIELD_NUMBER = 3;
     private volatile Object body_;
     /**
-     * <code>string body = 2;</code>
+     * <code>string body = 3;</code>
      * @return The body.
      */
     public String getBody() {
@@ -2982,7 +3003,7 @@ public final class PackProtobuf {
       }
     }
     /**
-     * <code>string body = 2;</code>
+     * <code>string body = 3;</code>
      * @return The bytes for body.
      */
     public com.google.protobuf.ByteString
@@ -3013,11 +3034,14 @@ public final class PackProtobuf {
     @Override
     public void writeTo(com.google.protobuf.CodedOutputStream output)
                         throws java.io.IOException {
+      if (serial_ != 0L) {
+        output.writeInt64(1, serial_);
+      }
       if (head_ != null) {
-        output.writeMessage(1, getHead());
+        output.writeMessage(2, getHead());
       }
       if (!getBodyBytes().isEmpty()) {
-        com.google.protobuf.GeneratedMessageV3.writeString(output, 2, body_);
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 3, body_);
       }
       unknownFields.writeTo(output);
     }
@@ -3028,12 +3052,16 @@ public final class PackProtobuf {
       if (size != -1) return size;
 
       size = 0;
+      if (serial_ != 0L) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeInt64Size(1, serial_);
+      }
       if (head_ != null) {
         size += com.google.protobuf.CodedOutputStream
-          .computeMessageSize(1, getHead());
+          .computeMessageSize(2, getHead());
       }
       if (!getBodyBytes().isEmpty()) {
-        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(2, body_);
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(3, body_);
       }
       size += unknownFields.getSerializedSize();
       memoizedSize = size;
@@ -3050,6 +3078,8 @@ public final class PackProtobuf {
       }
       Msg other = (Msg) obj;
 
+      if (getSerial()
+          != other.getSerial()) return false;
       if (hasHead() != other.hasHead()) return false;
       if (hasHead()) {
         if (!getHead()
@@ -3068,6 +3098,9 @@ public final class PackProtobuf {
       }
       int hash = 41;
       hash = (19 * hash) + getDescriptor().hashCode();
+      hash = (37 * hash) + SERIAL_FIELD_NUMBER;
+      hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
+          getSerial());
       if (hasHead()) {
         hash = (37 * hash) + HEAD_FIELD_NUMBER;
         hash = (53 * hash) + getHead().hashCode();
@@ -3207,6 +3240,8 @@ public final class PackProtobuf {
       @Override
       public Builder clear() {
         super.clear();
+        serial_ = 0L;
+
         if (headBuilder_ == null) {
           head_ = null;
         } else {
@@ -3241,6 +3276,7 @@ public final class PackProtobuf {
       @Override
       public Msg buildPartial() {
         Msg result = new Msg(this);
+        result.serial_ = serial_;
         if (headBuilder_ == null) {
           result.head_ = head_;
         } else {
@@ -3295,6 +3331,9 @@ public final class PackProtobuf {
 
       public Builder mergeFrom(Msg other) {
         if (other == Msg.getDefaultInstance()) return this;
+        if (other.getSerial() != 0L) {
+          setSerial(other.getSerial());
+        }
         if (other.hasHead()) {
           mergeHead(other.getHead());
         }
@@ -3331,18 +3370,48 @@ public final class PackProtobuf {
         return this;
       }
 
+      private long serial_ ;
+      /**
+       * <code>int64 serial = 1;</code>
+       * @return The serial.
+       */
+      public long getSerial() {
+        return serial_;
+      }
+      /**
+       * <code>int64 serial = 1;</code>
+       * @param value The serial to set.
+       * @return This builder for chaining.
+       */
+      public Builder setSerial(long value) {
+        
+        serial_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>int64 serial = 1;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearSerial() {
+        
+        serial_ = 0L;
+        onChanged();
+        return this;
+      }
+
       private Head head_;
       private com.google.protobuf.SingleFieldBuilderV3<
           Head, Head.Builder, HeadOrBuilder> headBuilder_;
       /**
-       * <code>.Head head = 1;</code>
+       * <code>.Head head = 2;</code>
        * @return Whether the head field is set.
        */
       public boolean hasHead() {
         return headBuilder_ != null || head_ != null;
       }
       /**
-       * <code>.Head head = 1;</code>
+       * <code>.Head head = 2;</code>
        * @return The head.
        */
       public Head getHead() {
@@ -3353,7 +3422,7 @@ public final class PackProtobuf {
         }
       }
       /**
-       * <code>.Head head = 1;</code>
+       * <code>.Head head = 2;</code>
        */
       public Builder setHead(Head value) {
         if (headBuilder_ == null) {
@@ -3369,7 +3438,7 @@ public final class PackProtobuf {
         return this;
       }
       /**
-       * <code>.Head head = 1;</code>
+       * <code>.Head head = 2;</code>
        */
       public Builder setHead(
           Head.Builder builderForValue) {
@@ -3383,7 +3452,7 @@ public final class PackProtobuf {
         return this;
       }
       /**
-       * <code>.Head head = 1;</code>
+       * <code>.Head head = 2;</code>
        */
       public Builder mergeHead(Head value) {
         if (headBuilder_ == null) {
@@ -3401,7 +3470,7 @@ public final class PackProtobuf {
         return this;
       }
       /**
-       * <code>.Head head = 1;</code>
+       * <code>.Head head = 2;</code>
        */
       public Builder clearHead() {
         if (headBuilder_ == null) {
@@ -3415,7 +3484,7 @@ public final class PackProtobuf {
         return this;
       }
       /**
-       * <code>.Head head = 1;</code>
+       * <code>.Head head = 2;</code>
        */
       public Head.Builder getHeadBuilder() {
         
@@ -3423,7 +3492,7 @@ public final class PackProtobuf {
         return getHeadFieldBuilder().getBuilder();
       }
       /**
-       * <code>.Head head = 1;</code>
+       * <code>.Head head = 2;</code>
        */
       public HeadOrBuilder getHeadOrBuilder() {
         if (headBuilder_ != null) {
@@ -3434,7 +3503,7 @@ public final class PackProtobuf {
         }
       }
       /**
-       * <code>.Head head = 1;</code>
+       * <code>.Head head = 2;</code>
        */
       private com.google.protobuf.SingleFieldBuilderV3<
           Head, Head.Builder, HeadOrBuilder>
@@ -3452,7 +3521,7 @@ public final class PackProtobuf {
 
       private Object body_ = "";
       /**
-       * <code>string body = 2;</code>
+       * <code>string body = 3;</code>
        * @return The body.
        */
       public String getBody() {
@@ -3468,7 +3537,7 @@ public final class PackProtobuf {
         }
       }
       /**
-       * <code>string body = 2;</code>
+       * <code>string body = 3;</code>
        * @return The bytes for body.
        */
       public com.google.protobuf.ByteString
@@ -3485,7 +3554,7 @@ public final class PackProtobuf {
         }
       }
       /**
-       * <code>string body = 2;</code>
+       * <code>string body = 3;</code>
        * @param value The body to set.
        * @return This builder for chaining.
        */
@@ -3500,7 +3569,7 @@ public final class PackProtobuf {
         return this;
       }
       /**
-       * <code>string body = 2;</code>
+       * <code>string body = 3;</code>
        * @return This builder for chaining.
        */
       public Builder clearBody() {
@@ -3510,7 +3579,7 @@ public final class PackProtobuf {
         return this;
       }
       /**
-       * <code>string body = 2;</code>
+       * <code>string body = 3;</code>
        * @param value The bytes for body to set.
        * @return This builder for chaining.
        */
@@ -5150,34 +5219,48 @@ public final class PackProtobuf {
       com.google.protobuf.MessageOrBuilder {
 
     /**
+     * <code>int64 serial = 1;</code>
+     * @return The serial.
+     */
+    long getSerial();
+
+    /**
      * <pre>
      *回复类型
      * </pre>
      *
-     * <code>int32 replyType = 1;</code>
+     * <code>int32 replyType = 2;</code>
      * @return The replyType.
      */
     int getReplyType();
 
     /**
-     * <code>string msgId = 2;</code>
+     * <code>string msgId = 3;</code>
      * @return The msgId.
      */
     String getMsgId();
     /**
-     * <code>string msgId = 2;</code>
+     * <code>string msgId = 3;</code>
      * @return The bytes for msgId.
      */
     com.google.protobuf.ByteString
         getMsgIdBytes();
 
     /**
-     * <code>string userId = 3;</code>
+     * <pre>
+     *服务端发送用的时候为发送者Id,客户端发送的时候则为接收Id
+     * </pre>
+     *
+     * <code>string userId = 4;</code>
      * @return The userId.
      */
     String getUserId();
     /**
-     * <code>string userId = 3;</code>
+     * <pre>
+     *服务端发送用的时候为发送者Id,客户端发送的时候则为接收Id
+     * </pre>
+     *
+     * <code>string userId = 4;</code>
      * @return The bytes for userId.
      */
     com.google.protobuf.ByteString
@@ -5188,7 +5271,7 @@ public final class PackProtobuf {
      *状态
      * </pre>
      *
-     * <code>int32 statusReport = 4;</code>
+     * <code>int32 statusReport = 5;</code>
      * @return The statusReport.
      */
     int getStatusReport();
@@ -5246,22 +5329,27 @@ public final class PackProtobuf {
               break;
             case 8: {
 
-              replyType_ = input.readInt32();
+              serial_ = input.readInt64();
               break;
             }
-            case 18: {
-              String s = input.readStringRequireUtf8();
+            case 16: {
 
-              msgId_ = s;
+              replyType_ = input.readInt32();
               break;
             }
             case 26: {
               String s = input.readStringRequireUtf8();
 
+              msgId_ = s;
+              break;
+            }
+            case 34: {
+              String s = input.readStringRequireUtf8();
+
               userId_ = s;
               break;
             }
-            case 32: {
+            case 40: {
 
               statusReport_ = input.readInt32();
               break;
@@ -5298,24 +5386,34 @@ public final class PackProtobuf {
               Reply.class, Builder.class);
     }
 
-    public static final int REPLYTYPE_FIELD_NUMBER = 1;
+    public static final int SERIAL_FIELD_NUMBER = 1;
+    private long serial_;
+    /**
+     * <code>int64 serial = 1;</code>
+     * @return The serial.
+     */
+    public long getSerial() {
+      return serial_;
+    }
+
+    public static final int REPLYTYPE_FIELD_NUMBER = 2;
     private int replyType_;
     /**
      * <pre>
      *回复类型
      * </pre>
      *
-     * <code>int32 replyType = 1;</code>
+     * <code>int32 replyType = 2;</code>
      * @return The replyType.
      */
     public int getReplyType() {
       return replyType_;
     }
 
-    public static final int MSGID_FIELD_NUMBER = 2;
+    public static final int MSGID_FIELD_NUMBER = 3;
     private volatile Object msgId_;
     /**
-     * <code>string msgId = 2;</code>
+     * <code>string msgId = 3;</code>
      * @return The msgId.
      */
     public String getMsgId() {
@@ -5331,7 +5429,7 @@ public final class PackProtobuf {
       }
     }
     /**
-     * <code>string msgId = 2;</code>
+     * <code>string msgId = 3;</code>
      * @return The bytes for msgId.
      */
     public com.google.protobuf.ByteString
@@ -5348,10 +5446,14 @@ public final class PackProtobuf {
       }
     }
 
-    public static final int USERID_FIELD_NUMBER = 3;
+    public static final int USERID_FIELD_NUMBER = 4;
     private volatile Object userId_;
     /**
-     * <code>string userId = 3;</code>
+     * <pre>
+     *服务端发送用的时候为发送者Id,客户端发送的时候则为接收Id
+     * </pre>
+     *
+     * <code>string userId = 4;</code>
      * @return The userId.
      */
     public String getUserId() {
@@ -5367,7 +5469,11 @@ public final class PackProtobuf {
       }
     }
     /**
-     * <code>string userId = 3;</code>
+     * <pre>
+     *服务端发送用的时候为发送者Id,客户端发送的时候则为接收Id
+     * </pre>
+     *
+     * <code>string userId = 4;</code>
      * @return The bytes for userId.
      */
     public com.google.protobuf.ByteString
@@ -5384,14 +5490,14 @@ public final class PackProtobuf {
       }
     }
 
-    public static final int STATUSREPORT_FIELD_NUMBER = 4;
+    public static final int STATUSREPORT_FIELD_NUMBER = 5;
     private int statusReport_;
     /**
      * <pre>
      *状态
      * </pre>
      *
-     * <code>int32 statusReport = 4;</code>
+     * <code>int32 statusReport = 5;</code>
      * @return The statusReport.
      */
     public int getStatusReport() {
@@ -5412,17 +5518,20 @@ public final class PackProtobuf {
     @Override
     public void writeTo(com.google.protobuf.CodedOutputStream output)
                         throws java.io.IOException {
+      if (serial_ != 0L) {
+        output.writeInt64(1, serial_);
+      }
       if (replyType_ != 0) {
-        output.writeInt32(1, replyType_);
+        output.writeInt32(2, replyType_);
       }
       if (!getMsgIdBytes().isEmpty()) {
-        com.google.protobuf.GeneratedMessageV3.writeString(output, 2, msgId_);
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 3, msgId_);
       }
       if (!getUserIdBytes().isEmpty()) {
-        com.google.protobuf.GeneratedMessageV3.writeString(output, 3, userId_);
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 4, userId_);
       }
       if (statusReport_ != 0) {
-        output.writeInt32(4, statusReport_);
+        output.writeInt32(5, statusReport_);
       }
       unknownFields.writeTo(output);
     }
@@ -5433,19 +5542,23 @@ public final class PackProtobuf {
       if (size != -1) return size;
 
       size = 0;
+      if (serial_ != 0L) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeInt64Size(1, serial_);
+      }
       if (replyType_ != 0) {
         size += com.google.protobuf.CodedOutputStream
-          .computeInt32Size(1, replyType_);
+          .computeInt32Size(2, replyType_);
       }
       if (!getMsgIdBytes().isEmpty()) {
-        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(2, msgId_);
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(3, msgId_);
       }
       if (!getUserIdBytes().isEmpty()) {
-        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(3, userId_);
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(4, userId_);
       }
       if (statusReport_ != 0) {
         size += com.google.protobuf.CodedOutputStream
-          .computeInt32Size(4, statusReport_);
+          .computeInt32Size(5, statusReport_);
       }
       size += unknownFields.getSerializedSize();
       memoizedSize = size;
@@ -5462,6 +5575,8 @@ public final class PackProtobuf {
       }
       Reply other = (Reply) obj;
 
+      if (getSerial()
+          != other.getSerial()) return false;
       if (getReplyType()
           != other.getReplyType()) return false;
       if (!getMsgId()
@@ -5481,6 +5596,9 @@ public final class PackProtobuf {
       }
       int hash = 41;
       hash = (19 * hash) + getDescriptor().hashCode();
+      hash = (37 * hash) + SERIAL_FIELD_NUMBER;
+      hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
+          getSerial());
       hash = (37 * hash) + REPLYTYPE_FIELD_NUMBER;
       hash = (53 * hash) + getReplyType();
       hash = (37 * hash) + MSGID_FIELD_NUMBER;
@@ -5626,6 +5744,8 @@ public final class PackProtobuf {
       @Override
       public Builder clear() {
         super.clear();
+        serial_ = 0L;
+
         replyType_ = 0;
 
         msgId_ = "";
@@ -5660,6 +5780,7 @@ public final class PackProtobuf {
       @Override
       public Reply buildPartial() {
         Reply result = new Reply(this);
+        result.serial_ = serial_;
         result.replyType_ = replyType_;
         result.msgId_ = msgId_;
         result.userId_ = userId_;
@@ -5712,6 +5833,9 @@ public final class PackProtobuf {
 
       public Builder mergeFrom(Reply other) {
         if (other == Reply.getDefaultInstance()) return this;
+        if (other.getSerial() != 0L) {
+          setSerial(other.getSerial());
+        }
         if (other.getReplyType() != 0) {
           setReplyType(other.getReplyType());
         }
@@ -5755,13 +5879,43 @@ public final class PackProtobuf {
         return this;
       }
 
+      private long serial_ ;
+      /**
+       * <code>int64 serial = 1;</code>
+       * @return The serial.
+       */
+      public long getSerial() {
+        return serial_;
+      }
+      /**
+       * <code>int64 serial = 1;</code>
+       * @param value The serial to set.
+       * @return This builder for chaining.
+       */
+      public Builder setSerial(long value) {
+        
+        serial_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>int64 serial = 1;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearSerial() {
+        
+        serial_ = 0L;
+        onChanged();
+        return this;
+      }
+
       private int replyType_ ;
       /**
        * <pre>
        *回复类型
        * </pre>
        *
-       * <code>int32 replyType = 1;</code>
+       * <code>int32 replyType = 2;</code>
        * @return The replyType.
        */
       public int getReplyType() {
@@ -5772,7 +5926,7 @@ public final class PackProtobuf {
        *回复类型
        * </pre>
        *
-       * <code>int32 replyType = 1;</code>
+       * <code>int32 replyType = 2;</code>
        * @param value The replyType to set.
        * @return This builder for chaining.
        */
@@ -5787,7 +5941,7 @@ public final class PackProtobuf {
        *回复类型
        * </pre>
        *
-       * <code>int32 replyType = 1;</code>
+       * <code>int32 replyType = 2;</code>
        * @return This builder for chaining.
        */
       public Builder clearReplyType() {
@@ -5799,7 +5953,7 @@ public final class PackProtobuf {
 
       private Object msgId_ = "";
       /**
-       * <code>string msgId = 2;</code>
+       * <code>string msgId = 3;</code>
        * @return The msgId.
        */
       public String getMsgId() {
@@ -5815,7 +5969,7 @@ public final class PackProtobuf {
         }
       }
       /**
-       * <code>string msgId = 2;</code>
+       * <code>string msgId = 3;</code>
        * @return The bytes for msgId.
        */
       public com.google.protobuf.ByteString
@@ -5832,7 +5986,7 @@ public final class PackProtobuf {
         }
       }
       /**
-       * <code>string msgId = 2;</code>
+       * <code>string msgId = 3;</code>
        * @param value The msgId to set.
        * @return This builder for chaining.
        */
@@ -5847,7 +6001,7 @@ public final class PackProtobuf {
         return this;
       }
       /**
-       * <code>string msgId = 2;</code>
+       * <code>string msgId = 3;</code>
        * @return This builder for chaining.
        */
       public Builder clearMsgId() {
@@ -5857,7 +6011,7 @@ public final class PackProtobuf {
         return this;
       }
       /**
-       * <code>string msgId = 2;</code>
+       * <code>string msgId = 3;</code>
        * @param value The bytes for msgId to set.
        * @return This builder for chaining.
        */
@@ -5875,7 +6029,11 @@ public final class PackProtobuf {
 
       private Object userId_ = "";
       /**
-       * <code>string userId = 3;</code>
+       * <pre>
+       *服务端发送用的时候为发送者Id,客户端发送的时候则为接收Id
+       * </pre>
+       *
+       * <code>string userId = 4;</code>
        * @return The userId.
        */
       public String getUserId() {
@@ -5891,7 +6049,11 @@ public final class PackProtobuf {
         }
       }
       /**
-       * <code>string userId = 3;</code>
+       * <pre>
+       *服务端发送用的时候为发送者Id,客户端发送的时候则为接收Id
+       * </pre>
+       *
+       * <code>string userId = 4;</code>
        * @return The bytes for userId.
        */
       public com.google.protobuf.ByteString
@@ -5908,7 +6070,11 @@ public final class PackProtobuf {
         }
       }
       /**
-       * <code>string userId = 3;</code>
+       * <pre>
+       *服务端发送用的时候为发送者Id,客户端发送的时候则为接收Id
+       * </pre>
+       *
+       * <code>string userId = 4;</code>
        * @param value The userId to set.
        * @return This builder for chaining.
        */
@@ -5923,7 +6089,11 @@ public final class PackProtobuf {
         return this;
       }
       /**
-       * <code>string userId = 3;</code>
+       * <pre>
+       *服务端发送用的时候为发送者Id,客户端发送的时候则为接收Id
+       * </pre>
+       *
+       * <code>string userId = 4;</code>
        * @return This builder for chaining.
        */
       public Builder clearUserId() {
@@ -5933,7 +6103,11 @@ public final class PackProtobuf {
         return this;
       }
       /**
-       * <code>string userId = 3;</code>
+       * <pre>
+       *服务端发送用的时候为发送者Id,客户端发送的时候则为接收Id
+       * </pre>
+       *
+       * <code>string userId = 4;</code>
        * @param value The bytes for userId to set.
        * @return This builder for chaining.
        */
@@ -5955,7 +6129,7 @@ public final class PackProtobuf {
        *状态
        * </pre>
        *
-       * <code>int32 statusReport = 4;</code>
+       * <code>int32 statusReport = 5;</code>
        * @return The statusReport.
        */
       public int getStatusReport() {
@@ -5966,7 +6140,7 @@ public final class PackProtobuf {
        *状态
        * </pre>
        *
-       * <code>int32 statusReport = 4;</code>
+       * <code>int32 statusReport = 5;</code>
        * @param value The statusReport to set.
        * @return This builder for chaining.
        */
@@ -5981,7 +6155,7 @@ public final class PackProtobuf {
        *状态
        * </pre>
        *
-       * <code>int32 statusReport = 4;</code>
+       * <code>int32 statusReport = 5;</code>
        * @return This builder for chaining.
        */
       public Builder clearStatusReport() {
@@ -6622,25 +6796,31 @@ public final class PackProtobuf {
       com.google.protobuf.MessageOrBuilder {
 
     /**
-     * <code>string msgId = 1;</code>
-     * @return The msgId.
+     * <code>int64 serial = 1;</code>
+     * @return The serial.
      */
-    String getMsgId();
-    /**
-     * <code>string msgId = 1;</code>
-     * @return The bytes for msgId.
-     */
-    com.google.protobuf.ByteString
-        getMsgIdBytes();
+    long getSerial();
 
     /**
-     * <code>int32 ackType = 2;</code>
+     * <code>string ackMsgId = 2;</code>
+     * @return The ackMsgId.
+     */
+    String getAckMsgId();
+    /**
+     * <code>string ackMsgId = 2;</code>
+     * @return The bytes for ackMsgId.
+     */
+    com.google.protobuf.ByteString
+        getAckMsgIdBytes();
+
+    /**
+     * <code>int32 ackType = 3;</code>
      * @return The ackType.
      */
     int getAckType();
 
     /**
-     * <code>int32 result = 3;</code>
+     * <code>int32 result = 4;</code>
      * @return The result.
      */
     int getResult();
@@ -6658,7 +6838,7 @@ public final class PackProtobuf {
       super(builder);
     }
     private Ack() {
-      msgId_ = "";
+      ackMsgId_ = "";
     }
 
     @Override
@@ -6691,18 +6871,23 @@ public final class PackProtobuf {
             case 0:
               done = true;
               break;
-            case 10: {
-              String s = input.readStringRequireUtf8();
+            case 8: {
 
-              msgId_ = s;
+              serial_ = input.readInt64();
               break;
             }
-            case 16: {
+            case 18: {
+              String s = input.readStringRequireUtf8();
+
+              ackMsgId_ = s;
+              break;
+            }
+            case 24: {
 
               ackType_ = input.readInt32();
               break;
             }
-            case 24: {
+            case 32: {
 
               result_ = input.readInt32();
               break;
@@ -6739,56 +6924,66 @@ public final class PackProtobuf {
               Ack.class, Builder.class);
     }
 
-    public static final int MSGID_FIELD_NUMBER = 1;
-    private volatile Object msgId_;
+    public static final int SERIAL_FIELD_NUMBER = 1;
+    private long serial_;
     /**
-     * <code>string msgId = 1;</code>
-     * @return The msgId.
+     * <code>int64 serial = 1;</code>
+     * @return The serial.
      */
-    public String getMsgId() {
-      Object ref = msgId_;
+    public long getSerial() {
+      return serial_;
+    }
+
+    public static final int ACKMSGID_FIELD_NUMBER = 2;
+    private volatile Object ackMsgId_;
+    /**
+     * <code>string ackMsgId = 2;</code>
+     * @return The ackMsgId.
+     */
+    public String getAckMsgId() {
+      Object ref = ackMsgId_;
       if (ref instanceof String) {
         return (String) ref;
       } else {
         com.google.protobuf.ByteString bs = 
             (com.google.protobuf.ByteString) ref;
         String s = bs.toStringUtf8();
-        msgId_ = s;
+        ackMsgId_ = s;
         return s;
       }
     }
     /**
-     * <code>string msgId = 1;</code>
-     * @return The bytes for msgId.
+     * <code>string ackMsgId = 2;</code>
+     * @return The bytes for ackMsgId.
      */
     public com.google.protobuf.ByteString
-        getMsgIdBytes() {
-      Object ref = msgId_;
+        getAckMsgIdBytes() {
+      Object ref = ackMsgId_;
       if (ref instanceof String) {
         com.google.protobuf.ByteString b = 
             com.google.protobuf.ByteString.copyFromUtf8(
                 (String) ref);
-        msgId_ = b;
+        ackMsgId_ = b;
         return b;
       } else {
         return (com.google.protobuf.ByteString) ref;
       }
     }
 
-    public static final int ACKTYPE_FIELD_NUMBER = 2;
+    public static final int ACKTYPE_FIELD_NUMBER = 3;
     private int ackType_;
     /**
-     * <code>int32 ackType = 2;</code>
+     * <code>int32 ackType = 3;</code>
      * @return The ackType.
      */
     public int getAckType() {
       return ackType_;
     }
 
-    public static final int RESULT_FIELD_NUMBER = 3;
+    public static final int RESULT_FIELD_NUMBER = 4;
     private int result_;
     /**
-     * <code>int32 result = 3;</code>
+     * <code>int32 result = 4;</code>
      * @return The result.
      */
     public int getResult() {
@@ -6809,14 +7004,17 @@ public final class PackProtobuf {
     @Override
     public void writeTo(com.google.protobuf.CodedOutputStream output)
                         throws java.io.IOException {
-      if (!getMsgIdBytes().isEmpty()) {
-        com.google.protobuf.GeneratedMessageV3.writeString(output, 1, msgId_);
+      if (serial_ != 0L) {
+        output.writeInt64(1, serial_);
+      }
+      if (!getAckMsgIdBytes().isEmpty()) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 2, ackMsgId_);
       }
       if (ackType_ != 0) {
-        output.writeInt32(2, ackType_);
+        output.writeInt32(3, ackType_);
       }
       if (result_ != 0) {
-        output.writeInt32(3, result_);
+        output.writeInt32(4, result_);
       }
       unknownFields.writeTo(output);
     }
@@ -6827,16 +7025,20 @@ public final class PackProtobuf {
       if (size != -1) return size;
 
       size = 0;
-      if (!getMsgIdBytes().isEmpty()) {
-        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(1, msgId_);
+      if (serial_ != 0L) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeInt64Size(1, serial_);
+      }
+      if (!getAckMsgIdBytes().isEmpty()) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(2, ackMsgId_);
       }
       if (ackType_ != 0) {
         size += com.google.protobuf.CodedOutputStream
-          .computeInt32Size(2, ackType_);
+          .computeInt32Size(3, ackType_);
       }
       if (result_ != 0) {
         size += com.google.protobuf.CodedOutputStream
-          .computeInt32Size(3, result_);
+          .computeInt32Size(4, result_);
       }
       size += unknownFields.getSerializedSize();
       memoizedSize = size;
@@ -6853,8 +7055,10 @@ public final class PackProtobuf {
       }
       Ack other = (Ack) obj;
 
-      if (!getMsgId()
-          .equals(other.getMsgId())) return false;
+      if (getSerial()
+          != other.getSerial()) return false;
+      if (!getAckMsgId()
+          .equals(other.getAckMsgId())) return false;
       if (getAckType()
           != other.getAckType()) return false;
       if (getResult()
@@ -6870,8 +7074,11 @@ public final class PackProtobuf {
       }
       int hash = 41;
       hash = (19 * hash) + getDescriptor().hashCode();
-      hash = (37 * hash) + MSGID_FIELD_NUMBER;
-      hash = (53 * hash) + getMsgId().hashCode();
+      hash = (37 * hash) + SERIAL_FIELD_NUMBER;
+      hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
+          getSerial());
+      hash = (37 * hash) + ACKMSGID_FIELD_NUMBER;
+      hash = (53 * hash) + getAckMsgId().hashCode();
       hash = (37 * hash) + ACKTYPE_FIELD_NUMBER;
       hash = (53 * hash) + getAckType();
       hash = (37 * hash) + RESULT_FIELD_NUMBER;
@@ -7009,7 +7216,9 @@ public final class PackProtobuf {
       @Override
       public Builder clear() {
         super.clear();
-        msgId_ = "";
+        serial_ = 0L;
+
+        ackMsgId_ = "";
 
         ackType_ = 0;
 
@@ -7041,7 +7250,8 @@ public final class PackProtobuf {
       @Override
       public Ack buildPartial() {
         Ack result = new Ack(this);
-        result.msgId_ = msgId_;
+        result.serial_ = serial_;
+        result.ackMsgId_ = ackMsgId_;
         result.ackType_ = ackType_;
         result.result_ = result_;
         onBuilt();
@@ -7092,8 +7302,11 @@ public final class PackProtobuf {
 
       public Builder mergeFrom(Ack other) {
         if (other == Ack.getDefaultInstance()) return this;
-        if (!other.getMsgId().isEmpty()) {
-          msgId_ = other.msgId_;
+        if (other.getSerial() != 0L) {
+          setSerial(other.getSerial());
+        }
+        if (!other.getAckMsgId().isEmpty()) {
+          ackMsgId_ = other.ackMsgId_;
           onChanged();
         }
         if (other.getAckType() != 0) {
@@ -7131,92 +7344,122 @@ public final class PackProtobuf {
         return this;
       }
 
-      private Object msgId_ = "";
+      private long serial_ ;
       /**
-       * <code>string msgId = 1;</code>
-       * @return The msgId.
+       * <code>int64 serial = 1;</code>
+       * @return The serial.
        */
-      public String getMsgId() {
-        Object ref = msgId_;
+      public long getSerial() {
+        return serial_;
+      }
+      /**
+       * <code>int64 serial = 1;</code>
+       * @param value The serial to set.
+       * @return This builder for chaining.
+       */
+      public Builder setSerial(long value) {
+        
+        serial_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>int64 serial = 1;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearSerial() {
+        
+        serial_ = 0L;
+        onChanged();
+        return this;
+      }
+
+      private Object ackMsgId_ = "";
+      /**
+       * <code>string ackMsgId = 2;</code>
+       * @return The ackMsgId.
+       */
+      public String getAckMsgId() {
+        Object ref = ackMsgId_;
         if (!(ref instanceof String)) {
           com.google.protobuf.ByteString bs =
               (com.google.protobuf.ByteString) ref;
           String s = bs.toStringUtf8();
-          msgId_ = s;
+          ackMsgId_ = s;
           return s;
         } else {
           return (String) ref;
         }
       }
       /**
-       * <code>string msgId = 1;</code>
-       * @return The bytes for msgId.
+       * <code>string ackMsgId = 2;</code>
+       * @return The bytes for ackMsgId.
        */
       public com.google.protobuf.ByteString
-          getMsgIdBytes() {
-        Object ref = msgId_;
+          getAckMsgIdBytes() {
+        Object ref = ackMsgId_;
         if (ref instanceof String) {
           com.google.protobuf.ByteString b = 
               com.google.protobuf.ByteString.copyFromUtf8(
                   (String) ref);
-          msgId_ = b;
+          ackMsgId_ = b;
           return b;
         } else {
           return (com.google.protobuf.ByteString) ref;
         }
       }
       /**
-       * <code>string msgId = 1;</code>
-       * @param value The msgId to set.
+       * <code>string ackMsgId = 2;</code>
+       * @param value The ackMsgId to set.
        * @return This builder for chaining.
        */
-      public Builder setMsgId(
+      public Builder setAckMsgId(
           String value) {
         if (value == null) {
     throw new NullPointerException();
   }
   
-        msgId_ = value;
+        ackMsgId_ = value;
         onChanged();
         return this;
       }
       /**
-       * <code>string msgId = 1;</code>
+       * <code>string ackMsgId = 2;</code>
        * @return This builder for chaining.
        */
-      public Builder clearMsgId() {
+      public Builder clearAckMsgId() {
         
-        msgId_ = getDefaultInstance().getMsgId();
+        ackMsgId_ = getDefaultInstance().getAckMsgId();
         onChanged();
         return this;
       }
       /**
-       * <code>string msgId = 1;</code>
-       * @param value The bytes for msgId to set.
+       * <code>string ackMsgId = 2;</code>
+       * @param value The bytes for ackMsgId to set.
        * @return This builder for chaining.
        */
-      public Builder setMsgIdBytes(
+      public Builder setAckMsgIdBytes(
           com.google.protobuf.ByteString value) {
         if (value == null) {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
         
-        msgId_ = value;
+        ackMsgId_ = value;
         onChanged();
         return this;
       }
 
       private int ackType_ ;
       /**
-       * <code>int32 ackType = 2;</code>
+       * <code>int32 ackType = 3;</code>
        * @return The ackType.
        */
       public int getAckType() {
         return ackType_;
       }
       /**
-       * <code>int32 ackType = 2;</code>
+       * <code>int32 ackType = 3;</code>
        * @param value The ackType to set.
        * @return This builder for chaining.
        */
@@ -7227,7 +7470,7 @@ public final class PackProtobuf {
         return this;
       }
       /**
-       * <code>int32 ackType = 2;</code>
+       * <code>int32 ackType = 3;</code>
        * @return This builder for chaining.
        */
       public Builder clearAckType() {
@@ -7239,14 +7482,14 @@ public final class PackProtobuf {
 
       private int result_ ;
       /**
-       * <code>int32 result = 3;</code>
+       * <code>int32 result = 4;</code>
        * @return The result.
        */
       public int getResult() {
         return result_;
       }
       /**
-       * <code>int32 result = 3;</code>
+       * <code>int32 result = 4;</code>
        * @param value The result to set.
        * @return This builder for chaining.
        */
@@ -7257,7 +7500,7 @@ public final class PackProtobuf {
         return this;
       }
       /**
-       * <code>int32 result = 3;</code>
+       * <code>int32 result = 4;</code>
        * @return This builder for chaining.
        */
       public Builder clearResult() {
@@ -7371,17 +7614,18 @@ public final class PackProtobuf {
       "B\n\010PackType\022\007\n\003MSG\020\000\022\t\n\005REPLY\020\001\022\t\n\005HEART" +
       "\020\002\022\016\n\nSHAKEHANDS\020\003\022\007\n\003ACK\020\004B\006\n\004body\":\n\nS" +
       "hakeHands\022\r\n\005msgId\030\001 \001(\t\022\016\n\006userId\030\002 \001(\t" +
-      "\022\r\n\005token\030\003 \001(\t\"(\n\003Msg\022\023\n\004head\030\001 \001(\0132\005.H" +
-      "ead\022\014\n\004body\030\002 \001(\t\"\215\001\n\004Head\022\r\n\005msgId\030\001 \001(" +
-      "\t\022\017\n\007msgType\030\002 \001(\005\022\026\n\016msgContentType\030\003 \001" +
-      "(\005\022\016\n\006fromId\030\004 \001(\t\022\014\n\004toId\030\005 \001(\t\022\021\n\ttime" +
-      "stamp\030\006 \001(\003\022\016\n\006extend\030\007 \001(\t\022\014\n\004auth\030\010 \001(" +
-      "\t\"O\n\005Reply\022\021\n\treplyType\030\001 \001(\005\022\r\n\005msgId\030\002" +
-      " \001(\t\022\016\n\006userId\030\003 \001(\t\022\024\n\014statusReport\030\004 \001" +
-      "(\005\"\026\n\005Heart\022\r\n\005msgId\030\001 \001(\t\"5\n\003Ack\022\r\n\005msg" +
-      "Id\030\001 \001(\t\022\017\n\007ackType\030\002 \001(\005\022\016\n\006result\030\003 \001(" +
-      "\005B*\n\032com.takiku.im_lib.protobufB\014PackPro" +
-      "tobufb\006proto3"
+      "\022\r\n\005token\030\003 \001(\t\"8\n\003Msg\022\016\n\006serial\030\001 \001(\003\022\023" +
+      "\n\004head\030\002 \001(\0132\005.Head\022\014\n\004body\030\003 \001(\t\"\215\001\n\004He" +
+      "ad\022\r\n\005msgId\030\001 \001(\t\022\017\n\007msgType\030\002 \001(\005\022\026\n\016ms" +
+      "gContentType\030\003 \001(\005\022\016\n\006fromId\030\004 \001(\t\022\014\n\004to" +
+      "Id\030\005 \001(\t\022\021\n\ttimestamp\030\006 \001(\003\022\016\n\006extend\030\007 " +
+      "\001(\t\022\014\n\004auth\030\010 \001(\t\"_\n\005Reply\022\016\n\006serial\030\001 \001" +
+      "(\003\022\021\n\treplyType\030\002 \001(\005\022\r\n\005msgId\030\003 \001(\t\022\016\n\006" +
+      "userId\030\004 \001(\t\022\024\n\014statusReport\030\005 \001(\005\"\026\n\005He" +
+      "art\022\r\n\005msgId\030\001 \001(\t\"H\n\003Ack\022\016\n\006serial\030\001 \001(" +
+      "\003\022\020\n\010ackMsgId\030\002 \001(\t\022\017\n\007ackType\030\003 \001(\005\022\016\n\006" +
+      "result\030\004 \001(\005B*\n\032com.takiku.im_lib.protob" +
+      "ufB\014PackProtobufb\006proto3"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
@@ -7404,7 +7648,7 @@ public final class PackProtobuf {
     internal_static_Msg_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_Msg_descriptor,
-        new String[] { "Head", "Body", });
+        new String[] { "Serial", "Head", "Body", });
     internal_static_Head_descriptor =
       getDescriptor().getMessageTypes().get(3);
     internal_static_Head_fieldAccessorTable = new
@@ -7416,7 +7660,7 @@ public final class PackProtobuf {
     internal_static_Reply_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_Reply_descriptor,
-        new String[] { "ReplyType", "MsgId", "UserId", "StatusReport", });
+        new String[] { "Serial", "ReplyType", "MsgId", "UserId", "StatusReport", });
     internal_static_Heart_descriptor =
       getDescriptor().getMessageTypes().get(5);
     internal_static_Heart_fieldAccessorTable = new
@@ -7428,7 +7672,7 @@ public final class PackProtobuf {
     internal_static_Ack_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_Ack_descriptor,
-        new String[] { "MsgId", "AckType", "Result", });
+        new String[] { "Serial", "AckMsgId", "AckType", "Result", });
   }
 
   // @@protoc_insertion_point(outer_class_scope)

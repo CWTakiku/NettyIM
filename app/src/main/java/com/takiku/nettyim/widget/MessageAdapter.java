@@ -146,7 +146,7 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
                     break;
                 case MSG_STATUS_SENDING:
                     frameSendHolder.errorView.setVisibility(View.GONE);
-                    frameSendHolder.statusView.setText("发送中...");
+                    break;
                 case MSG_STATUS_READ:
                     frameSendHolder.errorView.setVisibility(View.GONE);
                     frameSendHolder.statusView.setText("已读");

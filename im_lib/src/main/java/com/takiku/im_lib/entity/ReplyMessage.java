@@ -29,12 +29,13 @@ public class ReplyMessage extends AbstractPack {
     }
 
 
-    public PackProtobuf.Reply buildProto() {
+    public PackProtobuf.Reply buildProto(long netId) {
         return PackProtobuf.Reply.newBuilder()
                 .setMsgId(msgId)
                 .setReplyType(replyType)
                 .setUserId(userId)
                 .setStatusReport(statusReport)
+                .setSerial(netId)
                 .build();
 
     }

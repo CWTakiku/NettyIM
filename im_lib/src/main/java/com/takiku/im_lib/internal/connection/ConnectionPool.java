@@ -58,7 +58,7 @@ public final class ConnectionPool {
      * @param r
      */
     public synchronized void execWorkTask(Runnable r) {
-        if (r==null){
+        if (r == null){
             return;
         }
         if (workPool==null){

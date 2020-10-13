@@ -1,7 +1,10 @@
 package com.takiku.nettyim.clientdemo;
 
+import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
+
+import androidx.annotation.RequiresApi;
 
 import com.google.protobuf.GeneratedMessageV3;
 import com.takiku.im_lib.call.Call;
@@ -46,7 +49,7 @@ public class IMClientDemo2 {
         @Override
         public void onMessageArrive(PackProtobuf.Pack pack) {
             final AppMessage appMessage=AppMessage.buildAppMessage(pack.getMsg());
-            sendAck(appMessage.getHead().getMsgId());//发送ACK 给服务端
+            sendAck(appMessage.getHead().getMsgId(),pack.getMsg().getSerial());//发送ACK 给服务端
             if (onMessageReceiveListener!=null){
                 mHandler.post(new Runnable() {
                     @Override
@@ -60,6 +63,7 @@ public class IMClientDemo2 {
     public DefaultReplyReceiveHandler.OnReplyArriveListener onReplyListener=new DefaultReplyReceiveHandler.OnReplyArriveListener() {
         @Override
         public void onReplyArrive(PackProtobuf.Pack pack) {
+            sendAck(pack.getReply().getMsgId(),pack.getReply().getSerial());//发送ACK 给服务端
             final ReplyMessage replyMessage=ReplyMessage.buildReplyMessage(pack.getReply());
             if (onReplyReceiveListener!=null){
                 mHandler.post(new Runnable() {
@@ -107,8 +111,8 @@ public class IMClientDemo2 {
                 .registerMessageHandler(new DefaultMessageReceiveHandler(onMessageArriveListener)) //客户端消息接收处理器
                 .registerMessageHandler(new DefaultReplyReceiveHandler(onReplyListener)) //消息状态接收处理器
                 .registerMessageHandler(new DefaultHeartbeatRespHandler()) //心跳接收处理器
-                .setEventListener(new DefaultEventListener("user id2")) //事件监听，可选
-                .setAddress(new Address("192.168.69.32",8766,Address.Type.SOCKS))
+                .setEventListener(new DefaultEventListener("userid2")) //事件监听，可选
+                .setAddress(new Address("172.31.144.1",9081,Address.Type.SOCKS))
                 .setAddress(new Address("www.baidu.com",8766,Address.Type.HTTP))
                 .build();
     }
@@ -158,12 +162,15 @@ public class IMClientDemo2 {
     }
 
 
+    public long getMsgSerialID(){
+        return imClient.getMsgSerialId();
+    }
     /**
      * 发送ACK
      * @param msgId
      */
-    public void sendAck(String msgId){
-        imClient.newCall(createAckRequest(msgId)).enqueue(new Callback() {
+    public void sendAck(String msgId,long serial){
+        imClient.newCall(createAckRequest(msgId,serial)).enqueue(new Callback() {
             @Override
             public void onFailure(Call call, IOException e) {
 
@@ -176,9 +183,9 @@ public class IMClientDemo2 {
         });
     }
 
-    private Request createAckRequest(String msgId) {
-        return new  Request.Builder().setBody(getDefaultAck(msgId))
-                .setNeedACK(false)
+    private Request createAckRequest(String msgId,Long serial) {
+        return new  Request.Builder().setBody(getDefaultAck(msgId,serial))
+                .setNoNeedACK()
                 .build();
     }
 
@@ -226,7 +233,7 @@ public class IMClientDemo2 {
     private  PackProtobuf.Pack getDefaultHands() {
         ShakeHandsMessage shakeHandsMessage =new ShakeHandsMessage();
         shakeHandsMessage.setToken("token2");
-        shakeHandsMessage.setUserId("user id2");
+        shakeHandsMessage.setUserId("userid2");
         shakeHandsMessage.setMsgId("2222");
         return PackProtobuf.Pack.newBuilder()
                 .setPackType(PackProtobuf.Pack.PackType.SHAKEHANDS)
@@ -239,10 +246,14 @@ public class IMClientDemo2 {
      * @param msgId
      * @return
      */
-    private PackProtobuf.Pack getDefaultAck(String msgId){
+    private PackProtobuf.Pack getDefaultAck(String msgId,Long serial){
         return PackProtobuf.Pack.newBuilder()
                 .setPackType(PackProtobuf.Pack.PackType.ACK)
-                .setAck(PackProtobuf.Ack.newBuilder().setMsgId(msgId).setAckType(MSG_ACK_TYPE).setResult(0).build())
+                .setAck(PackProtobuf.Ack.newBuilder().setAckMsgId(msgId)
+                        .setAckType(MSG_ACK_TYPE)
+                        .setResult(0)
+                        .setSerial(serial)
+                        .build())
                 .build();
     }
     public interface OnMessageReceiveListener{
