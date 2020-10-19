@@ -185,8 +185,8 @@ class ServerHandler extends ChannelInboundHandlerAdapter {
                 PackProtobuf.Heart heart=pack.getHeart();
 
                 if (session!=null){
-                    System.out.println("收到客户端 "+ session.getUserId()+" 心跳消息,该消息id："+heart.getMsgId());
-                    session.writeAndFlush(createAck(heart.getMsgId(), NettyServerDemo.HEART_ACK_TYPE,0));
+                    System.out.println("收到客户端 "+ session.getUserId());
+                    session.writeAndFlush(createAck(heart.getUserId(), NettyServerDemo.HEART_ACK_TYPE,0));
                 }
                 break;
             case MSG:
@@ -213,8 +213,8 @@ class ServerHandler extends ChannelInboundHandlerAdapter {
                 System.out.println("收到接受方客户端响应的状态:"+receiveReply.toString());
                 switch (receiveReply.getReplyType()){
                     case MSG_REPLY_TYPE://消息状态回复，转发给发送方是被送达了，还是被阅读了等
-                        System.out.println("转发消息状态给发送方"+receiveReply.getUserId());
-                        Session replyTargetSession =sessionManager.getByUserId(receiveReply.getUserId());
+                        System.out.println("转发消息状态给发送方"+receiveReply.getToId());
+                        Session replyTargetSession =sessionManager.getByUserId(receiveReply.getToId());
                         if (replyTargetSession!=null) {
                             replyTargetSession.writeAndFlush(pack);
                         }else {//对方离线,消息回执就不要转发了，等用户上线主动来获取消息状态
@@ -267,7 +267,7 @@ class ServerHandler extends ChannelInboundHandlerAdapter {
     private PackProtobuf.Pack createMsgReply(String userId,String msgId,int replyType,int status){
         return PackProtobuf.Pack.newBuilder()
                 .setPackType(PackProtobuf.Pack.PackType.REPLY)
-                .setReply( PackProtobuf.Reply.newBuilder().setUserId(userId).setReplyType(replyType).setMsgId(msgId).setStatusReport(status).build())
+                .setReply( PackProtobuf.Reply.newBuilder().setToId(userId).setReplyType(replyType).setMsgId(msgId).setStatusReport(status).build())
                 .build();
     }
     private PackProtobuf.Pack createAck(String msgId,int ackType,int result){

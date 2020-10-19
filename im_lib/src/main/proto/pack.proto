@@ -47,15 +47,18 @@ message Reply { //消息回执
     int64 serial= 1;
     int32 replyType=2;//回复类型
     string msgId=3;
-    string userId=4;//服务端发送用的时候为发送者Id,客户端发送的时候则为接收Id
-    int32 statusReport=5;//状态
+    string fromId = 4;
+    string toId = 5;//服务端发送用的时候为发送者Id,客户端发送的时候则为接收Id
+    int32 statusReport = 6;//状态
 }
 message Heart { //心跳
-    string msgId = 1;
+    string userId = 1;
 }
 message Ack {
     int64 serial= 1;
     string ackMsgId = 2;
     int32 ackType = 3;
     int32 result = 4;
+    string fromId = 5;
+    string toId = 6;
 }

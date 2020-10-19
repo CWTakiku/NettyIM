@@ -180,7 +180,7 @@ public class MainActivity extends AppCompatActivity {
 
             }
             if (status!=-1){
-                IMClientDemo.getInstance().sendMsg(createReplyRequest(appMessage.getHead().getMsgId(), client2UserId, status,1), new Callback() {
+                IMClientDemo.getInstance().sendMsg(createReplyRequest(appMessage.getHead().getMsgId(),client1UserId, client2UserId, status,1), new Callback() {
                     @Override
                     public void onFailure(Call call, IOException e) {
                         //消息发送失败
@@ -204,7 +204,7 @@ public class MainActivity extends AppCompatActivity {
                     break;
             }
             if (status!=-1){
-                IMClientDemo2.getInstance().sendMsg(createReplyRequest(appMessage.getHead().getMsgId(), client1UserId, status,2), new Callback() {
+                IMClientDemo2.getInstance().sendMsg(createReplyRequest(appMessage.getHead().getMsgId(),client2UserId, client1UserId, status,2), new Callback() {
                     @Override
                     public void onFailure(Call call, IOException e) {
                         //消息发送失败
@@ -277,13 +277,13 @@ public class MainActivity extends AppCompatActivity {
     /**
      * 构建消息状态回复请求
      * @param msgId
-     * @param userId
      * @return
      */
-    public Request createReplyRequest(String msgId,String userId,int status,int clientNum){
+    public Request createReplyRequest(String msgId,String fromId,String toId,int status,int clientNum){
         ReplyMessage replyMessage=new ReplyMessage();
         replyMessage.setMsgId(msgId);
-        replyMessage.setUserId(userId);
+        replyMessage.setToId(toId);
+        replyMessage.setFromId(fromId);
         replyMessage.setReplyType(MSG_REPLY_TYPE);
         replyMessage.setStatusReport(status); //已读
         Request replyRequest=  new Request.Builder()

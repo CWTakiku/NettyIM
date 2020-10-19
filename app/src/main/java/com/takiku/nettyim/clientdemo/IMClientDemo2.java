@@ -45,11 +45,14 @@ public class IMClientDemo2 {
     private IMClientDemo2.OnMessageReceiveListener onMessageReceiveListener;
     private IMClientDemo2.OnReplyReceiveListener onReplyReceiveListener;
 
+
+    public static final String userId2 = "userid2";
+
     private DefaultMessageReceiveHandler.onMessageArriveListener onMessageArriveListener=new DefaultMessageReceiveHandler.onMessageArriveListener() {
         @Override
         public void onMessageArrive(PackProtobuf.Pack pack) {
             final AppMessage appMessage=AppMessage.buildAppMessage(pack.getMsg());
-            sendAck(appMessage.getHead().getMsgId(),pack.getMsg().getSerial());//发送ACK 给服务端
+            sendAck(appMessage.getHead().getMsgId(),pack.getMsg().getSerial(),pack.getMsg().getHead().getFromId());//发送ACK 给服务端
             if (onMessageReceiveListener!=null){
                 mHandler.post(new Runnable() {
                     @Override
@@ -63,7 +66,7 @@ public class IMClientDemo2 {
     public DefaultReplyReceiveHandler.OnReplyArriveListener onReplyListener=new DefaultReplyReceiveHandler.OnReplyArriveListener() {
         @Override
         public void onReplyArrive(PackProtobuf.Pack pack) {
-            sendAck(pack.getReply().getMsgId(),pack.getReply().getSerial());//发送ACK 给服务端
+            sendAck(pack.getReply().getMsgId(),pack.getReply().getSerial(),pack.getReply().getFromId());//发送ACK 给服务端
             final ReplyMessage replyMessage=ReplyMessage.buildReplyMessage(pack.getReply());
             if (onReplyReceiveListener!=null){
                 mHandler.post(new Runnable() {
@@ -111,7 +114,7 @@ public class IMClientDemo2 {
                 .registerMessageHandler(new DefaultMessageReceiveHandler(onMessageArriveListener)) //客户端消息接收处理器
                 .registerMessageHandler(new DefaultReplyReceiveHandler(onReplyListener)) //消息状态接收处理器
                 .registerMessageHandler(new DefaultHeartbeatRespHandler()) //心跳接收处理器
-                .setEventListener(new DefaultEventListener("userid2")) //事件监听，可选
+                .setEventListener(new DefaultEventListener(userId2)) //事件监听，可选
                 .setAddress(new Address("172.31.144.1",9081,Address.Type.SOCKS))
                 .setAddress(new Address("www.baidu.com",8766,Address.Type.HTTP))
                 .build();
@@ -169,8 +172,8 @@ public class IMClientDemo2 {
      * 发送ACK
      * @param msgId
      */
-    public void sendAck(String msgId,long serial){
-        imClient.newCall(createAckRequest(msgId,serial)).enqueue(new Callback() {
+    public void sendAck(String msgId,long serial,String fromId){
+        imClient.newCall(createAckRequest(msgId,serial,userId2,fromId)).enqueue(new Callback() {
             @Override
             public void onFailure(Call call, IOException e) {
 
@@ -183,8 +186,8 @@ public class IMClientDemo2 {
         });
     }
 
-    private Request createAckRequest(String msgId,Long serial) {
-        return new  Request.Builder().setBody(getDefaultAck(msgId,serial))
+    private Request createAckRequest(String msgId,Long serial,String fromId,String toId) {
+        return new  Request.Builder().setBody(getDefaultAck(msgId,serial,fromId,toId))
                 .setNoNeedACK()
                 .build();
     }
@@ -222,7 +225,7 @@ public class IMClientDemo2 {
     private GeneratedMessageV3 getDefaultHeart() {
         return PackProtobuf.Pack.newBuilder()
                 .setPackType(PackProtobuf.Pack.PackType.HEART)
-                .setHeart(PackProtobuf.Heart.newBuilder().setMsgId(UUID.randomUUID().toString()).build())
+                .setHeart(PackProtobuf.Heart.newBuilder().setUserId(userId2).build())
                 .build();
     }
 
@@ -233,7 +236,7 @@ public class IMClientDemo2 {
     private  PackProtobuf.Pack getDefaultHands() {
         ShakeHandsMessage shakeHandsMessage =new ShakeHandsMessage();
         shakeHandsMessage.setToken("token2");
-        shakeHandsMessage.setUserId("userid2");
+        shakeHandsMessage.setUserId(userId2);
         shakeHandsMessage.setMsgId("2222");
         return PackProtobuf.Pack.newBuilder()
                 .setPackType(PackProtobuf.Pack.PackType.SHAKEHANDS)
@@ -246,12 +249,14 @@ public class IMClientDemo2 {
      * @param msgId
      * @return
      */
-    private PackProtobuf.Pack getDefaultAck(String msgId,Long serial){
+    private PackProtobuf.Pack getDefaultAck(String msgId,Long serial,String fromId,String toId){
         return PackProtobuf.Pack.newBuilder()
                 .setPackType(PackProtobuf.Pack.PackType.ACK)
                 .setAck(PackProtobuf.Ack.newBuilder().setAckMsgId(msgId)
                         .setAckType(MSG_ACK_TYPE)
                         .setResult(0)
+                        .setFromId(fromId)
+                        .setToId(toId)
                         .setSerial(serial)
                         .build())
                 .build();

@@ -16,13 +16,19 @@ public class ReplyMessage extends AbstractPack {
     String msgId;
 
     int statusReport;
-    String userId;
+
     int replyType;
+
+    String fromId;
+
+    String toId;
+
 
     public static ReplyMessage buildReplyMessage(PackProtobuf.Reply reply) {
         ReplyMessage replyMessage=new ReplyMessage();
         replyMessage.setReplyType(reply.getReplyType());
-        replyMessage.setUserId(reply.getUserId());
+        replyMessage.setFromId(reply.getFromId());
+        replyMessage.setToId(reply.getToId());
         replyMessage.setMsgId(reply.getMsgId());
         replyMessage.setStatusReport(reply.getStatusReport());
         return replyMessage;
@@ -33,7 +39,8 @@ public class ReplyMessage extends AbstractPack {
         return PackProtobuf.Reply.newBuilder()
                 .setMsgId(msgId)
                 .setReplyType(replyType)
-                .setUserId(userId)
+                .setFromId(fromId)
+                .setToId(toId)
                 .setStatusReport(statusReport)
                 .setSerial(netId)
                 .build();
@@ -56,13 +63,7 @@ public class ReplyMessage extends AbstractPack {
         this.statusReport = statusReport;
     }
 
-    public String getUserId() {
-        return userId;
-    }
 
-    public void setUserId(String userId) {
-        this.userId = userId;
-    }
 
     public int getReplyType() {
         return replyType;
@@ -70,5 +71,21 @@ public class ReplyMessage extends AbstractPack {
 
     public void setReplyType(int replyType) {
         this.replyType = replyType;
+    }
+
+    public String getFromId() {
+        return fromId == null ? "" : fromId;
+    }
+
+    public void setFromId(String fromId) {
+        this.fromId = fromId;
+    }
+
+    public String getToId() {
+        return toId == null ? "" : toId;
+    }
+
+    public void setToId(String toId) {
+        this.toId = toId;
     }
 }
