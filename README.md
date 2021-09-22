@@ -68,10 +68,13 @@ Disposable disposable=   imClient.newCall(request).enqueue(callback).subscribe(c
  imClient.setBackground(background);//设置前后台切换，将会自动切换不同的心跳间隔
 ```
 
-### 三、详细使用
-可自行下载源码运行，先运行com.takiku.im_lib.NettyServerDemo类的服务端demo，再运行demo APP
+### 三、项目结构设计图
+![image](https://github.com/mrchengwenlong/NettyIM/blob/master/IM客户端架构图.png)
 
-### 四、项目博客地址
+### 四、详细使用
+可自行下载源码运行，先运行com.takiku.im_lib.NettyServerDemo类的服务端Demo（这个是个微型服务端后台，开了这个才能让APP互发消息），再运行Demo APP
+
+### 五、项目博客地址
 [简书](https://www.jianshu.com/p/5b01f4d6e4f4)       [CSDN](https://blog.csdn.net/smile__dream/article/details/105681018)  [掘金](https://juejin.im/post/5ea569aaf265da47e34c19ed) 
 
 
