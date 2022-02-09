@@ -51,8 +51,7 @@ imClient.startConnect();//建立连接
 imClient.disConnect();//主动断开连接，不会自动重连
 ```
 ```
-  Request request=new Request.Builder(). //创建一个消息发送request
-              setRequestTag(appMessage.getHead().getMsgId()). //请求tag
+  Request request=new Request.Builder(). //创建一个消息发送request           
               setNeedACK(true).//需要ACK
               setSendRetry(true). //能发送重试
               setBody(getMsgPack(appMessage.buildProto())). //body为protbuf
