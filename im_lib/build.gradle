@@ -36,7 +36,8 @@ dependencies {
     androidTestImplementation 'androidx.test.ext:junit:1.1.1'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
     api "com.google.protobuf:protobuf-java:${cfgs.protobufVersion}"
-    compileOnly files('libs/netty-tcp-4.1.33-1.0.jar')
+   // compileOnly files('libs/netty-tcp-4.1.33-1.0.jar')
+    api group: 'io.netty', name: 'netty-all', version: '4.1.33.Final'
 
 }
 

@@ -2,7 +2,7 @@ package com.takiku.im_lib.internal.handler.listener;
 
 import com.google.protobuf.GeneratedMessageV3;
 
-public interface MessageShakeHandsHandler<K extends GeneratedMessageV3,T extends GeneratedMessageV3>  {
+public interface MessageShakeHandsHandler<K extends Object,T extends Object>  {
 
 
     /**

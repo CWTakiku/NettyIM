@@ -1,8 +1,9 @@
-package com.takiku.im_lib;
+package com.takiku.nettyim.tcp;
 
 
-import com.google.protobuf.GeneratedMessageV3;
 import com.takiku.im_lib.protobuf.PackProtobuf;
+import com.takiku.nettyim.Session;
+import com.takiku.nettyim.SessionManager;
 
 import org.junit.Test;
 
@@ -10,10 +11,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 import io.netty.bootstrap.ServerBootstrap;
-import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
@@ -31,13 +30,13 @@ import io.netty.handler.codec.protobuf.ProtobufDecoder;
 import io.netty.handler.codec.protobuf.ProtobufEncoder;
 
 
-import static com.takiku.im_lib.NettyServerDemo.MSG_ACK_TYPE;
-import static com.takiku.im_lib.NettyServerDemo.MSG_REPLY_TYPE;
-import static com.takiku.im_lib.NettyServerDemo.SHAKE_HANDS_ACK_TYPE;
-import static com.takiku.im_lib.NettyServerDemo.SHAKE_HANDS_STATUS_FAILED;
-import static com.takiku.im_lib.NettyServerDemo.SHAKE_HANDS_STATUS_SUCCESS;
-import static com.takiku.im_lib.NettyServerDemo.offLine;
-import static com.takiku.im_lib.NettyServerDemo.userMap;
+import static com.takiku.nettyim.tcp.NettyServerDemo.MSG_ACK_TYPE;
+import static com.takiku.nettyim.tcp.NettyServerDemo.MSG_REPLY_TYPE;
+import static com.takiku.nettyim.tcp.NettyServerDemo.SHAKE_HANDS_ACK_TYPE;
+import static com.takiku.nettyim.tcp.NettyServerDemo.SHAKE_HANDS_STATUS_FAILED;
+import static com.takiku.nettyim.tcp.NettyServerDemo.SHAKE_HANDS_STATUS_SUCCESS;
+import static com.takiku.nettyim.tcp.NettyServerDemo.offLine;
+import static com.takiku.nettyim.tcp.NettyServerDemo.userMap;
 
 
 /**

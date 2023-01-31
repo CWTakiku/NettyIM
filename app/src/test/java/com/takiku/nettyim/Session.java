@@ -1,4 +1,4 @@
-package com.takiku.im_lib;
+package com.takiku.nettyim;
 
 import io.netty.channel.Channel;
 

@@ -21,7 +21,7 @@ public class Address {
     }
 
     public enum Type{
-        HTTP,
+        WS,
         SOCKS
     }
 

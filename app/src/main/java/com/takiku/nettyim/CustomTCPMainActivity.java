@@ -12,6 +12,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 
+import com.google.gson.Gson;
 import com.takiku.im_lib.call.Call;
 import com.takiku.im_lib.call.Callback;
 import com.takiku.im_lib.entity.AppMessage;
@@ -19,8 +20,8 @@ import com.takiku.im_lib.entity.ReplyMessage;
 import com.takiku.im_lib.entity.base.Request;
 import com.takiku.im_lib.entity.base.Response;
 import com.takiku.im_lib.protobuf.PackProtobuf;
-import com.takiku.nettyim.clientdemo.IMClientDemo;
-import com.takiku.nettyim.clientdemo.IMClientDemo2;
+import com.takiku.nettyim.customTcpClientdemo.IMClientDemo;
+import com.takiku.nettyim.customTcpClientdemo.IMClientDemo2;
 import com.takiku.nettyim.widget.MenuItemPopWindow;
 import com.takiku.nettyim.widget.MessageAdapter;
 
@@ -34,11 +35,13 @@ import static com.takiku.nettyim.Constants.MSG_STATUS_SEND;
 import static com.takiku.nettyim.Constants.MSG_STATUS_SENDING;
 import static com.takiku.nettyim.Constants.MSG_STATUS_WITHDRAW;
 
+import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
+
 /**
  * create by cwl
  * 这里一个页面直接模拟两个客户端通信
  */
-public class MainActivity extends AppCompatActivity {
+public class CustomTCPMainActivity extends AppCompatActivity {
 
     private Button btn1;
     private Button btn2;
@@ -254,7 +257,8 @@ public class MainActivity extends AppCompatActivity {
      * @return
      */
     private Request createRequest(AppMessage appMessage,int clientNum){
-
+        String json = new Gson().toJson(appMessage);
+        TextWebSocketFrame textWebSocketFrame = new TextWebSocketFrame(json);
         Request request=new Request.Builder().
                 setNoNeedACK(appMessage.getHead().getMsgId())
                 .setBody(getMsgPack(appMessage.buildProto(clientNum == 1?IMClientDemo.getInstance().getMsgSerialID():IMClientDemo2.getInstance().getMsgSerialID())))

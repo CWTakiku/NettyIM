@@ -1,5 +1,7 @@
 package com.takiku.im_lib.call;
 
+import android.util.Log;
+
 import com.google.protobuf.GeneratedMessageV3;
 import com.takiku.im_lib.client.IMClient;
 import com.takiku.im_lib.entity.base.Request;
@@ -124,8 +126,9 @@ public class RealCall implements Call {
                  responseCallback.onResponse(RealCall.this, response);
              }
          }catch ( InterruptedException e){
-
+             e.printStackTrace();
          }catch (IOException e){
+             e.printStackTrace();
              if (signalledCallback) {
                  // Do not signal the callback twice!
                  // Platform.get().log(INFO, "Callback failure for " + toLoggableString(), e);

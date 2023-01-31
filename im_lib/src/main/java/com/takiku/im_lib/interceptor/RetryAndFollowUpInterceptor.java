@@ -1,5 +1,7 @@
 package com.takiku.im_lib.interceptor;
 
+import android.util.Log;
+
 import com.takiku.im_lib.entity.base.ConnectRequest;
 import com.takiku.im_lib.entity.base.Request;
 import com.takiku.im_lib.client.IMClient;
@@ -45,18 +47,25 @@ public class RetryAndFollowUpInterceptor implements Interceptor {
             boolean releaseConnection = true;
             try {
                 response = ((RealInterceptorChain) chain).proceed(request, streamAllocation, null, null);
+                Log.i("RetryAndFoll","response");
                 releaseConnection = false;
             } catch (RouteException e) {
 
             } catch (IOException e) {
                 if (request instanceof ConnectRequest){ //连接请求重试
+                    System.out.println("connect_retry "+connect_retry);
                     if (!connectRecover(e,request, ++connect_retry)) {
                         realChain.eventListener().connectFailed(streamAllocation.currentInetSocketAddress(),e);
                         throw e;
                     }
                        System.out.println("连接重试 " + streamAllocation.currentInetSocketAddress().toString());
                        releaseConnection=false;
-                       continue;
+                    try {
+                        Thread.sleep(client.connectRetryInterval());
+                    } catch (InterruptedException ex) {
+                        ex.printStackTrace();
+                    }
+                    continue;
                 }
                 if (!sendRecover(e,  request,++resendCount)){
                     realChain.eventListener().sendMsgFailed(realChain.call());
@@ -74,6 +83,7 @@ public class RetryAndFollowUpInterceptor implements Interceptor {
                 e.printStackTrace();
             }finally {
                 // We're throwing an unchecked exception. Release any resources.
+
                 if (releaseConnection) {   //是否需要释放连接
                     streamAllocation.release();
                 }

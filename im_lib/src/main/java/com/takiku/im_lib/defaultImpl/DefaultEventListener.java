@@ -20,7 +20,7 @@ public class DefaultEventListener extends EventListener {
     @Override
     public void connectionBroken() {
         super.connectionBroken();
-        System.out.println(userId+"connectionBroken");
+        System.out.println(userId+" connectionBroken");
     }
 
     @Override

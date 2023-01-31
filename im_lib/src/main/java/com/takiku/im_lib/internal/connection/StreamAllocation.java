@@ -2,7 +2,9 @@ package com.takiku.im_lib.internal.connection;
 
 import com.takiku.im_lib.client.IMClient;
 import com.takiku.im_lib.entity.base.Address;
+import com.takiku.im_lib.entity.base.ConnectRequest;
 import com.takiku.im_lib.exception.AuthException;
+import com.takiku.im_lib.exception.ConnectionShutdownException;
 import com.takiku.im_lib.interceptor.Interceptor;
 import com.takiku.im_lib.internal.Internal;
 import com.takiku.im_lib.listener.EventListener;
@@ -24,7 +26,7 @@ public class StreamAllocation {
     private boolean canceled;
     private ConnectionPool connectionPool;
     private LinkedHashMap<String, ChannelHandler> channelHandlerMap;
-    public StreamAllocation(ConnectionPool connectionPool, List<Address> addressList, LinkedHashMap<String, ChannelHandler>  channelHandlerMap, Object callStackTrace){
+    public StreamAllocation(ConnectionPool connectionPool, List<Address> addressList,LinkedHashMap<String, ChannelHandler>  channelHandlerMap, Object callStackTrace){
       this.addressList = addressList;
       this.connectionPool=connectionPool;
       this.callStackTrace=callStackTrace;
@@ -73,9 +75,11 @@ public class StreamAllocation {
             if (this.connection==null||!this.connection.isHealth()){
                 Internal.instance.get(connectionPool, address, this);
                     if(connection==null||!connection.isHealth()){
+                        if (!client.msgTriggerReconnectEnabled()&&!(chain.request() instanceof ConnectRequest)){
+                            throw new ConnectionShutdownException();
+                        }
                         connection= new RealConnection(connectionPool, routeSelector.lastInetSocketAddress(), eventListener);
-
-                        connection.ChannelInitializerHandler(client.codec(), client.heartBeatMsg(),
+                        connection.ChannelInitializerHandler(client.codec(), client.protocol(),client.wsHeaderMap(),client.heartBeatMsg(),
                                 client.customChannelHandlerLinkedHashMap(),heartbeatInterval,client.messageParser()
                                 ,new RealConnection.connectionBrokenListener() {
                                     @Override
@@ -88,7 +92,7 @@ public class StreamAllocation {
                                         }
 
                                     }
-                                });
+                                },client.maxFrameLength());
                         connection.connect(connectTimeout);
                         Internal.instance.put(connectionPool,connection);
                         TcpStream tcpStream=connection.newStream(client,this);

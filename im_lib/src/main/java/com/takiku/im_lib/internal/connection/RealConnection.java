@@ -1,7 +1,5 @@
 package com.takiku.im_lib.internal.connection;
 
-import android.util.Log;
-
 import com.takiku.im_lib.call.Consumer;
 import com.takiku.im_lib.call.OnResponseListener;
 import com.takiku.im_lib.codec.Codec;
@@ -14,15 +12,19 @@ import com.takiku.im_lib.internal.handler.internalhandler.HeartbeatChannelHandle
 import com.takiku.im_lib.internal.handler.internalhandler.MessageChannelHandler;
 import com.takiku.im_lib.internal.MessageParser;
 import com.takiku.im_lib.internal.handler.internalhandler.StatusChannelHandler;
+import com.takiku.im_lib.internal.handler.internalhandler.WebSocketClientHandler;
 import com.takiku.im_lib.listener.EventListener;
+import com.takiku.im_lib.protocol.IMProtocol;
 import com.takiku.im_lib.util.LRUMap;
+import com.takiku.im_lib.util.LogUtil;
 
-import java.io.IOException;
 import java.io.Serializable;
 import java.net.InetSocketAddress;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -37,6 +39,12 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 import io.netty.handler.codec.LengthFieldPrepender;
+import io.netty.handler.codec.http.DefaultHttpHeaders;
+import io.netty.handler.codec.http.HttpClientCodec;
+import io.netty.handler.codec.http.HttpHeaders;
+import io.netty.handler.codec.http.HttpObjectAggregator;
+import io.netty.handler.codec.http.websocketx.WebSocketClientHandshakerFactory;
+import io.netty.handler.codec.http.websocketx.WebSocketVersion;
 import io.netty.handler.timeout.IdleStateHandler;
 
 
@@ -57,6 +65,8 @@ public class RealConnection  implements Connection {
     private connectionBrokenListener connectionBrokenListener;
     private volatile LRUMap<String,Response> responseLRUMap;
     private Serializable netId;
+    private @IMProtocol int protocol;
+    private  WebSocketClientHandler webSocketClientHandler;
 
 
     public RealConnection(ConnectionPool connectionPool, InetSocketAddress inetSocketAddress, EventListener eventListener){
@@ -77,8 +87,14 @@ public class RealConnection  implements Connection {
     public void release(boolean reConnect){
         this.reConnect=reConnect;
         if (channel!=null){
+            if (protocol == IMProtocol.PRIVATE){
+                removeHandler(HeartbeatChannelHandler.class.getSimpleName(),channel);
+            }else if (protocol == IMProtocol.WEB_SOCKET){
+                removeHandler(HttpClientCodec.class.getSimpleName(),channel);
+                removeHandler(HttpObjectAggregator.class.getSimpleName(),channel);
+                removeHandler(WebSocketClientHandler.class.getSimpleName(),channel);
+            }
             removeHandler(StatusChannelHandler.class.getSimpleName(),channel);
-            removeHandler(HeartbeatChannelHandler.class.getSimpleName(),channel);
             removeHandler(MessageChannelHandler.class.getSimpleName(),channel);
 
             if (handlers!=null){
@@ -115,18 +131,20 @@ public class RealConnection  implements Connection {
         }
     }
 
-    public void ChannelInitializerHandler(final Codec codec,
+    public void ChannelInitializerHandler(final Codec codec, @IMProtocol int protocol, HashMap<String,Object> wsHeaderMap,
                                           final com.google.protobuf.GeneratedMessageV3 heartBeatMsg,
                                           final LinkedHashMap<String, ChannelHandler> handlers,
                                           final int heartbeatInterval,
                                           final MessageParser messageParser,
-                                          final connectionBrokenListener connectionBrokenListener
+                                          final connectionBrokenListener connectionBrokenListener,
+                                          final int maxFrameLength
                                          ) throws AuthException {
         if (hasInit){
             return;
         }
         this.handlers=handlers;
         this.heartBeatMsg=heartBeatMsg;
+        this.protocol = protocol;
         this.connectionBrokenListener=connectionBrokenListener;
         this.messageParser=messageParser;
         bootstrap.handler(new ChannelInitializer<Channel>() {
@@ -134,38 +152,61 @@ public class RealConnection  implements Connection {
             protected void initChannel(Channel channel ) throws Exception {
                 ChannelPipeline pipeline = channel.pipeline();
                 //解决tcp拆包、粘包
-                pipeline.addLast("frameEncoder", new LengthFieldPrepender(2));
-                pipeline.addLast("frameDecoder", new LengthFieldBasedFrameDecoder(65535,
-                        0, 2, 0, 2));
-                //编解码支持
-                if (codec==null){
-                    throw new  IllegalArgumentException("codec is null");
-                }
-                messageParser.addShakeResultListener(new MessageParser.onShakeHandsResultListener() {
-                    @Override
-                    public void shakeHandsResult(boolean isSuccess) {
-                        if (isSuccess){
-                            if (heartBeatMsg!=null){ //握手成功且设置了心跳包，则里面启动心跳机制
-                                addHeartbeatHandler(connectionPool,heartbeatInterval);
+                if (protocol == IMProtocol.PRIVATE){
+                    pipeline.addLast("frameEncoder", new LengthFieldPrepender(2));
+                    pipeline.addLast("frameDecoder", new LengthFieldBasedFrameDecoder(maxFrameLength,
+                            0, 2, 0, 2));
+                    //编解码支持
+                    if (codec==null){
+                        throw new  IllegalArgumentException("codec is null");
+                    }
+                    messageParser.addShakeResultListener(new MessageParser.onShakeHandsResultListener() {
+                        @Override
+                        public void shakeHandsResult(boolean isSuccess) {
+                            if (isSuccess){
+                                if (heartBeatMsg!=null){ //握手成功且设置了心跳包，则里面启动心跳机制
+                                    addHeartbeatHandler(connectionPool,heartbeatInterval);
+                                }
+                            }else {
+                                release(false);
                             }
-                        }else {
-                            release(false);
+                        }
+                    });
+
+                    pipeline.addLast(codec.EnCoder().getClass().getSimpleName(),codec.EnCoder());
+                    pipeline.addLast(codec.DeCoder().getClass().getSimpleName(),codec.DeCoder());
+
+                    if (messageParser.getMessageShakeHandsHandler() == null){ //如果没有握手消息且设置了心跳包，则直接添加心跳机制，否则等握手成功后添加心跳机制
+                        if (heartBeatMsg!=null){
+//                        // 3次心跳没响应，代表连接已断开
+                            addHeartbeatHandler(connectionPool,heartbeatInterval);
+
                         }
                     }
-                });
-
-                pipeline.addLast(codec.EnCoder().getClass().getSimpleName(),codec.EnCoder());
-                pipeline.addLast(codec.DeCoder().getClass().getSimpleName(),codec.DeCoder());
-
-                if (messageParser.getMessageShakeHandsHandler() == null){ //如果没有握手消息且设置了心跳包，则直接添加心跳机制，否则等握手成功后添加心跳机制
-                    if (heartBeatMsg!=null){
-//                        // 3次心跳没响应，代表连接已断开
-                        addHeartbeatHandler(connectionPool,heartbeatInterval);
-
+                    pipeline.addLast(StatusChannelHandler.class.getSimpleName(),new StatusChannelHandler(eventListener,connectionBrokenListener));
+                    pipeline.addLast(MessageChannelHandler.class.getSimpleName(),new MessageChannelHandler(messageParser));
+                }else if (protocol == IMProtocol.WEB_SOCKET){
+                    URI uri   = new  URI(inetSocketAddress.getHostName());
+                    // Connect with V13 (RFC 6455 aka HyBi-17). You can change it to V08 or V00.
+                    // If you change it to V00, ping is not supported and remember to change
+                    // HttpResponseDecoder to WebSocketHttpResponseDecoder in the pipeline.
+                    HttpHeaders customHeaders = null;
+                    if (wsHeaderMap!=null&&!wsHeaderMap.isEmpty()){
+                        customHeaders = new DefaultHttpHeaders();
+                        for (String key:wsHeaderMap.keySet()){
+                            customHeaders.add(key,wsHeaderMap.get(key));
+                        }
                     }
+                    webSocketClientHandler =
+                            new WebSocketClientHandler(
+                                    WebSocketClientHandshakerFactory.newHandshaker(uri, WebSocketVersion.V13, null, false,customHeaders,maxFrameLength),
+                                    messageParser,connectionBrokenListener,eventListener);
+
+                    pipeline.addLast(HttpClientCodec.class.getSimpleName(), new HttpClientCodec());
+                    pipeline.addLast(HttpObjectAggregator.class.getSimpleName(), new HttpObjectAggregator(65535));
+                    pipeline.addLast(WebSocketClientHandler.class.getSimpleName(), webSocketClientHandler);
                 }
-                pipeline.addLast(StatusChannelHandler.class.getSimpleName(),new StatusChannelHandler(eventListener,connectionBrokenListener));
-                pipeline.addLast(MessageChannelHandler.class.getSimpleName(),new MessageChannelHandler(messageParser));
+
                 if (handlers!=null){
                     for (String key : handlers.keySet()) {
                         pipeline.addLast(key, handlers.get(key));
@@ -221,6 +262,7 @@ public class RealConnection  implements Connection {
 
 
     public void connect(int connectTimeout) throws InterruptedException {
+
           eventListener.connectStart(inetSocketAddress);
         // 设置连接超时时长
           bootstrap.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, connectTimeout);
@@ -231,7 +273,19 @@ public class RealConnection  implements Connection {
               ip=inetSocketAddress.getHostName();
           }
           int port=inetSocketAddress.getPort();
-          channel=  bootstrap.connect(ip,port).sync().channel();
+        try {
+            URI uri = new URI(inetSocketAddress.getHostName());
+            if (protocol == IMProtocol.WEB_SOCKET){
+                //等待握手成功
+                channel=  bootstrap.connect(uri.getHost(), uri.getPort()).sync().channel();
+                webSocketClientHandler.handshakeFuture().sync();
+            }else {
+                channel=  bootstrap.connect(ip, port).sync().channel();
+            }
+        } catch (URISyntaxException e) {
+            e.printStackTrace();
+        }
+
 
     }
     public boolean isHealth(){

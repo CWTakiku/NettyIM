@@ -135,11 +135,11 @@ public class MessageParser {
                Map.Entry<String,List<Consumer>> entry=iterator.next();
                List<Consumer> consumers=entry.getValue();
                if (consumers.size()>0){
-                   if (consumers.get(0).Observable((GeneratedMessageV3) msg,entry.getKey())){ //是被观察的消息，则将该消息返回给所有的订阅者们
+                   if (consumers.get(0).Observable(msg,entry.getKey())){ //是被观察的消息，则将该消息返回给所有的订阅者们
                        if (onResponseListenerLRUMap.containsKey(entry.getKey())){
                            onResponseListenerLRUMap.get(entry.getKey()).onResponseArrive( new Response.Builder().setCode(Response.SUCCESS).build());
                        }
-                       transferToSubscribers(consumers, (GeneratedMessageV3) msg);
+                       transferToSubscribers(consumers,  msg);
                        return true;
                    }
                }
@@ -148,14 +148,14 @@ public class MessageParser {
 
         for (MessageHandler messageHandler:messageHandlerList){
             if (messageHandler.isFocusMsg(msg)){
-                messageHandler.handleMsg((GeneratedMessageV3) msg);
+                messageHandler.handleMsg(msg);
                 return true;
             }
         }
 
         return false;
     }
-    private void transferToSubscribers(List<Consumer> consumers,GeneratedMessageV3 messageV3){
+    private void transferToSubscribers(List<Consumer> consumers,Object messageV3){
         for (Consumer consumer :consumers){
             consumer.accept(messageV3);
         }

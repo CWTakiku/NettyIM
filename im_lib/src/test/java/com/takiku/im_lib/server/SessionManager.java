@@ -1,4 +1,4 @@
-package com.takiku.im_lib;
+package com.takiku.im_lib.server;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -58,6 +58,9 @@ public class SessionManager {
         if (session.getUserId() != null)
             this.userToSessionIdMap.remove(session.getUserId());
         return session;
+    }
+    public Map<String, Session> getSessionIdMap(){
+        return sessionIdMap;
     }
 
     public synchronized Session put(String key, Session value) {

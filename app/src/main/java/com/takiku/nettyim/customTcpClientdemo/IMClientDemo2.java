@@ -1,10 +1,7 @@
-package com.takiku.nettyim.clientdemo;
+package com.takiku.nettyim.customTcpClientdemo;
 
-import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
-
-import androidx.annotation.RequiresApi;
 
 import com.google.protobuf.GeneratedMessageV3;
 import com.takiku.im_lib.call.Call;
@@ -15,6 +12,7 @@ import com.takiku.im_lib.defaultImpl.DefaultAckConsumer;
 import com.takiku.im_lib.defaultImpl.DefaultReplyReceiveHandler;
 import com.takiku.im_lib.entity.AppMessage;
 import com.takiku.im_lib.entity.ReplyMessage;
+import com.takiku.im_lib.protocol.IMProtocol;
 import com.takiku.nettyim.callbcak.UICallback;
 import com.takiku.im_lib.client.IMClient;
 import com.takiku.im_lib.defaultImpl.DefaultCodec;
@@ -33,7 +31,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import static com.takiku.nettyim.Constants.MSG_ACK_TYPE;
@@ -115,8 +112,7 @@ public class IMClientDemo2 {
                 .registerMessageHandler(new DefaultReplyReceiveHandler(onReplyListener)) //消息状态接收处理器
                 .registerMessageHandler(new DefaultHeartbeatRespHandler()) //心跳接收处理器
                 .setEventListener(new DefaultEventListener(userId2)) //事件监听，可选
-                .setAddress(new Address("172.31.144.1",9081,Address.Type.SOCKS))
-                .setAddress(new Address("www.baidu.com",8766,Address.Type.HTTP))
+                .addAddress(new Address("192.168.31.212",9081,Address.Type.SOCKS))
                 .build();
     }
 

@@ -7,5 +7,13 @@
     android:layout_height="wrap_content"
     android:layout_centerInParent="true"
     android:id="@+id/btn_two"
-    android:text="双用户"/>
+    android:text="自定义协议双用户"/>
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        android:layout_marginTop="20dp"
+        android:layout_below="@+id/btn_two"
+        android:id="@+id/btn_ws_two"
+        android:text="ws协议双用户"/>
 </RelativeLayout>

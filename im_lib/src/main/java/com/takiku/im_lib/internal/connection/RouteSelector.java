@@ -29,7 +29,7 @@ public class RouteSelector {
         for (Address address:addressList){
             if (address.type()==Address.Type.SOCKS){
                 inetSocketAddress=InetSocketAddress.createUnresolved(address.getUrl(),address.getPort());
-            }else if (address.type()==Address.Type.HTTP){
+            }else if (address.type()==Address.Type.WS){
                 inetSocketAddress=new InetSocketAddress(address.getUrl(),address.getPort());
             }
             inetSocketAddresses.add(inetSocketAddress);

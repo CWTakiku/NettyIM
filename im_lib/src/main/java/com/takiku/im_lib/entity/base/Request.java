@@ -11,12 +11,13 @@ public  class Request {
   public static final int PACK_REPLY_TYPE=1;
   public static final int PACK_HANDS_TYPE=3;
   public static final int PACK_CONNECT_TYPE=4;
+  public static final int PACK_ACK_TYPE = 5;
 
  public String requestTag;//请求tag，这个tag能确定唯一的request
  public Address address; //暂时未用到，为预留字段
  public boolean sendRetry;//失败是否重试
  public boolean needACK=true;//是否需要确认
- public com.google.protobuf.GeneratedMessageV3 requestBody;
+ public Object requestBody;
 
   Request(Builder builder) {
      this.address=builder.address;
@@ -27,7 +28,7 @@ public  class Request {
   }
     public static class Builder {
     Address address;
-    com.google.protobuf.GeneratedMessageV3 body;
+    Object body;
     String requestTag;
     boolean sendRetry;
     boolean needACK;
@@ -46,7 +47,7 @@ public  class Request {
       this.address=address;
       return this;
     }
-    public Builder setBody(com.google.protobuf.GeneratedMessageV3 body){
+    public Builder setBody(Object body){
       this.body=body;
       return this;
     }
