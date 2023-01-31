@@ -112,6 +112,7 @@ public class WSClientDemo2 {
                // .setHeartBeatMsg(getDefaultHeart()) //设置心跳,可选
                 .setAckConsumer(new WSAckConsumer()) //设置确认机制
                 .setConnectTimeout(10, TimeUnit.SECONDS) //设置连接超时
+                .setConnectRetryInterval(1000)
                 .setResendCount(3)//设置失败重试数
                 .setConnectionRetryEnabled(true)//是否连接重试
                 .setSendTimeout(6,TimeUnit.SECONDS)//设置发送超时
@@ -120,7 +121,7 @@ public class WSClientDemo2 {
                 .registerMessageHandler(new WSMessageReplyHandler(onReplyListener)) //消息状态接收处理器
                 .setEventListener(new DefaultEventListener(userId2)) //事件监听，可选
                 // .addAddress(new Address("192.168.31.212",9081,Address.Type.SOCKS))
-                .addAddress(new Address("ws://192.168.31.218:8804/ws",8804,Address.Type.WS))
+                .addAddress(new Address("ws://192.168.31.223:8804/ws",8804,Address.Type.WS))
                 .addWsHeader("user",userId2)
                 .setProtocol(IMProtocol.WEB_SOCKET)
                 .build();

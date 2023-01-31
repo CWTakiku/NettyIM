@@ -124,7 +124,7 @@ public class WSClientDemo1 {
                // .registerMessageHandler(new DefaultHeartbeatRespHandler()) //心跳接收处理器
                 .setEventListener(new DefaultEventListener(userId1)) //事件监听，可选
                 // .addAddress(new Address("192.168.31.212",9081,Address.Type.SOCKS))
-                .addAddress(new Address("ws://192.168.31.218:8804/ws",8804,Address.Type.WS))
+                .addAddress(new Address("ws://192.168.31.223:8804/ws",8804,Address.Type.WS))
                 .addWsHeader("user",userId1)
                 .setProtocol(IMProtocol.WEB_SOCKET)
                 .build();
