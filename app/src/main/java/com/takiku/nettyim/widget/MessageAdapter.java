@@ -80,7 +80,8 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
             receiveHolder.contentView.setOnLongClickListener(new View.OnLongClickListener() {
                 @Override
                 public boolean onLongClick(View v) {
-                    MenuItemPopWindow menuItemPopWindow=  MenuItemPopWindow.builder(v.getContext(), new MenuItemPopWindow.MenuItemListenr() {
+                    MenuItemPopWindow menuItemPopWindow = null;
+                    menuItemPopWindow=  MenuItemPopWindow.builder(v.getContext(), new MenuItemPopWindow.MenuItemListenr() {
                         @Override
                         public void onItem(int flag) {
                             AppMessage appMessage=list.get(position);
@@ -90,6 +91,7 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
                                     if (operationMessageListener!=null){
                                         operationMessageListener.operationMessage(appMessage,flag);
                                     }
+
                                     break;
                             }
 

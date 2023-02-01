@@ -26,7 +26,9 @@ public class MenuItemPopWindow extends StyleAlphaPopWindow {
                 @Override
                 public void onClick(View v) {
                     if (null != lis) {
+                        dismiss();
                         lis.onItem(MENU_TYPE_READ);
+
                     }
                 }
             });
@@ -37,7 +39,9 @@ public class MenuItemPopWindow extends StyleAlphaPopWindow {
                 @Override
                 public void onClick(View v) {
                     if (null != lis) {
+                        dismiss();
                         lis.onItem(MENU_TYPE_RECALL);
+
                     }
                 }
             });

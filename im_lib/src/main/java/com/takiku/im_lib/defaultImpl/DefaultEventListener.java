@@ -9,6 +9,8 @@ import com.takiku.im_lib.listener.EventListener;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 
+import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
+
 /**
  * 默认事件处理，这里只是打印了日志
  */

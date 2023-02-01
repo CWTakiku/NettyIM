@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.util.List;
 
 import io.netty.channel.Channel;
+import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 
 
 public class Stream implements TcpStream {
@@ -38,7 +39,12 @@ public class Stream implements TcpStream {
     public void writeRequest(Request request) throws IOException {
         if (channel!=null&&channel.isActive()){
            // System.out.println(" requestTag: "+request.requestTag+" request body: "+request.requestBody.toString());
-            channel.writeAndFlush(request.requestBody);
+            if (request.requestBody instanceof TextWebSocketFrame){
+                channel.writeAndFlush(((TextWebSocketFrame) request.requestBody).retain());
+            }else {
+                channel.writeAndFlush(request.requestBody);
+            }
+
         }
 
     }

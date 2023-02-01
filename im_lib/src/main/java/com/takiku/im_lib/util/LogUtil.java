@@ -44,6 +44,16 @@ public class LogUtil {
         }
         return functionNames;
     }
+    public static void i(String tag,String msg){
+        if (BuildConfig.DEBUG){
+            Log.i(tag,msg);
+        }
+    }
+    public static void e(String tag,String msg){
+        if (BuildConfig.DEBUG){
+            Log.e(tag,msg);
+        }
+    }
     public static void debug_e(String msg, int layerNumber) {
         debug_e("custom_debug", msg, layerNumber);
 

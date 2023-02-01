@@ -4,7 +4,6 @@ package com.takiku.nettyim.websocket.server;
 import static io.netty.handler.codec.http.HttpUtil.isKeepAlive;
 
 import com.google.gson.Gson;
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
@@ -25,7 +24,6 @@ import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
-import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.handler.codec.http.DefaultFullHttpResponse;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
@@ -119,8 +117,9 @@ public class MyWebSocketServerHandler extends ChannelInboundHandlerAdapter {
         Session session=   sessionManager.getBySessionId(ctx.channel().id().asLongText());
         // Send the uppercase string back.
         String data = ((TextWebSocketFrame) frame).text();
-        TextWebSocketFrame textWebSocketFrame = (TextWebSocketFrame) frame;
         System.out.println(data);
+        TextWebSocketFrame textWebSocketFrame = (TextWebSocketFrame) frame;
+
         JsonObject jsonObject =(JsonObject) new JsonParser().parse(data);
         int type =   jsonObject.get("packType").getAsInt();
         switch (type){
@@ -161,11 +160,17 @@ public class MyWebSocketServerHandler extends ChannelInboundHandlerAdapter {
                         }
                         break;
                 }
+            case Request.PACK_HEART_TYPE://心跳包
+                AckMessage ackMessage = new AckMessage();
+                ackMessage.setAckType(HEART_ACK_TYPE);
+                TextWebSocketFrame textWebSocketFrame1 = new TextWebSocketFrame(new Gson().toJson(ackMessage));
+                ctx.channel().writeAndFlush(textWebSocketFrame1);
                 break;
         }
     }
     private TextWebSocketFrame createAck(String msgId,int ackType,int result){
         AckMessage ackMessage = new AckMessage();
+        ackMessage.setAckType(ackType);
         ackMessage.setMsgId(msgId);
       return   new TextWebSocketFrame(new Gson().toJson(ackMessage));
     }

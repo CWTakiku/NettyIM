@@ -12,7 +12,6 @@ import com.takiku.im_lib.defaultImpl.DefaultAckConsumer;
 import com.takiku.im_lib.defaultImpl.DefaultReplyReceiveHandler;
 import com.takiku.im_lib.entity.AppMessage;
 import com.takiku.im_lib.entity.ReplyMessage;
-import com.takiku.im_lib.protocol.IMProtocol;
 import com.takiku.nettyim.callbcak.UICallback;
 import com.takiku.im_lib.client.IMClient;
 import com.takiku.im_lib.defaultImpl.DefaultCodec;
@@ -112,7 +111,7 @@ public class IMClientDemo2 {
                 .registerMessageHandler(new DefaultReplyReceiveHandler(onReplyListener)) //消息状态接收处理器
                 .registerMessageHandler(new DefaultHeartbeatRespHandler()) //心跳接收处理器
                 .setEventListener(new DefaultEventListener(userId2)) //事件监听，可选
-                .addAddress(new Address("192.168.31.212",9081,Address.Type.SOCKS))
+                .addAddress(new Address("192.168.31.223",9081,Address.Type.SOCKS))
                 .build();
     }
 

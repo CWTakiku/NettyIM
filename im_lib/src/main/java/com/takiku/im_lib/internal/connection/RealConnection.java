@@ -1,5 +1,7 @@
 package com.takiku.im_lib.internal.connection;
 
+import android.util.Log;
+
 import com.takiku.im_lib.call.Consumer;
 import com.takiku.im_lib.call.OnResponseListener;
 import com.takiku.im_lib.codec.Codec;
@@ -25,6 +27,7 @@ import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -55,7 +58,7 @@ public class RealConnection  implements Connection {
     private Channel channel;
     private final ConnectionPool connectionPool;
     private Bootstrap bootstrap;
-    private com.google.protobuf.GeneratedMessageV3  heartBeatMsg;
+    private Object heartBeatMsg;
     private MessageParser messageParser;
     private boolean hasInit=false;
     private InetSocketAddress inetSocketAddress;
@@ -132,7 +135,7 @@ public class RealConnection  implements Connection {
     }
 
     public void ChannelInitializerHandler(final Codec codec, @IMProtocol int protocol, HashMap<String,Object> wsHeaderMap,
-                                          final com.google.protobuf.GeneratedMessageV3 heartBeatMsg,
+                                          final Object heartBeatMsg,
                                           final LinkedHashMap<String, ChannelHandler> handlers,
                                           final int heartbeatInterval,
                                           final MessageParser messageParser,
@@ -205,6 +208,7 @@ public class RealConnection  implements Connection {
                     pipeline.addLast(HttpClientCodec.class.getSimpleName(), new HttpClientCodec());
                     pipeline.addLast(HttpObjectAggregator.class.getSimpleName(), new HttpObjectAggregator(65535));
                     pipeline.addLast(WebSocketClientHandler.class.getSimpleName(), webSocketClientHandler);
+                    addHeartbeatHandler(pipeline,connectionPool,heartbeatInterval);
                 }
 
                 if (handlers!=null){
@@ -217,6 +221,7 @@ public class RealConnection  implements Connection {
         });
     }
     public void addHeartbeatHandler(ConnectionPool connectionPool,int heartbeatInterval) {
+       LogUtil.i("real","addHeartbeatHandler "+heartbeatInterval);
         if (channel == null || channel.pipeline() == null) {
             return;
         }
@@ -242,7 +247,33 @@ public class RealConnection  implements Connection {
             System.err.println("添加心跳消息管理handler失败，reason：" + e.getMessage());
         }
     }
+    public void addHeartbeatHandler(ChannelPipeline pipeline,ConnectionPool connectionPool,int heartbeatInterval) {
+        LogUtil.i("real","addHeartbeatHandler "+heartbeatInterval);
+        if (pipeline  == null) {
+            return;
+        }
+        try {
+            // 之前存在的读写超时handler，先移除掉，再重新添加
+            if (pipeline.get(IdleStateHandler.class.getSimpleName()) != null) {
+                pipeline.remove(IdleStateHandler.class.getSimpleName());
+            }
+            // 3次心跳时间内没得到服务端响应，即可代表连接已断开
+            pipeline.addFirst(IdleStateHandler.class.getSimpleName(), new IdleStateHandler(
+                    heartbeatInterval * 3, heartbeatInterval, 0, TimeUnit.MILLISECONDS));
 
+            // 重新添加HeartbeatHandler
+            if (pipeline.get(HeartbeatChannelHandler.class.getSimpleName()) != null) {
+                pipeline.remove(HeartbeatChannelHandler.class.getSimpleName());
+            }
+            if (pipeline.get(IdleStateHandler.class.getSimpleName()) != null) {
+                pipeline.addLast(HeartbeatChannelHandler.class.getSimpleName(),
+                        new HeartbeatChannelHandler(connectionPool,heartBeatMsg,connectionBrokenListener));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.err.println("添加心跳消息管理handler失败，reason：" + e.getMessage());
+        }
+    }
 
     @Override
     public Channel channel() {

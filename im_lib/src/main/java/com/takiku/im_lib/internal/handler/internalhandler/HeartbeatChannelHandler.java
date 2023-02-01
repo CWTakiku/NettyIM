@@ -4,17 +4,19 @@ import android.util.Log;
 
 import com.takiku.im_lib.internal.connection.ConnectionPool;
 import com.takiku.im_lib.internal.connection.RealConnection;
+import com.takiku.im_lib.util.LogUtil;
 
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
+import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 import io.netty.handler.timeout.IdleState;
 import io.netty.handler.timeout.IdleStateEvent;
 
 public class HeartbeatChannelHandler extends ChannelInboundHandlerAdapter {
     ConnectionPool connectionPool;
-    com.google.protobuf.GeneratedMessageV3 heartbeatMsg;
+    Object heartbeatMsg;
     RealConnection.connectionBrokenListener connectionBrokenListener;
-    public HeartbeatChannelHandler(ConnectionPool connectionPool, com.google.protobuf.GeneratedMessageV3 hearBeatMsg, RealConnection.connectionBrokenListener connectionBrokenListener){
+    public HeartbeatChannelHandler(ConnectionPool connectionPool, Object hearBeatMsg, RealConnection.connectionBrokenListener connectionBrokenListener){
        this.connectionPool=connectionPool;
        this.heartbeatMsg=hearBeatMsg;
        this.connectionBrokenListener=connectionBrokenListener;
@@ -23,18 +25,17 @@ public class HeartbeatChannelHandler extends ChannelInboundHandlerAdapter {
     @Override
     public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
         super.userEventTriggered(ctx, evt);
-        if (heartbeatMsg==null){
-            return;
-        }
+        LogUtil.i("HeartbeatChannelHandler","userEventTriggered");
         if (evt instanceof IdleStateEvent) {
             IdleState state = ((IdleStateEvent) evt).state();
             switch (state) {
                 case READER_IDLE: {
-                    Log.i("TAG", "userEventTriggered:READER_IDLE ");
+                    LogUtil.i("HeartbeatChannelHandler", "userEventTriggered:READER_IDLE ");
                     connectionBrokenListener.connectionBroken();
                     break;
                 }
                 case WRITER_IDLE: {
+                    LogUtil.i("HeartbeatChannelHandler", "userEventTriggered:WRITER_IDLE ");
                     // 规定时间内没向服务端发送心跳包,则马上发送一个心跳包
                     if (heartbeatTask == null) {
                         heartbeatTask = new HeartbeatTask(ctx);
@@ -57,7 +58,12 @@ public class HeartbeatChannelHandler extends ChannelInboundHandlerAdapter {
         @Override
         public void run() {
             if (ctx.channel().isActive()) {
-              ctx.channel().writeAndFlush(heartbeatMsg);
+                if (heartbeatMsg instanceof TextWebSocketFrame){
+                    ctx.channel().writeAndFlush(((TextWebSocketFrame) heartbeatMsg).retain());
+                }else {
+                    ctx.channel().writeAndFlush(heartbeatMsg);
+                }
+
             }
         }
     }

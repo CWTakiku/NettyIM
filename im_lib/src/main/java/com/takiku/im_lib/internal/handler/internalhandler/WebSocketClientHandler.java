@@ -9,6 +9,7 @@ import com.takiku.im_lib.listener.EventListener;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.channel.ChannelPromise;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.handler.codec.http.FullHttpResponse;
@@ -19,7 +20,7 @@ import io.netty.handler.codec.http.websocketx.WebSocketClientHandshaker;
 import io.netty.handler.codec.http.websocketx.WebSocketFrame;
 import io.netty.util.CharsetUtil;
 
-public class WebSocketClientHandler extends SimpleChannelInboundHandler<Object> {
+public class WebSocketClientHandler extends ChannelInboundHandlerAdapter {
     private final WebSocketClientHandshaker handshaker;
     private ChannelPromise handshakeFuture;
     private RealConnection.connectionBrokenListener connectionBrokenListener;
@@ -93,9 +94,7 @@ public class WebSocketClientHandler extends SimpleChannelInboundHandler<Object> 
 
     }
 
-    @Override
-    protected void channelRead0(ChannelHandlerContext channelHandlerContext, Object o) throws Exception {
-    }
+
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {

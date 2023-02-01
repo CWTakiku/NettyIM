@@ -8,6 +8,7 @@ import com.google.gson.JsonParser;
 import com.takiku.im_lib.entity.base.Request;
 import com.takiku.im_lib.internal.handler.listener.MessageHandler;
 import com.takiku.im_lib.protobuf.PackProtobuf;
+import com.takiku.im_lib.util.LogUtil;
 
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 
@@ -26,15 +27,15 @@ public class WSMessageReceiveHandler implements MessageHandler<TextWebSocketFram
         TextWebSocketFrame textWebSocketFrame = (TextWebSocketFrame) msg;
         JsonObject jsonObject =(JsonObject) new JsonParser().parse(textWebSocketFrame.text());
         JsonElement type =   jsonObject.get("packType");
-        Log.i("WSMessageReceiveHandler","type "+type.getAsInt());
+        LogUtil.i("WSMessageReceiveHandler","type "+type.getAsInt());
         return type.getAsInt() == Request.PACK_MSG_TYPE;
     }
 
     @Override
     public void handleMsg(TextWebSocketFrame textWebSocketFrame) {
-        Log.i("WSMessageReceiveHandler","type "+textWebSocketFrame.text());
+        LogUtil.i("WSMessageReceiveHandler","type "+textWebSocketFrame.text());
         if (listener!=null){
-            Log.i("WSMessageReceiveHandler","type --- "+textWebSocketFrame.text());
+            LogUtil.i("WSMessageReceiveHandler","type --- "+textWebSocketFrame.text());
             listener.onMessageArrive(textWebSocketFrame);
         }
     }

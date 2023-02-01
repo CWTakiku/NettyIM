@@ -14,6 +14,7 @@ public abstract class NamedRunnable implements Runnable {
     Thread.currentThread().setName(name);
     try {
       execute();
+
     } finally {
       Thread.currentThread().setName(oldName);
     }

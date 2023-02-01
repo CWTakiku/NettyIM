@@ -11,6 +11,7 @@ import com.takiku.im_lib.exception.SendTimeoutException;
 import com.takiku.im_lib.internal.connection.StreamAllocation;
 
 import com.takiku.im_lib.entity.base.Response;
+import com.takiku.im_lib.util.LogUtil;
 
 import java.io.IOException;
 import java.io.InterruptedIOException;
@@ -47,7 +48,7 @@ public class RetryAndFollowUpInterceptor implements Interceptor {
             boolean releaseConnection = true;
             try {
                 response = ((RealInterceptorChain) chain).proceed(request, streamAllocation, null, null);
-                Log.i("RetryAndFoll","response");
+                LogUtil.i("RetryAndFoll","response");
                 releaseConnection = false;
             } catch (RouteException e) {
 

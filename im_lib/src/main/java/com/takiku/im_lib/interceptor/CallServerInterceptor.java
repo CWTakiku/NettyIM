@@ -12,6 +12,8 @@ import com.takiku.im_lib.util.TimeoutTracker;
 import java.io.IOException;
 import java.util.List;
 
+import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
+
 
 public class CallServerInterceptor implements Interceptor {
 

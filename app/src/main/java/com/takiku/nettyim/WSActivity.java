@@ -26,7 +26,6 @@ import com.takiku.im_lib.entity.AppMessage;
 import com.takiku.im_lib.entity.ReplyMessage;
 import com.takiku.im_lib.entity.base.Request;
 import com.takiku.im_lib.entity.base.Response;
-import com.takiku.im_lib.protobuf.PackProtobuf;
 
 import com.takiku.nettyim.widget.MenuItemPopWindow;
 import com.takiku.nettyim.widget.MessageAdapter;
@@ -261,7 +260,7 @@ public class WSActivity extends AppCompatActivity {
     private Request createRequest(AppMessage appMessage, int clientNum){
 
         Request request=new Request.Builder().
-                setNoNeedACK(appMessage.getHead().getMsgId())
+                setNeedACK(appMessage.getHead().getMsgId())
                 .setBody(getMsgPack(appMessage))
                 .setSendRetry(false)
                 .build();
@@ -292,7 +291,7 @@ public class WSActivity extends AppCompatActivity {
         replyMessage.setReplyType(MSG_REPLY_TYPE);
         replyMessage.setStatusReport(status); //已读
         Request replyRequest=  new Request.Builder()
-                .setNoNeedACK(msgId) //设置为不需要应答
+                .setNoNeedACK() //设置为不需要应答
                 .setBody(getReplyPack(replyMessage))
                 .build();
         return replyRequest;
@@ -315,7 +314,9 @@ public class WSActivity extends AppCompatActivity {
      * @return
      */
     public TextWebSocketFrame getReplyPack(ReplyMessage  reply){
-        return new TextWebSocketFrame(new Gson().toJson(reply));
+        String json = new Gson().toJson(reply);
+        TextWebSocketFrame textWebSocketFrame = new TextWebSocketFrame(json);
+        return textWebSocketFrame;
     }
 
     @Override

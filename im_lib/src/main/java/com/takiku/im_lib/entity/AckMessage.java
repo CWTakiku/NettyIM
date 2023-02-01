@@ -13,6 +13,16 @@ public class AckMessage extends AbstractPack {
         super(Request.PACK_ACK_TYPE);
     }
     String msgId;
+    private int ackType;
+
+    public int getAckType() {
+        return ackType;
+    }
+
+    public void setAckType(int ackType) {
+        this.ackType = ackType;
+    }
+
     public String getMsgId() {
         return msgId == null ? "" : msgId;
     }

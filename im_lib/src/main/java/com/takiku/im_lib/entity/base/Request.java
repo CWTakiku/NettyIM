@@ -12,6 +12,7 @@ public  class Request {
   public static final int PACK_HANDS_TYPE=3;
   public static final int PACK_CONNECT_TYPE=4;
   public static final int PACK_ACK_TYPE = 5;
+  public static final int PACK_HEART_TYPE = 6;
 
  public String requestTag;//请求tag，这个tag能确定唯一的request
  public Address address; //暂时未用到，为预留字段
@@ -60,7 +61,7 @@ public  class Request {
             this.needACK = false;
             return this;
         }
-    public Builder setNoNeedACK(String requestTag){
+    public Builder setNeedACK(String requestTag){
         this.needACK = true;
         this.requestTag = requestTag;
         return this;

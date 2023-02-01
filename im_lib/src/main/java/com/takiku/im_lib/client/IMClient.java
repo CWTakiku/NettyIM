@@ -27,6 +27,7 @@ import com.takiku.im_lib.internal.handler.listener.MessageShakeHandsHandler;
 import com.takiku.im_lib.listener.EventListener;
 import com.takiku.im_lib.protocol.IMProtocol;
 import com.takiku.im_lib.util.IdWorker;
+import com.takiku.im_lib.util.LogUtil;
 
 import java.io.IOException;
 import java.net.URI;
@@ -79,7 +80,7 @@ public class IMClient {
     ConnectionPool connectionPool;
     Codec codec;//编解码器
     LinkedHashMap<String, ChannelHandler> channelHandlerLinkedHashMap;//channelhandler，开发者可以添加自己的channelhandler
-    com.google.protobuf.GeneratedMessageV3 heartBeatMsg;//心跳包
+    Object heartBeatMsg;//心跳包
     List<Address> addressList;//连接地址列表，连接失败会自动切换
     MessageParser messageParser;//消息解析器
     Consumer ackConsumer;//消息ACK机制，开发者需要设置自己的ACKConsumer， Observable返回的是否是该请求的ACK包
@@ -214,7 +215,7 @@ public class IMClient {
     }
 
 
-    public com.google.protobuf.GeneratedMessageV3 heartBeatMsg() {
+    public Object heartBeatMsg() {
         return heartBeatMsg;
     }
 
@@ -278,7 +279,7 @@ public class IMClient {
         @Nullable
         Codec codec;
         LinkedHashMap<String, ChannelHandler> channelHandlerLinkedHashMap;
-        com.google.protobuf.GeneratedMessageV3 heartBeatMsg;
+        Object heartBeatMsg;
         MessageParser messageParser;
         Consumer ackConsumer;
         HashMap<String, Object> wsHeaderMap;
@@ -344,8 +345,8 @@ public class IMClient {
          * @param interval
          * @return
          */
-        public Builder setConnectRetryInterval(int interval) {
-            this.connectRetryInterval = interval;
+        public Builder setConnectRetryInterval(int interval,TimeUnit unit) {
+            this.connectRetryInterval = checkDuration("interval", interval, unit);
             return this;
         }
 
@@ -355,7 +356,7 @@ public class IMClient {
                 try {
                     uri = new URI(address.getUrl());
                     String protocol = uri.getScheme();
-                    Log.i("IMCient", "protocol " + protocol);
+                    LogUtil.i("IMCient", "protocol " + protocol);
                     if (!"ws".equals(protocol)) {
                         throw new IllegalArgumentException("Unsupported protocol: " + protocol);
                     }
@@ -377,7 +378,6 @@ public class IMClient {
 
         public Builder setSendTimeout(long timeout, TimeUnit unit) {
             this.sendTimeout = checkDuration("timeout", timeout, unit);
-            ;
             return this;
         }
 
@@ -447,7 +447,7 @@ public class IMClient {
             return this;
         }
 
-        public Builder setHeartBeatMsg(com.google.protobuf.GeneratedMessageV3 heartBeatMsg) {
+        public Builder setHeartBeatMsg(Object heartBeatMsg) {
             this.heartBeatMsg = heartBeatMsg;
             return this;
         }

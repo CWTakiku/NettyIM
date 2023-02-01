@@ -260,7 +260,7 @@ public class CustomTCPMainActivity extends AppCompatActivity {
         String json = new Gson().toJson(appMessage);
         TextWebSocketFrame textWebSocketFrame = new TextWebSocketFrame(json);
         Request request=new Request.Builder().
-                setNoNeedACK(appMessage.getHead().getMsgId())
+                setNeedACK(appMessage.getHead().getMsgId())
                 .setBody(getMsgPack(appMessage.buildProto(clientNum == 1?IMClientDemo.getInstance().getMsgSerialID():IMClientDemo2.getInstance().getMsgSerialID())))
                 .setSendRetry(false)
                 .build();
@@ -291,7 +291,7 @@ public class CustomTCPMainActivity extends AppCompatActivity {
         replyMessage.setReplyType(MSG_REPLY_TYPE);
         replyMessage.setStatusReport(status); //已读
         Request replyRequest=  new Request.Builder()
-                .setNoNeedACK(msgId) //设置为不需要应答
+                .setNoNeedACK() //设置为不需要应答
                 .setBody(getReplyPack(replyMessage.buildProto(clientNum == 1?IMClientDemo.getInstance().getMsgSerialID():IMClientDemo2.getInstance().getMsgSerialID())))
                 .build();
         return replyRequest;
