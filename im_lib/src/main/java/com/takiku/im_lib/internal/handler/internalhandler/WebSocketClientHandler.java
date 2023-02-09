@@ -5,6 +5,7 @@ import android.util.Log;
 import com.takiku.im_lib.internal.MessageParser;
 import com.takiku.im_lib.internal.connection.RealConnection;
 import com.takiku.im_lib.listener.EventListener;
+import com.takiku.im_lib.util.LogUtil;
 
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
@@ -48,12 +49,12 @@ public class WebSocketClientHandler extends ChannelInboundHandlerAdapter {
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
         handshaker.handshake(ctx.channel());
-
     }
 
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
         super.channelInactive(ctx);
+        LogUtil.i("WebSocketClientHandler","websocket  disconnect!");
         eventListener.connectionBroken();
         connectionBrokenListener.connectionBroken();
 
@@ -64,9 +65,9 @@ public class WebSocketClientHandler extends ChannelInboundHandlerAdapter {
         Channel ch = ctx.channel();
         if (!handshaker.isHandshakeComplete()) {
             handshaker.finishHandshake(ch, (FullHttpResponse) msg);
-           // Print.info("websocket client connected!");
-            handshakeFuture.setSuccess();
+            LogUtil.i("WebSocketClientHandler","websocket  connect!");
             eventListener.connectSuccess();
+            handshakeFuture.setSuccess();
             return;
         }
         if (msg instanceof FullHttpResponse) {
@@ -75,23 +76,13 @@ public class WebSocketClientHandler extends ChannelInboundHandlerAdapter {
         }
         WebSocketFrame frame = (WebSocketFrame) msg;
         if (frame instanceof TextWebSocketFrame) {
-            Log.i("WebSocketClientHandler",((TextWebSocketFrame) frame).text());
+            LogUtil.i("WebSocketClientHandler",((TextWebSocketFrame) frame).text());
         }
 
         if (!messageParser.parseMsg(msg)){
 
             ctx.fireChannelRead(msg);
         }
-//        WebSocketFrame frame = (WebSocketFrame) msg;
-//        if (frame instanceof TextWebSocketFrame) {
-//
-//            TextWebSocketFrame textFrame = (TextWebSocketFrame) frame;
-//            Log.i("WebSocketClientHandler",textFrame.text());
-//        } else if (frame instanceof PongWebSocketFrame) {
-//        } else if (frame instanceof CloseWebSocketFrame) {
-//
-//        }
-
     }
 
 
@@ -105,12 +96,5 @@ public class WebSocketClientHandler extends ChannelInboundHandlerAdapter {
         eventListener.connectionException(cause);
         ctx.close();
     }
-    public static class Print{
-        public static void info(String msg){
-            System.out.println(msg);
-        }
-        public static void error(String msg){
-            System.out.println(msg);
-        }
-    }
+
 }

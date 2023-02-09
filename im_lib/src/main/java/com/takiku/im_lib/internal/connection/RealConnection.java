@@ -105,9 +105,10 @@ public class RealConnection  implements Connection {
                     removeHandler(key, channel);
                 }
             }
-
-            channel.close();
-            channel=null;
+            if (channel!=null){
+                channel.close();
+                channel=null;
+            }
         }
         if (bootstrap != null&&bootstrap.group()!=null) {
             bootstrap.group().shutdownGracefully();
@@ -130,7 +131,6 @@ public class RealConnection  implements Connection {
             }
         } catch (Exception e) {
             e.printStackTrace();
-            System.err.println("移除handler失败，handlerName=" + handlerName);
         }
     }
 
@@ -221,7 +221,6 @@ public class RealConnection  implements Connection {
         });
     }
     public void addHeartbeatHandler(ConnectionPool connectionPool,int heartbeatInterval) {
-       LogUtil.i("real","addHeartbeatHandler "+heartbeatInterval);
         if (channel == null || channel.pipeline() == null) {
             return;
         }
@@ -244,11 +243,9 @@ public class RealConnection  implements Connection {
             }
         } catch (Exception e) {
             e.printStackTrace();
-            System.err.println("添加心跳消息管理handler失败，reason：" + e.getMessage());
         }
     }
     public void addHeartbeatHandler(ChannelPipeline pipeline,ConnectionPool connectionPool,int heartbeatInterval) {
-        LogUtil.i("real","addHeartbeatHandler "+heartbeatInterval);
         if (pipeline  == null) {
             return;
         }
@@ -271,7 +268,6 @@ public class RealConnection  implements Connection {
             }
         } catch (Exception e) {
             e.printStackTrace();
-            System.err.println("添加心跳消息管理handler失败，reason：" + e.getMessage());
         }
     }
 

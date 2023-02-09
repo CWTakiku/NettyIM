@@ -164,9 +164,6 @@ public class IMClient {
         return connectionPool;
     }
 
-    ;
-
-
     public Codec codec() {
         return codec;
     }
@@ -312,6 +309,10 @@ public class IMClient {
 
         public Builder setProtocol(@IMProtocol int protocol) {
             this.protocol = protocol;
+            return this;
+        }
+        public Builder setLogOpen(boolean isOpen){
+            LogUtil.setOpen(isOpen);
             return this;
         }
 

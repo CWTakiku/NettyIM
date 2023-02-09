@@ -4,6 +4,7 @@ import com.takiku.im_lib.exception.AuthError;
 import com.takiku.im_lib.exception.AuthException;
 import com.takiku.im_lib.internal.connection.RealConnection;
 import com.takiku.im_lib.listener.EventListener;
+import com.takiku.im_lib.util.LogUtil;
 
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
@@ -21,6 +22,7 @@ public class StatusChannelHandler extends ChannelInboundHandlerAdapter {
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
         super.channelActive(ctx);
         eventListener.connectSuccess();
+        LogUtil.i("StatusChannelHandler","tcp  connect!");
     }
 
     @Override
@@ -36,6 +38,7 @@ public class StatusChannelHandler extends ChannelInboundHandlerAdapter {
         super.channelInactive(ctx);
         connectionBrokenListener.connectionBroken();
         eventListener.connectionBroken();
+        LogUtil.i("StatusChannelHandler","tcp  disconnect!");
 
     }
 }

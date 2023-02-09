@@ -44,13 +44,18 @@ public class LogUtil {
         }
         return functionNames;
     }
+    public static boolean isOpen = false;
+
+    public static void setOpen(boolean open){
+        isOpen = open;
+    }
     public static void i(String tag,String msg){
-        if (BuildConfig.DEBUG){
+        if (isOpen){
             Log.i(tag,msg);
         }
     }
     public static void e(String tag,String msg){
-        if (BuildConfig.DEBUG){
+        if (isOpen){
             Log.e(tag,msg);
         }
     }
@@ -68,7 +73,7 @@ public class LogUtil {
         return String.format("DEBUG %s \n %s", msg, funNameSBuild);
     }
     public static void debug_e(String tag, String msg, int layerNumber) {
-        if (BuildConfig.DEBUG) {
+        if (isOpen) {
             String newMsg = createMessage(msg, layerNumber);
             Log.e(tag, newMsg);
         }
