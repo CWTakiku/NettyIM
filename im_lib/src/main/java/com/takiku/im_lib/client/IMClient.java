@@ -164,6 +164,13 @@ public class IMClient {
         return connectionPool;
     }
 
+    public boolean isConnected(){
+        if ( connectionPool()== null||connectionPool().realConnection()==null){
+            return false;
+        }
+        return connectionPool().realConnection().isHealth();
+    }
+
     public Codec codec() {
         return codec;
     }
@@ -311,15 +318,12 @@ public class IMClient {
             this.protocol = protocol;
             return this;
         }
-        public Builder setLogOpen(boolean isOpen){
+        public Builder setOpenLog(boolean isOpen){
             LogUtil.setOpen(isOpen);
             return this;
         }
 
-        public Builder setAuthenticator(Authenticator authenticator) {
-            this.authenticator = authenticator;
-            return this;
-        }
+
 
         public Builder setConnectTimeout(long timeout, TimeUnit unit) {
             this.connectTimeout = checkDuration("timeout", timeout, unit);
@@ -358,7 +362,7 @@ public class IMClient {
                     uri = new URI(address.getUrl());
                     String protocol = uri.getScheme();
                     LogUtil.i("IMCient", "protocol " + protocol);
-                    if (!"ws".equals(protocol)) {
+                    if (!("ws".equals(protocol)||("wss".equals(protocol)))) {
                         throw new IllegalArgumentException("Unsupported protocol: " + protocol);
                     }
                 } catch (URISyntaxException e) {

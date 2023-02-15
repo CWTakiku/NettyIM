@@ -48,6 +48,9 @@ import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.handler.codec.http.websocketx.WebSocketClientHandshakerFactory;
 import io.netty.handler.codec.http.websocketx.WebSocketVersion;
+import io.netty.handler.ssl.SslContext;
+import io.netty.handler.ssl.SslContextBuilder;
+import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
 import io.netty.handler.timeout.IdleStateHandler;
 
 
@@ -200,11 +203,14 @@ public class RealConnection  implements Connection {
                             customHeaders.add(key,wsHeaderMap.get(key));
                         }
                     }
+                    SslContext sslCtx = SslContextBuilder.forClient().trustManager(InsecureTrustManagerFactory.INSTANCE).build();
+
                     webSocketClientHandler =
                             new WebSocketClientHandler(
                                     WebSocketClientHandshakerFactory.newHandshaker(uri, WebSocketVersion.V13, null, false,customHeaders,maxFrameLength),
                                     messageParser,connectionBrokenListener,eventListener);
-
+                    //支持wss
+                    pipeline.addFirst(sslCtx.newHandler(channel.alloc(), uri.getHost(),uri.getPort()));
                     pipeline.addLast(HttpClientCodec.class.getSimpleName(), new HttpClientCodec());
                     pipeline.addLast(HttpObjectAggregator.class.getSimpleName(), new HttpObjectAggregator(65535));
                     pipeline.addLast(WebSocketClientHandler.class.getSimpleName(), webSocketClientHandler);
