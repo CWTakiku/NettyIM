@@ -123,9 +123,9 @@ imClient.isConnected(); // Check whether the connection is established
 APP module test contains the background code of the built-in custom protocol and webscoket protocol. Start the server, modify the server IP on the client of the corresponding protocol, and run the client
 
 #### VII. Project blog address
-[Jane books] (https://www.jianshu.com/p/5b01f4d6e4f4) 
-[CSDN] (https://blog.csdn.net/smile__dream/article/details/105681018) 
-[Denver] (https://juejin.im/post/5ea569aaf265da47e34c19ed)
+[Jane books](https://www.jianshu.com/p/5b01f4d6e4f4) 
+[CSDN](https://blog.csdn.net/smile__dream/article/details/105681018) 
+[Denver](https://juejin.im/post/5ea569aaf265da47e34c19ed)
 
 
 If you encounter any problems or questions in the use process, you are welcome to submit the issue, and welcome star!
@@ -134,4 +134,4 @@ If you encounter any problems or questions in the use process, you are welcome t
 **Android IM feedback communication Group **
 QQ group: 1051018406
 
-! [image](https://github.com/mrchengwenlong/NettyIM/blob/master/50327b1d735eb106d6c94f40edfbbc7.jpg)
+![image](https://github.com/mrchengwenlong/NettyIM/blob/master/50327b1d735eb106d6c94f40edfbbc7.jpg)
