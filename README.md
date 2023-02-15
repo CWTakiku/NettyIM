@@ -117,7 +117,7 @@ imClient.isConnected(); // Check whether the connection is established
  ```
 
 #### V. Project structure design drawing
-![image](https://github.com/mrchengwenlong/NettyIM/blob/master/IMPic.PNG)
+![image](https://github.com/CWTakiku/NettyIM/blob/master/IMPic.png)
 
 #### VI. Demo use
 APP module test contains the background code of the built-in custom protocol and webscoket protocol. Start the server, modify the server IP on the client of the corresponding protocol, and run the client
