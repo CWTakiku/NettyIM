@@ -5,7 +5,7 @@
 
 [英文文档](https://github.com/CWTakiku/NettyIM/blob/master/README.md)
 
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/CWTakiku/NettyIM/pulls)      [![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/CWTakiku/NettyIM/blob/master/LICENSE)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/CWTakiku/NettyIM/pulls)      [![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/CWTakiku/NettyIM/blob/master/LICENSE) [![](https://www.jitpack.io/v/CWTakiku/NettyIM.svg)](https://www.jitpack.io/#CWTakiku/NettyIM)
 
 #### 一、功能介绍
 
@@ -39,7 +39,7 @@
  2. 添加依赖
 ```
 dependencies {
-	        implementation 'com.github.mrchengwenlong:NettyIM:1.0.2'
+	       implementation 'com.github.CWTakiku:NettyIM:1.0.2'
 	}
 ```
 #### 四、使用方式

@@ -5,7 +5,7 @@
 
  [中文文档](https://github.com/CWTakiku/NettyIM/blob/master/README_CN.md)
 
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/CWTakiku/NettyIM/pulls)      [![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/CWTakiku/NettyIM/blob/master/LICENSE)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/CWTakiku/NettyIM/pulls)      [![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/CWTakiku/NettyIM/blob/master/LICENSE) [![](https://www.jitpack.io/v/CWTakiku/NettyIM.svg)](https://www.jitpack.io/#CWTakiku/NettyIM)
 
 #### I. Feature
 
@@ -38,7 +38,7 @@ maven { url 'https://jitpack.io' }}
 2. Add dependencies
  ```
 dependencies {
-Implementation 'com. Making. Mrchengwenlong: NettyIM: 1.0.2'
+  implementation 'com.github.CWTakiku:NettyIM:1.0.2'
 }
  ```
 #### IV. Use
