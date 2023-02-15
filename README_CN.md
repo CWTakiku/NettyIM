@@ -116,7 +116,7 @@ Disposable disposable=   imClient.newCall(request).enqueue(callback).subscribe(c
 ```
 
 #### 五、项目结构设计图
-![image](https://github.com/mrchengwenlong/NettyIM/blob/master/IM客户端架构图.png)
+![image](https://github.com/mrchengwenlong/NettyIM/blob/master/IMPic.png)
 
 #### 六、Demo使用
 APP模块test下含有内置自定义协议和webscoket两种协议的后台代码，开启服务端，再到对应协议的客户端上修改服务端IP，运行客户端
