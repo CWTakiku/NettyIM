@@ -39,7 +39,7 @@
  2. 添加依赖
 ```
 dependencies {
-	       implementation 'com.github.CWTakiku:NettyIM:1.0.2'
+	       implementation 'com.github.CWTakiku:NettyIM:latest'
 	}
 ```
 #### 四、使用方式

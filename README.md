@@ -38,7 +38,7 @@ maven { url 'https://jitpack.io' }}
 2. Add dependencies
  ```
 dependencies {
-  implementation 'com.github.CWTakiku:NettyIM:1.0.2'
+  implementation 'com.github.CWTakiku:NettyIM:latest'
 }
  ```
 #### IV. Use
