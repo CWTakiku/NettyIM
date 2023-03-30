@@ -216,7 +216,10 @@ public class RealConnection  implements Connection {
                     pipeline.addLast(HttpClientCodec.class.getSimpleName(), new HttpClientCodec());
                     pipeline.addLast(HttpObjectAggregator.class.getSimpleName(), new HttpObjectAggregator(65535));
                     pipeline.addLast(WebSocketClientHandler.class.getSimpleName(), webSocketClientHandler);
-                    addHeartbeatHandler(pipeline,connectionPool,heartbeatInterval);
+                    if (heartBeatMsg!=null){ //设置了心跳包，则里面启动心跳机制
+                        addHeartbeatHandler(pipeline,connectionPool,heartbeatInterval);
+                    }
+
                 }
 
                 if (handlers!=null){
