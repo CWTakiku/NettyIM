@@ -31,7 +31,7 @@ public class HeartbeatChannelHandler extends ChannelInboundHandlerAdapter {
             switch (state) {
                 case READER_IDLE: {
                     LogUtil.i("HeartbeatChannelHandler", "userEventTriggered:READER_IDLE ");
-                    connectionBrokenListener.connectionBroken();
+                   // connectionBrokenListener.connectionBroken();
                     break;
                 }
                 case WRITER_IDLE: {
