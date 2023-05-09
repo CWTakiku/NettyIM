@@ -23,7 +23,6 @@ public class RetryAndFollowUpInterceptor implements Interceptor {
     private final IMClient client;
     private StreamAllocation streamAllocation;
     private Object callStackTrace;
-    private static final int MAX_CONNECT_RETRY=3;
     private volatile boolean canceled;
     int connect_retry=0;
     public void setCallStackTrace(Object callStackTrace) {
@@ -41,7 +40,7 @@ public class RetryAndFollowUpInterceptor implements Interceptor {
         int resendCount=0;
         while (true){
             if (canceled) {
-                streamAllocation.release();
+                streamAllocation.release(false);
                 throw new IOException("Canceled");
             }
             Response response = null;
@@ -86,7 +85,7 @@ public class RetryAndFollowUpInterceptor implements Interceptor {
                 // We're throwing an unchecked exception. Release any resources.
 
                 if (releaseConnection) {   //是否需要释放连接
-                    streamAllocation.release();
+                    streamAllocation.release(false);
                 }
             }
             if (isOk(response)){ //拿到正确response直接返回
@@ -143,7 +142,7 @@ public class RetryAndFollowUpInterceptor implements Interceptor {
         if (!client.connectionRetryEnabled()) return false;
 
 
-        if (connectCount>MAX_CONNECT_RETRY){
+        if (connectCount> client.connectRetryCount()){
             connect_retry=1;
              Request request=followUpRequest(userRequest);
             if (request==null) return false;

@@ -42,14 +42,20 @@ public class StreamAllocation {
     }
 
     public void release() {
-        closeQuietly(connection);
+      release(true);
+    }
+    public void release(boolean isReConnect) {
+        closeQuietly(connection,isReConnect);
     }
 
     private void closeQuietly(RealConnection connection) {
+       closeQuietly(connection,true);
+    }
+    private void closeQuietly(RealConnection connection,boolean isReConnect) {
         released=true;
         if (connection!=null){
-           connection.release(true);
-           connection=null;
+            connection.release(isReConnect);
+            connection=null;
         }
     }
 

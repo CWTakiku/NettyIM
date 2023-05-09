@@ -73,6 +73,7 @@ public class IMClient {
     int sendTimeout;//发送超时，该时间段没收到ACK即认定为超时，会触发超时重发（如果设置为超时重发）
     boolean connectionRetryEnabled;//能否连接重试
     long connectRetryInterval;//连接重试间隔
+    int connectRetryCount;//最大重连次数
     int heartIntervalForeground;//前台心跳间隔
     int heartIntervalBackground;//后台心跳间隔
     boolean isBackground;//是否处于后台
@@ -115,6 +116,7 @@ public class IMClient {
         this.ackConsumer = builder.ackConsumer;
         this.protocol = builder.protocol;
         this.wsHeaderMap = builder.wsHeaderMap;
+        this.connectRetryCount = builder.connectRetryCount;
         this.connectRetryInterval = builder.connectRetryInterval;
         this.maxFrameLength = builder.maxFrameLength;
         this.msgTriggerReconnectEnabled = builder.msgTriggerReconnectEnabled;
@@ -247,8 +249,12 @@ public class IMClient {
     public boolean connectionRetryEnabled() {
         return connectionRetryEnabled;
     }
+
     public long connectRetryInterval(){
         return connectRetryInterval;
+    }
+    public int connectRetryCount(){
+        return connectRetryCount;
     }
 
 
@@ -287,6 +293,7 @@ public class IMClient {
         MessageParser messageParser;
         Consumer ackConsumer;
         HashMap<String, Object> wsHeaderMap;
+        int connectRetryCount;
         @IMProtocol
         int protocol = IMProtocol.PRIVATE;
 
@@ -300,6 +307,7 @@ public class IMClient {
             connectTimeout = 10 * 1000;
             connectRetryInterval = 500;
             maxFrameLength = 65535;
+            connectRetryCount = 3;
             msgTriggerReconnectEnabled = true;
             connectionRetryEnabled = true;
             wsHeaderMap = new HashMap<>();
@@ -322,6 +330,7 @@ public class IMClient {
             LogUtil.setOpen(isOpen);
             return this;
         }
+
 
 
 
@@ -372,6 +381,11 @@ public class IMClient {
             if (!addressList.contains(address)) {
                 addressList.add(address);
             }
+            return this;
+        }
+
+        public Builder setConnectRetryCount(int connectRetryCount){
+            this.connectRetryCount = connectRetryCount;
             return this;
         }
 
