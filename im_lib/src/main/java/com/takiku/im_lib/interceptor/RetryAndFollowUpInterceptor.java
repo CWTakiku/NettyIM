@@ -54,12 +54,12 @@ public class RetryAndFollowUpInterceptor implements Interceptor {
 
             } catch (IOException e) {
                 if (request instanceof ConnectRequest){ //连接请求重试
-                    System.out.println("connect_retry "+connect_retry);
+                    LogUtil.i("RetryAndFoll","connect_retry "+connect_retry);
                     if (!connectRecover(e,request, ++connect_retry)) {
                         realChain.eventListener().connectFailed(streamAllocation.currentInetSocketAddress(),e);
                         throw e;
                     }
-                       System.out.println("连接重试 " + streamAllocation.currentInetSocketAddress().toString());
+                    LogUtil.i("RetryAndFoll","连接重试 " + streamAllocation.currentInetSocketAddress().toString());
                        releaseConnection=false;
                     try {
                         Thread.sleep(client.connectRetryInterval());
@@ -73,7 +73,7 @@ public class RetryAndFollowUpInterceptor implements Interceptor {
                     throw e;
                 }
                       //发送请求重试
-                       System.out.println("发送重试");
+                LogUtil.i("RetryAndFoll","发送重试");
                        releaseConnection=false;
                        continue;
 

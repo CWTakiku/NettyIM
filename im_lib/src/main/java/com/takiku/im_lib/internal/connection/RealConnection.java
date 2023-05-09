@@ -118,7 +118,10 @@ public class RealConnection  implements Connection {
         }
         connectionPool.destroyWorkLoopGroup();
         bootstrap=null;
-        eventListener.connectionReleased(this);
+        if (!reConnect){
+            eventListener.connectionReleased(this);
+        }
+
     }
     /**
      * 移除指定handler
