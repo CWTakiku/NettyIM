@@ -1,11 +1,8 @@
 package com.takiku.nettyim;
 
-import static com.takiku.nettyim.Constants.MSG_REPLY_TYPE;
-import static com.takiku.nettyim.Constants.MSG_STATUS_FAILED;
-import static com.takiku.nettyim.Constants.MSG_STATUS_READ;
-import static com.takiku.nettyim.Constants.MSG_STATUS_SEND;
-import static com.takiku.nettyim.Constants.MSG_STATUS_SENDING;
-import static com.takiku.nettyim.Constants.MSG_STATUS_WITHDRAW;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import android.os.Bundle;
 import android.os.Handler;
@@ -15,10 +12,6 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
-
 import com.google.gson.Gson;
 import com.takiku.im_lib.call.Call;
 import com.takiku.im_lib.call.Callback;
@@ -26,23 +19,29 @@ import com.takiku.im_lib.entity.AppMessage;
 import com.takiku.im_lib.entity.ReplyMessage;
 import com.takiku.im_lib.entity.base.Request;
 import com.takiku.im_lib.entity.base.Response;
-
+import com.takiku.im_lib.protobuf.PackProtobuf;
+import com.takiku.nettyim.customTcpClientDemo.IMClientDemo;
+import com.takiku.nettyim.customTcpClientDemo.IMClientDemo2;
 import com.takiku.nettyim.widget.MenuItemPopWindow;
 import com.takiku.nettyim.widget.MessageAdapter;
-import com.takiku.nettyim.wsClientDemo.WSClientDemo1;
-import com.takiku.nettyim.wsClientDemo.WSClientDemo2;
 
 import java.io.IOException;
 import java.util.UUID;
 
+import static com.takiku.nettyim.Constants.MSG_REPLY_TYPE;
+import static com.takiku.nettyim.Constants.MSG_STATUS_FAILED;
+import static com.takiku.nettyim.Constants.MSG_STATUS_READ;
+import static com.takiku.nettyim.Constants.MSG_STATUS_SEND;
+import static com.takiku.nettyim.Constants.MSG_STATUS_SENDING;
+import static com.takiku.nettyim.Constants.MSG_STATUS_WITHDRAW;
+
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 
 /**
- * @author chengwl
- * @des
- * @date:2022/11/17
+ * create by cwl
+ * 这里一个页面直接模拟两个客户端通信
  */
-public class WSActivity extends AppCompatActivity {
+public class CustomTCPActivity extends AppCompatActivity {
 
     private Button btn1;
     private Button btn2;
@@ -69,12 +68,12 @@ public class WSActivity extends AppCompatActivity {
         initView();
         initAdapter();
         this.mDeliveryHandler = new Handler(Looper.getMainLooper());
-        WSClientDemo1.getInstance().startConnect();
-        WSClientDemo1.getInstance().registerMessageReceive(appMessage->{addClient1Message(appMessage);});
-        WSClientDemo1.getInstance().registerReplyReceive(replyMessage ->{updateClient1MessageStatus(replyMessage);});
-        WSClientDemo2.getInstance().startConnect();
-        WSClientDemo2.getInstance().registerMessageReceive(appMessage->{addClient2Message(appMessage);});
-        WSClientDemo2.getInstance().registerReplyReceive(replyMessage ->{updateClient2MessageStatus(replyMessage);});
+        IMClientDemo.getInstance().startConnect();
+        IMClientDemo.getInstance().registerMessageReceive(appMessage->{addClient1Message(appMessage);});
+        IMClientDemo.getInstance().registerReplyReceive(replyMessage ->{updateClient1MessageStatus(replyMessage);});
+        IMClientDemo2.getInstance().startConnect();
+        IMClientDemo2.getInstance().registerMessageReceive(appMessage->{addClient2Message(appMessage);});
+        IMClientDemo2.getInstance().registerReplyReceive(replyMessage ->{updateClient2MessageStatus(replyMessage);});
 
         btn1.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -83,7 +82,7 @@ public class WSActivity extends AppCompatActivity {
                 editText1.setText("");
                 appMessage.msgStatus=MSG_STATUS_SENDING;
                 addClient1Message(appMessage);
-                WSClientDemo1.getInstance().sendMsgUICallback(createRequest(appMessage,1), new Callback() {
+                IMClientDemo.getInstance().sendMsgUICallback(createRequest(appMessage,1), new Callback() {
                     @Override
                     public void onFailure(Call call, IOException e) {
                         appMessage.msgStatus = MSG_STATUS_FAILED;
@@ -105,7 +104,7 @@ public class WSActivity extends AppCompatActivity {
                 editText2.setText("");
                 appMessage.msgStatus=MSG_STATUS_SENDING;
                 addClient2Message(appMessage);
-                WSClientDemo2.getInstance().sendMsgUICallback(createRequest(appMessage,2), new Callback() {
+                IMClientDemo2.getInstance().sendMsgUICallback(createRequest(appMessage,2), new Callback() {
                     @Override
                     public void onFailure(Call call, IOException e) {
                         appMessage.msgStatus = MSG_STATUS_FAILED; //发送失败，指规定时间内服务器无应答且进行了发送重试依然没有响应
@@ -127,10 +126,10 @@ public class WSActivity extends AppCompatActivity {
                 client1Online=!client1Online;
                 if (client1Online){
                     btnLine1.setText("下线");
-                    WSClientDemo1.getInstance().startConnect();
+                    IMClientDemo.getInstance().startConnect();
                 }else {
                     btnLine1.setText("上线");
-                    WSClientDemo1.getInstance().disConnect();
+                    IMClientDemo.getInstance().disConnect();
                 }
             }
         });
@@ -140,10 +139,10 @@ public class WSActivity extends AppCompatActivity {
                 client2Online=!client2Online;
                 if (client2Online){
                     btnLine2.setText("下线");
-                    WSClientDemo2.getInstance().startConnect();
+                    IMClientDemo2.getInstance().startConnect();
                 }else {
                     btnLine2.setText("上线");
-                    WSClientDemo2.getInstance().disConnect();
+                    IMClientDemo2.getInstance().disConnect();
                 }
             }
         });
@@ -151,8 +150,8 @@ public class WSActivity extends AppCompatActivity {
 
     //UI显示一条发送消息
     private void addClient1Message(AppMessage appMessage){
-        messageAdapter1.addMessage(appMessage);
-        recyclerView1.scrollToPosition(messageAdapter1.getItemCount()-1);
+         messageAdapter1.addMessage(appMessage);
+         recyclerView1.scrollToPosition(messageAdapter1.getItemCount()-1);
 
 
     }
@@ -178,13 +177,13 @@ public class WSActivity extends AppCompatActivity {
                 case MenuItemPopWindow.MENU_TYPE_READ:
                     status=MSG_STATUS_READ;
                     break;
-                case MenuItemPopWindow.MENU_TYPE_RECALL:
-                    status=MSG_STATUS_WITHDRAW;
-                    break;
+                    case MenuItemPopWindow.MENU_TYPE_RECALL:
+                     status=MSG_STATUS_WITHDRAW;
+                     break;
 
             }
             if (status!=-1){
-                WSClientDemo1.getInstance().sendMsg(createReplyRequest(appMessage.getHead().getMsgId(),client1UserId, client2UserId, status,1), new Callback() {
+                IMClientDemo.getInstance().sendMsg(createReplyRequest(appMessage.getHead().getMsgId(),client1UserId, client2UserId, status,1), new Callback() {
                     @Override
                     public void onFailure(Call call, IOException e) {
                         //消息发送失败
@@ -208,7 +207,7 @@ public class WSActivity extends AppCompatActivity {
                     break;
             }
             if (status!=-1){
-                WSClientDemo2.getInstance().sendMsg(createReplyRequest(appMessage.getHead().getMsgId(),client2UserId, client1UserId, status,2), new Callback() {
+                IMClientDemo2.getInstance().sendMsg(createReplyRequest(appMessage.getHead().getMsgId(),client2UserId, client1UserId, status,2), new Callback() {
                     @Override
                     public void onFailure(Call call, IOException e) {
                         //消息发送失败
@@ -242,26 +241,27 @@ public class WSActivity extends AppCompatActivity {
      * @param content
      * @return
      */
-    private AppMessage createAppMessage(String fromId,String toId,String content){
-        AppMessage appMessage=new AppMessage.Builder()
-                .setMsgId(UUID.randomUUID().toString())
-                .setFromId(fromId)
-                .setToId(toId)
-                .setBody(content)
-                .build();
-        return appMessage;
-    }
+  private AppMessage createAppMessage(String fromId,String toId,String content){
+      AppMessage appMessage=new AppMessage.Builder()
+              .setMsgId(UUID.randomUUID().toString())
+              .setFromId(fromId)
+              .setToId(toId)
+              .setBody(content)
+              .build();
+      return appMessage;
+  }
 
     /**
      * 创建一个消息发送请求
      * @param appMessage
      * @return
      */
-    private Request createRequest(AppMessage appMessage, int clientNum){
-
+    private Request createRequest(AppMessage appMessage,int clientNum){
+        String json = new Gson().toJson(appMessage);
+        TextWebSocketFrame textWebSocketFrame = new TextWebSocketFrame(json);
         Request request=new Request.Builder().
                 setNeedACK(appMessage.getHead().getMsgId())
-                .setBody(getMsgPack(appMessage))
+                .setBody(getMsgPack(appMessage.buildProto(clientNum == 1?IMClientDemo.getInstance().getMsgSerialID():IMClientDemo2.getInstance().getMsgSerialID())))
                 .setSendRetry(false)
                 .build();
         return request;
@@ -292,7 +292,7 @@ public class WSActivity extends AppCompatActivity {
         replyMessage.setStatusReport(status); //已读
         Request replyRequest=  new Request.Builder()
                 .setNoNeedACK() //设置为不需要应答
-                .setBody(getReplyPack(replyMessage))
+                .setBody(getReplyPack(replyMessage.buildProto(clientNum == 1?IMClientDemo.getInstance().getMsgSerialID():IMClientDemo2.getInstance().getMsgSerialID())))
                 .build();
         return replyRequest;
     }
@@ -302,10 +302,11 @@ public class WSActivity extends AppCompatActivity {
      * @param msg
      * @return
      */
-    public TextWebSocketFrame getMsgPack(AppMessage  msg){
-        String json = new Gson().toJson(msg);
-        TextWebSocketFrame textWebSocketFrame = new TextWebSocketFrame(json);
-        return textWebSocketFrame;
+    public PackProtobuf.Pack getMsgPack(PackProtobuf.Msg  msg){
+        return PackProtobuf.Pack.newBuilder()
+                .setPackType(PackProtobuf.Pack.PackType.MSG)
+                .setMsg(msg)
+                .build();
     }
 
     /**
@@ -313,20 +314,21 @@ public class WSActivity extends AppCompatActivity {
      * @param reply
      * @return
      */
-    public TextWebSocketFrame getReplyPack(ReplyMessage  reply){
-        String json = new Gson().toJson(reply);
-        TextWebSocketFrame textWebSocketFrame = new TextWebSocketFrame(json);
-        return textWebSocketFrame;
+    public PackProtobuf.Pack getReplyPack(PackProtobuf.Reply  reply){
+        return PackProtobuf.Pack.newBuilder()
+                .setPackType(PackProtobuf.Pack.PackType.REPLY)
+                .setReply(reply)
+                .build();
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        WSClientDemo1.getInstance().unregisterMessageReceive();
-        WSClientDemo1.getInstance().unregisterReplyReceive();
+        IMClientDemo.getInstance().unregisterMessageReceive();
+        IMClientDemo.getInstance().unregisterReplyReceive();
 
-        WSClientDemo2.getInstance().unregisterMessageReceive();
-        WSClientDemo2.getInstance().unregisterReplyReceive();
+        IMClientDemo2.getInstance().unregisterMessageReceive();
+        IMClientDemo2.getInstance().unregisterReplyReceive();
 
     }
 }

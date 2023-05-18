@@ -1,9 +1,5 @@
 package com.takiku.nettyim;
 
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
-
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -12,6 +8,11 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
 import com.google.gson.Gson;
 import com.takiku.im_lib.call.Call;
 import com.takiku.im_lib.call.Callback;
@@ -19,14 +20,16 @@ import com.takiku.im_lib.entity.AppMessage;
 import com.takiku.im_lib.entity.ReplyMessage;
 import com.takiku.im_lib.entity.base.Request;
 import com.takiku.im_lib.entity.base.Response;
-import com.takiku.im_lib.protobuf.PackProtobuf;
-import com.takiku.nettyim.customTcpClientdemo.IMClientDemo;
-import com.takiku.nettyim.customTcpClientdemo.IMClientDemo2;
+import com.takiku.nettyim.udpClientDemo.UdpClientDemo1;
+import com.takiku.nettyim.udpClientDemo.UdpClientDemo2;
 import com.takiku.nettyim.widget.MenuItemPopWindow;
 import com.takiku.nettyim.widget.MessageAdapter;
 
+
 import java.io.IOException;
 import java.util.UUID;
+
+
 
 import static com.takiku.nettyim.Constants.MSG_REPLY_TYPE;
 import static com.takiku.nettyim.Constants.MSG_STATUS_FAILED;
@@ -35,13 +38,12 @@ import static com.takiku.nettyim.Constants.MSG_STATUS_SEND;
 import static com.takiku.nettyim.Constants.MSG_STATUS_SENDING;
 import static com.takiku.nettyim.Constants.MSG_STATUS_WITHDRAW;
 
-import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
-
 /**
- * create by cwl
- * 这里一个页面直接模拟两个客户端通信
+ * author:chengwl
+ * Description:
+ * Date:2023/5/16
  */
-public class CustomTCPMainActivity extends AppCompatActivity {
+public class UdpActivity extends AppCompatActivity {
 
     private Button btn1;
     private Button btn2;
@@ -68,12 +70,12 @@ public class CustomTCPMainActivity extends AppCompatActivity {
         initView();
         initAdapter();
         this.mDeliveryHandler = new Handler(Looper.getMainLooper());
-        IMClientDemo.getInstance().startConnect();
-        IMClientDemo.getInstance().registerMessageReceive(appMessage->{addClient1Message(appMessage);});
-        IMClientDemo.getInstance().registerReplyReceive(replyMessage ->{updateClient1MessageStatus(replyMessage);});
-        IMClientDemo2.getInstance().startConnect();
-        IMClientDemo2.getInstance().registerMessageReceive(appMessage->{addClient2Message(appMessage);});
-        IMClientDemo2.getInstance().registerReplyReceive(replyMessage ->{updateClient2MessageStatus(replyMessage);});
+        UdpClientDemo1.getInstance().startConnect();
+        UdpClientDemo1.getInstance().registerMessageReceive(appMessage->{addClient1Message(appMessage);});
+        UdpClientDemo1.getInstance().registerReplyReceive(replyMessage ->{updateClient1MessageStatus(replyMessage);});
+        UdpClientDemo2.getInstance().startConnect();
+        UdpClientDemo2.getInstance().registerMessageReceive(appMessage->{addClient2Message(appMessage);});
+        UdpClientDemo2.getInstance().registerReplyReceive(replyMessage ->{updateClient2MessageStatus(replyMessage);});
 
         btn1.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -82,7 +84,7 @@ public class CustomTCPMainActivity extends AppCompatActivity {
                 editText1.setText("");
                 appMessage.msgStatus=MSG_STATUS_SENDING;
                 addClient1Message(appMessage);
-                IMClientDemo.getInstance().sendMsgUICallback(createRequest(appMessage,1), new Callback() {
+                UdpClientDemo1.getInstance().sendMsgUICallback(createRequest(appMessage,1), new Callback() {
                     @Override
                     public void onFailure(Call call, IOException e) {
                         appMessage.msgStatus = MSG_STATUS_FAILED;
@@ -104,7 +106,7 @@ public class CustomTCPMainActivity extends AppCompatActivity {
                 editText2.setText("");
                 appMessage.msgStatus=MSG_STATUS_SENDING;
                 addClient2Message(appMessage);
-                IMClientDemo2.getInstance().sendMsgUICallback(createRequest(appMessage,2), new Callback() {
+                UdpClientDemo2.getInstance().sendMsgUICallback(createRequest(appMessage,2), new Callback() {
                     @Override
                     public void onFailure(Call call, IOException e) {
                         appMessage.msgStatus = MSG_STATUS_FAILED; //发送失败，指规定时间内服务器无应答且进行了发送重试依然没有响应
@@ -126,10 +128,10 @@ public class CustomTCPMainActivity extends AppCompatActivity {
                 client1Online=!client1Online;
                 if (client1Online){
                     btnLine1.setText("下线");
-                    IMClientDemo.getInstance().startConnect();
+                    UdpClientDemo1.getInstance().startConnect();
                 }else {
                     btnLine1.setText("上线");
-                    IMClientDemo.getInstance().disConnect();
+                    UdpClientDemo1.getInstance().disConnect();
                 }
             }
         });
@@ -139,10 +141,10 @@ public class CustomTCPMainActivity extends AppCompatActivity {
                 client2Online=!client2Online;
                 if (client2Online){
                     btnLine2.setText("下线");
-                    IMClientDemo2.getInstance().startConnect();
+                    UdpClientDemo2.getInstance().startConnect();
                 }else {
                     btnLine2.setText("上线");
-                    IMClientDemo2.getInstance().disConnect();
+                    UdpClientDemo2.getInstance().disConnect();
                 }
             }
         });
@@ -150,8 +152,8 @@ public class CustomTCPMainActivity extends AppCompatActivity {
 
     //UI显示一条发送消息
     private void addClient1Message(AppMessage appMessage){
-         messageAdapter1.addMessage(appMessage);
-         recyclerView1.scrollToPosition(messageAdapter1.getItemCount()-1);
+        messageAdapter1.addMessage(appMessage);
+        recyclerView1.scrollToPosition(messageAdapter1.getItemCount()-1);
 
 
     }
@@ -177,13 +179,13 @@ public class CustomTCPMainActivity extends AppCompatActivity {
                 case MenuItemPopWindow.MENU_TYPE_READ:
                     status=MSG_STATUS_READ;
                     break;
-                    case MenuItemPopWindow.MENU_TYPE_RECALL:
-                     status=MSG_STATUS_WITHDRAW;
-                     break;
+                case MenuItemPopWindow.MENU_TYPE_RECALL:
+                    status=MSG_STATUS_WITHDRAW;
+                    break;
 
             }
             if (status!=-1){
-                IMClientDemo.getInstance().sendMsg(createReplyRequest(appMessage.getHead().getMsgId(),client1UserId, client2UserId, status,1), new Callback() {
+                UdpClientDemo1.getInstance().sendMsg(createReplyRequest(appMessage.getHead().getMsgId(),client1UserId, client2UserId, status,1), new Callback() {
                     @Override
                     public void onFailure(Call call, IOException e) {
                         //消息发送失败
@@ -207,7 +209,7 @@ public class CustomTCPMainActivity extends AppCompatActivity {
                     break;
             }
             if (status!=-1){
-                IMClientDemo2.getInstance().sendMsg(createReplyRequest(appMessage.getHead().getMsgId(),client2UserId, client1UserId, status,2), new Callback() {
+                UdpClientDemo2.getInstance().sendMsg(createReplyRequest(appMessage.getHead().getMsgId(),client2UserId, client1UserId, status,2), new Callback() {
                     @Override
                     public void onFailure(Call call, IOException e) {
                         //消息发送失败
@@ -241,27 +243,26 @@ public class CustomTCPMainActivity extends AppCompatActivity {
      * @param content
      * @return
      */
-  private AppMessage createAppMessage(String fromId,String toId,String content){
-      AppMessage appMessage=new AppMessage.Builder()
-              .setMsgId(UUID.randomUUID().toString())
-              .setFromId(fromId)
-              .setToId(toId)
-              .setBody(content)
-              .build();
-      return appMessage;
-  }
+    private AppMessage createAppMessage(String fromId,String toId,String content){
+        AppMessage appMessage=new AppMessage.Builder()
+                .setMsgId(UUID.randomUUID().toString())
+                .setFromId(fromId)
+                .setToId(toId)
+                .setBody(content)
+                .build();
+        return appMessage;
+    }
 
     /**
      * 创建一个消息发送请求
      * @param appMessage
      * @return
      */
-    private Request createRequest(AppMessage appMessage,int clientNum){
-        String json = new Gson().toJson(appMessage);
-        TextWebSocketFrame textWebSocketFrame = new TextWebSocketFrame(json);
+    private Request createRequest(AppMessage appMessage, int clientNum){
+
         Request request=new Request.Builder().
                 setNeedACK(appMessage.getHead().getMsgId())
-                .setBody(getMsgPack(appMessage.buildProto(clientNum == 1?IMClientDemo.getInstance().getMsgSerialID():IMClientDemo2.getInstance().getMsgSerialID())))
+                .setBody(getMsgPack(appMessage))
                 .setSendRetry(false)
                 .build();
         return request;
@@ -292,7 +293,7 @@ public class CustomTCPMainActivity extends AppCompatActivity {
         replyMessage.setStatusReport(status); //已读
         Request replyRequest=  new Request.Builder()
                 .setNoNeedACK() //设置为不需要应答
-                .setBody(getReplyPack(replyMessage.buildProto(clientNum == 1?IMClientDemo.getInstance().getMsgSerialID():IMClientDemo2.getInstance().getMsgSerialID())))
+                .setBody(getReplyPack(replyMessage))
                 .build();
         return replyRequest;
     }
@@ -302,11 +303,9 @@ public class CustomTCPMainActivity extends AppCompatActivity {
      * @param msg
      * @return
      */
-    public PackProtobuf.Pack getMsgPack(PackProtobuf.Msg  msg){
-        return PackProtobuf.Pack.newBuilder()
-                .setPackType(PackProtobuf.Pack.PackType.MSG)
-                .setMsg(msg)
-                .build();
+    public String getMsgPack(AppMessage  msg){
+        String json = new Gson().toJson(msg);
+        return json;
     }
 
     /**
@@ -314,21 +313,19 @@ public class CustomTCPMainActivity extends AppCompatActivity {
      * @param reply
      * @return
      */
-    public PackProtobuf.Pack getReplyPack(PackProtobuf.Reply  reply){
-        return PackProtobuf.Pack.newBuilder()
-                .setPackType(PackProtobuf.Pack.PackType.REPLY)
-                .setReply(reply)
-                .build();
+    public String getReplyPack(ReplyMessage  reply){
+        String json = new Gson().toJson(reply);
+        return json;
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        IMClientDemo.getInstance().unregisterMessageReceive();
-        IMClientDemo.getInstance().unregisterReplyReceive();
+        UdpClientDemo1.getInstance().unregisterMessageReceive();
+        UdpClientDemo1.getInstance().unregisterReplyReceive();
 
-        IMClientDemo2.getInstance().unregisterMessageReceive();
-        IMClientDemo2.getInstance().unregisterReplyReceive();
+        UdpClientDemo2.getInstance().unregisterMessageReceive();
+        UdpClientDemo2.getInstance().unregisterReplyReceive();
 
     }
 }

@@ -1,4 +1,4 @@
-package com.takiku.nettyim.wsClientdemo;
+package com.takiku.nettyim.wsClientDemo;
 
 import static com.takiku.nettyim.Constants.MSG_ACK_TYPE;
 

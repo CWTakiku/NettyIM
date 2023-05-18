@@ -1,14 +1,12 @@
-package com.takiku.nettyim.wsClientdemo;
+package com.takiku.nettyim.wsClientDemo;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import com.takiku.im_lib.defaultImpl.DefaultReplyReceiveHandler;
 import com.takiku.im_lib.entity.ReplyMessage;
 import com.takiku.im_lib.entity.base.Request;
 import com.takiku.im_lib.internal.handler.listener.MessageHandler;
-import com.takiku.im_lib.protobuf.PackProtobuf;
 
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 

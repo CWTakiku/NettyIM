@@ -18,11 +18,14 @@ public class HomeActivity extends AppCompatActivity {
         button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                startActivity(new Intent(HomeActivity.this, CustomTCPMainActivity.class));
+                startActivity(new Intent(HomeActivity.this, CustomTCPActivity.class));
             }
         });
         findViewById(R.id.btn_ws_two).setOnClickListener(v -> {
             startActivity(new Intent(HomeActivity.this, WSActivity.class));
+        });
+        findViewById(R.id.btn_udp_two).setOnClickListener(v -> {
+            startActivity(new Intent(HomeActivity.this, UdpActivity.class));
         });
     }
 }

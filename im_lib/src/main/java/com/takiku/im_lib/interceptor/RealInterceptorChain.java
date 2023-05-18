@@ -10,7 +10,7 @@ import com.takiku.im_lib.exception.SendTimeoutException;
 import com.takiku.im_lib.internal.connection.RealConnection;
 import com.takiku.im_lib.internal.connection.StreamAllocation;
 import com.takiku.im_lib.entity.base.Response;
-import com.takiku.im_lib.internal.connection.TcpStream;
+import com.takiku.im_lib.internal.connection.IStream;
 import com.takiku.im_lib.listener.EventListener;
 
 import java.io.IOException;
@@ -21,7 +21,7 @@ public class RealInterceptorChain implements Interceptor.Chain {
     private final Request request;
     private final List<Interceptor> interceptors;
     private final int index;
-    private final TcpStream tcpStream;
+    private final IStream iStream;
     private final StreamAllocation streamAllocation;
     private final RealConnection connection;
     private final EventListener eventListener;
@@ -31,13 +31,13 @@ public class RealInterceptorChain implements Interceptor.Chain {
     private int calls;
     public RealInterceptorChain(List<Interceptor> interceptors,
                                 StreamAllocation streamAllocation,
-                                TcpStream tcpStream, RealConnection realConnection,
+                                IStream iStream, RealConnection realConnection,
                                 int index, Request request, Call call, EventListener eventListener,
-                                int connectTimeout,int sendTimeout){
+                                int connectTimeout, int sendTimeout){
         this.request=request;
         this.index=index;
         this.interceptors=interceptors;
-        this.tcpStream=tcpStream;
+        this.iStream = iStream;
         this.streamAllocation=streamAllocation;
         this.connection=realConnection;
         this.connectTimeout=connectTimeout;
@@ -79,7 +79,7 @@ public class RealInterceptorChain implements Interceptor.Chain {
 
     @Override
     public Response proceed(Request request) throws IOException, InterruptedException, AuthException ,SendTimeoutException{
-        return proceed(request, streamAllocation, tcpStream, connection);
+        return proceed(request, streamAllocation, iStream, connection);
     }
 
     @Override
@@ -87,13 +87,13 @@ public class RealInterceptorChain implements Interceptor.Chain {
         return call;
     }
 
-    public Response proceed(Request request, StreamAllocation streamAllocation, TcpStream tcpStream,
+    public Response proceed(Request request, StreamAllocation streamAllocation, IStream iStream,
                             RealConnection connection) throws IOException, InterruptedException, AuthException , SendTimeoutException {
         if (index >= interceptors.size()) throw new AssertionError();
         calls++;
         // Call the next interceptor in the chain.
         RealInterceptorChain next = new RealInterceptorChain(
-                interceptors, streamAllocation, tcpStream, connection, index + 1, request,call,eventListener,connectTimeout,sendTimeout);
+                interceptors, streamAllocation, iStream, connection, index + 1, request,call,eventListener,connectTimeout,sendTimeout);
         Interceptor interceptor = interceptors.get(index);
         Response response = interceptor.intercept(next);
         return response;
@@ -103,8 +103,8 @@ public class RealInterceptorChain implements Interceptor.Chain {
       return streamAllocation;
     }
 
-    public TcpStream tcpStream(){
-        return tcpStream;
+    public IStream tcpStream(){
+        return iStream;
     }
 
     public EventListener eventListener() {

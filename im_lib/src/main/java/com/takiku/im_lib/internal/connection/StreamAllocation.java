@@ -71,7 +71,7 @@ public class StreamAllocation {
         return routeSelector.hasNext();
     }
 
-    public TcpStream newStream(IMClient client, Interceptor.Chain chain, EventListener eventListener) throws IOException, InterruptedException,AuthException  {
+    public IStream newStream(IMClient client, Interceptor.Chain chain, EventListener eventListener) throws IOException, InterruptedException,AuthException  {
         int connectTimeout = chain.connectTimeoutMillis();
         int heartbeatInterval= client.heartInterval();
         Address address=chain.request().address;
@@ -84,8 +84,8 @@ public class StreamAllocation {
                         if (!client.msgTriggerReconnectEnabled()&&!(chain.request() instanceof ConnectRequest)){
                             throw new ConnectionShutdownException();
                         }
-                        connection= new RealConnection(connectionPool, routeSelector.lastInetSocketAddress(), eventListener);
-                        connection.ChannelInitializerHandler(client.codec(), client.protocol(),client.wsHeaderMap(),client.heartBeatMsg(),
+                        connection= new RealConnection(connectionPool, routeSelector.lastInetSocketAddress(),client.protocol(), eventListener);
+                        connection.ChannelInitializerHandler(client.codec(),client.wsHeaderMap(),client.heartBeatMsg(),
                                 client.customChannelHandlerLinkedHashMap(),heartbeatInterval,client.messageParser()
                                 ,new RealConnection.connectionBrokenListener() {
                                     @Override
@@ -99,10 +99,10 @@ public class StreamAllocation {
 
                                     }
                                 },client.maxFrameLength());
-                        connection.connect(connectTimeout);
+                        connection.connect(connectTimeout,client.port());
                         Internal.instance.put(connectionPool,connection);
-                        TcpStream tcpStream=connection.newStream(client,this);
-                        return tcpStream;
+                        IStream iStream =connection.newStream(client,this);
+                        return iStream;
                     }else {return connection.newStream(client,this);}
             }else {
                 return connection.newStream(client,this);

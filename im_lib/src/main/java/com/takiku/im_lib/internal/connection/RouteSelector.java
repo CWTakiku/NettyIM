@@ -32,6 +32,8 @@ public class RouteSelector {
                 inetSocketAddress=InetSocketAddress.createUnresolved(address.getUrl(),address.getPort());
             }else if (address.type()==Address.Type.WS){
                 inetSocketAddress=new InetSocketAddress(address.getUrl(),address.getPort());
+            }else {
+                inetSocketAddress=new InetSocketAddress(address.getUrl(),address.getPort());
             }
             inetSocketAddresses.add(inetSocketAddress);
         }

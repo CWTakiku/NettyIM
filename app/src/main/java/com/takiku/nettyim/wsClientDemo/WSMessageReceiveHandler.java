@@ -1,13 +1,10 @@
-package com.takiku.nettyim.wsClientdemo;
-
-import android.util.Log;
+package com.takiku.nettyim.wsClientDemo;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.takiku.im_lib.entity.base.Request;
 import com.takiku.im_lib.internal.handler.listener.MessageHandler;
-import com.takiku.im_lib.protobuf.PackProtobuf;
 import com.takiku.im_lib.util.LogUtil;
 
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;

@@ -10,9 +10,10 @@ import java.lang.annotation.RetentionPolicy;
  * @des
  * @date:2022/11/11
  */
-@IntDef({IMProtocol.PRIVATE,IMProtocol.WEB_SOCKET})
+@IntDef({IMProtocol.PRIVATE,IMProtocol.WEB_SOCKET,IMProtocol.UDP})
 @Retention(RetentionPolicy.SOURCE)
 public @interface IMProtocol {
     int PRIVATE = 0;
     int WEB_SOCKET = 1;
+    int UDP = 2;
 }

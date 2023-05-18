@@ -1,0 +1,43 @@
+package com.takiku.nettyim.udpClientDemo;
+
+import com.google.gson.Gson;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import com.takiku.im_lib.entity.AckMessage;
+import com.takiku.im_lib.entity.base.Request;
+import com.takiku.im_lib.internal.handler.listener.MessageHandler;
+import com.takiku.im_lib.util.LogUtil;
+
+
+import java.nio.charset.StandardCharsets;
+
+import io.netty.channel.socket.DatagramPacket;
+import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
+
+import static com.takiku.nettyim.Constants.MSG_ACK_TYPE;
+
+/**
+ * @author chengwl
+ * @des
+ * @date:2022/11/17
+ */
+public class UdpHeartbeatRespHandler implements MessageHandler<DatagramPacket> {
+    public static final int HEART_ACK_TYPE=0x11;//与服务端保持类型统一
+    @Override
+    public boolean isFocusMsg(Object msg) {
+
+        String data =((DatagramPacket)(msg)).content().toString(StandardCharsets.UTF_8);
+        JsonObject jsonObject  =(JsonObject) new JsonParser().parse(data);
+        if (jsonObject.get("packType").getAsInt() == Request.PACK_ACK_TYPE){
+            AckMessage ackMessage = new Gson().fromJson(data,AckMessage.class);
+            return ackMessage.getAckType()==HEART_ACK_TYPE;
+        }
+        return false;
+    }
+
+    @Override
+    public void handleMsg(DatagramPacket textWebSocketFrame) {
+        LogUtil.i("WsHeartbeatRespHandler","收到心跳包的响应");
+    }
+}

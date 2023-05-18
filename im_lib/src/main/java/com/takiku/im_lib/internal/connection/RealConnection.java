@@ -1,7 +1,5 @@
 package com.takiku.im_lib.internal.connection;
 
-import android.util.Log;
-
 import com.takiku.im_lib.call.Consumer;
 import com.takiku.im_lib.call.OnResponseListener;
 import com.takiku.im_lib.codec.Codec;
@@ -14,7 +12,8 @@ import com.takiku.im_lib.internal.handler.internalhandler.HeartbeatChannelHandle
 import com.takiku.im_lib.internal.handler.internalhandler.MessageChannelHandler;
 import com.takiku.im_lib.internal.MessageParser;
 import com.takiku.im_lib.internal.handler.internalhandler.StatusChannelHandler;
-import com.takiku.im_lib.internal.handler.internalhandler.WebSocketClientHandler;
+import com.takiku.im_lib.internal.handler.internalhandler.UdpChannelHandler;
+import com.takiku.im_lib.internal.handler.internalhandler.WebSocketHandler;
 import com.takiku.im_lib.listener.EventListener;
 import com.takiku.im_lib.protocol.IMProtocol;
 import com.takiku.im_lib.util.LRUMap;
@@ -27,11 +26,11 @@ import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 import io.netty.bootstrap.Bootstrap;
+import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelInitializer;
@@ -39,6 +38,7 @@ import io.netty.channel.ChannelOption;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.socket.nio.NioDatagramChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 import io.netty.handler.codec.LengthFieldPrepender;
@@ -72,16 +72,22 @@ public class RealConnection  implements Connection {
     private volatile LRUMap<String,Response> responseLRUMap;
     private Serializable netId;
     private @IMProtocol int protocol;
-    private  WebSocketClientHandler webSocketClientHandler;
+    private WebSocketHandler webSocketHandler;
 
 
-    public RealConnection(ConnectionPool connectionPool, InetSocketAddress inetSocketAddress, EventListener eventListener){
+    public RealConnection(ConnectionPool connectionPool, InetSocketAddress inetSocketAddress,@IMProtocol int protocol, EventListener eventListener){
         this.inetSocketAddress=inetSocketAddress;
         this.connectionPool=connectionPool;
         this.eventListener=eventListener;
+        this.protocol = protocol;
         EventLoopGroup loopGroup = new NioEventLoopGroup(4);
         bootstrap = new Bootstrap();
-        bootstrap.group(loopGroup).channel(NioSocketChannel.class);
+        if (protocol==IMProtocol.UDP){
+            bootstrap.group(loopGroup).channel(NioDatagramChannel.class);
+        }else {
+            bootstrap.group(loopGroup).channel(NioSocketChannel.class);
+        }
+
         // 设置该选项以后，如果在两小时内没有数据的通信时，TCP会自动发送一个活动探测数据报文
         bootstrap.option(ChannelOption.SO_KEEPALIVE, true);
         // 设置禁用nagle算法
@@ -98,7 +104,7 @@ public class RealConnection  implements Connection {
             }else if (protocol == IMProtocol.WEB_SOCKET){
                 removeHandler(HttpClientCodec.class.getSimpleName(),channel);
                 removeHandler(HttpObjectAggregator.class.getSimpleName(),channel);
-                removeHandler(WebSocketClientHandler.class.getSimpleName(),channel);
+                removeHandler(WebSocketHandler.class.getSimpleName(),channel);
             }
             removeHandler(StatusChannelHandler.class.getSimpleName(),channel);
             removeHandler(MessageChannelHandler.class.getSimpleName(),channel);
@@ -140,7 +146,7 @@ public class RealConnection  implements Connection {
         }
     }
 
-    public void ChannelInitializerHandler(final Codec codec, @IMProtocol int protocol, HashMap<String,Object> wsHeaderMap,
+    public void ChannelInitializerHandler(final Codec codec, HashMap<String,Object> wsHeaderMap,
                                           final Object heartBeatMsg,
                                           final LinkedHashMap<String, ChannelHandler> handlers,
                                           final int heartbeatInterval,
@@ -205,8 +211,8 @@ public class RealConnection  implements Connection {
                         for (String key:wsHeaderMap.keySet()){
                             customHeaders.add(key,wsHeaderMap.get(key));
                         }
-                    }  webSocketClientHandler =
-                            new WebSocketClientHandler(
+                    }  webSocketHandler =
+                            new WebSocketHandler(
                                     WebSocketClientHandshakerFactory.newHandshaker(uri, WebSocketVersion.V13, null, false,customHeaders,maxFrameLength),
                                     messageParser,connectionBrokenListener,eventListener);
                     LogUtil.i("protocol","host"+inetSocketAddress.getHostName());
@@ -218,11 +224,19 @@ public class RealConnection  implements Connection {
 
                     pipeline.addLast(HttpClientCodec.class.getSimpleName(), new HttpClientCodec());
                     pipeline.addLast(HttpObjectAggregator.class.getSimpleName(), new HttpObjectAggregator(65535));
-                    pipeline.addLast(WebSocketClientHandler.class.getSimpleName(), webSocketClientHandler);
+                    pipeline.addLast(WebSocketHandler.class.getSimpleName(), webSocketHandler);
                     if (heartBeatMsg!=null){ //设置了心跳包，则里面启动心跳机制
                         addHeartbeatHandler(pipeline,connectionPool,heartbeatInterval);
                     }
 
+                }else if (protocol == IMProtocol.UDP){
+                    if (codec !=null){
+                        pipeline.addLast(codec.EnCoder());
+                        pipeline.addLast(codec.DeCoder());
+                    }
+                    pipeline.addLast(StatusChannelHandler.class.getSimpleName(),new StatusChannelHandler(eventListener,connectionBrokenListener));
+                    UdpChannelHandler udpChannelHandler = new UdpChannelHandler(messageParser);
+                    pipeline.addLast(UdpChannelHandler.class.getSimpleName(),udpChannelHandler);
                 }
 
                 if (handlers!=null){
@@ -302,11 +316,12 @@ public class RealConnection  implements Connection {
 
 
 
-    public void connect(int connectTimeout) throws InterruptedException {
+    public void connect(int connectTimeout,int localPort) throws InterruptedException {
 
           eventListener.connectStart(inetSocketAddress);
         // 设置连接超时时长
-          bootstrap.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, connectTimeout);
+          bootstrap.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, connectTimeout)
+                  .bind(localPort);
            String ip;
           if (inetSocketAddress.getAddress()!=null){
               ip= inetSocketAddress.getAddress().getHostAddress();
@@ -318,10 +333,18 @@ public class RealConnection  implements Connection {
             URI uri = new URI(inetSocketAddress.getHostName());
             if (protocol == IMProtocol.WEB_SOCKET){
                 //等待握手成功
-                channel=  bootstrap.connect(uri.getHost(), uri.getPort()).sync().channel();
-                webSocketClientHandler.handshakeFuture().sync();
-            }else {
-                channel=  bootstrap.connect(ip, port).sync().channel();
+                channel =  bootstrap.connect(uri.getHost(), uri.getPort()).sync().channel();
+                webSocketHandler.handshakeFuture().sync();
+            }else if (protocol == IMProtocol.PRIVATE){
+                channel =  bootstrap.connect(ip, port).sync().channel();
+            }else if (protocol == IMProtocol.UDP){
+                channel =  bootstrap
+                          .option(ChannelOption.SO_BROADCAST,true)
+                          .option(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT)
+//                          .option(ChannelOption.SO_RCVBUF,1024)
+//                          .option(ChannelOption.SO_SNDBUF,1024)
+                          .bind(localPort) //绑定一个随机可用端口
+                          .sync().channel();
             }
         } catch (URISyntaxException e) {
             e.printStackTrace();
@@ -337,9 +360,9 @@ public class RealConnection  implements Connection {
       }
     }
 
-    public TcpStream newStream(IMClient client,StreamAllocation streamAllocation){
-        TcpStream tcpStream=new Stream(client,streamAllocation,channel);
-        return tcpStream;
+    public IStream newStream(IMClient client, StreamAllocation streamAllocation){
+        IStream iStream =new Stream(client,streamAllocation,channel);
+        return iStream;
     }
 
 

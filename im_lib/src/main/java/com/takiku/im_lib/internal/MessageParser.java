@@ -1,6 +1,6 @@
 package com.takiku.im_lib.internal;
 
-import com.google.protobuf.GeneratedMessageV3;
+
 import com.google.protobuf.MapEntry;
 import com.takiku.im_lib.call.Consumer;
 import com.takiku.im_lib.call.OnResponseListener;
@@ -117,7 +117,7 @@ public class MessageParser {
     public boolean parseMsg(Object msg){
         if (messageShakeHandsHandler!=null){
             if (messageShakeHandsHandler.isShakeHands(msg)){
-                if (messageShakeHandsHandler.isShakeHandsOk((GeneratedMessageV3) msg)){
+                if (messageShakeHandsHandler.isShakeHandsOk( msg)){
                     if (shakeHandsResultListener!=null){
                         shakeHandsResultListener.shakeHandsResult(true);
                     }

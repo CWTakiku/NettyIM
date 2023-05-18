@@ -10,7 +10,7 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".CustomTCPMainActivity"
+        <activity android:name=".CustomTCPActivity"
             android:screenOrientation="landscape"
             android:configChanges="orientation|keyboardHidden|screenSize"
             android:exported="true">
@@ -26,6 +26,7 @@
         <activity android:name=".WSActivity">
 
         </activity>
+        <activity android:name=".UdpActivity"/>
     </application>
 
 </manifest>

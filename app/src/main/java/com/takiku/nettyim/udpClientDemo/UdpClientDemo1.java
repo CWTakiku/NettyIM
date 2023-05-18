@@ -1,9 +1,8 @@
-package com.takiku.nettyim.wsClientdemo;
-
-import static com.takiku.nettyim.Constants.MSG_ACK_TYPE;
+package com.takiku.nettyim.udpClientDemo;
 
 import android.os.Handler;
 import android.os.Looper;
+import android.util.Log;
 
 import com.google.gson.Gson;
 import com.takiku.im_lib.call.Call;
@@ -17,75 +16,84 @@ import com.takiku.im_lib.entity.AckMessage;
 import com.takiku.im_lib.entity.AppMessage;
 import com.takiku.im_lib.entity.HeartbeatMessage;
 import com.takiku.im_lib.entity.ReplyMessage;
+import com.takiku.im_lib.entity.ShakeHandsMessage;
 import com.takiku.im_lib.entity.base.Address;
 import com.takiku.im_lib.entity.base.Request;
 import com.takiku.im_lib.entity.base.Response;
 import com.takiku.im_lib.protocol.IMProtocol;
-import com.takiku.im_lib.util.LogUtil;
 import com.takiku.nettyim.callbcak.UICallback;
 import com.takiku.nettyim.callbcak.UIConsumerCallback;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import io.netty.buffer.Unpooled;
+import io.netty.channel.socket.DatagramPacket;
+import io.netty.handler.codec.DatagramPacketDecoder;
+import io.netty.handler.codec.DatagramPacketEncoder;
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
+
+import static com.takiku.nettyim.Constants.MSG_ACK_TYPE;
 
 /**
  * @author chengwl
  * @des
- * @date:2022/11/17
+ * @Date:2023/5/16
  */
-public class WSClientDemo2 {
-    private static WSClientDemo2 instance;
+public class UdpClientDemo1 {
+
+    private static UdpClientDemo1 instance;
     private IMClient imClient;
     private Handler mHandler;
-    private WSClientDemo2.OnMessageReceiveListener onMessageReceiveListener;
-    private WSClientDemo2.OnReplyReceiveListener onReplyReceiveListener;
-    public static final String userId2 = "userid2";
+    private OnMessageReceiveListener onMessageReceiveListener;
+    private OnReplyReceiveListener onReplyReceiveListener;
+    public static final String userId1 = "userid1";
 
-    private WSMessageReceiveHandler.onMessageArriveListener onMessageArriveListener = new WSMessageReceiveHandler.onMessageArriveListener() {
-        @Override
-        public void onMessageArrive(TextWebSocketFrame pack) {
-            LogUtil.i("WSClientDemo2",pack.text());
-            final AppMessage appMessage= new Gson().fromJson(pack.text(),AppMessage.class);
-            sendAck(appMessage.getHead().getMsgId(),appMessage.getHead().getFromId());//发送ACK 给服务端
-            if (onMessageReceiveListener!=null){
-                mHandler.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        onMessageReceiveListener.onMessageReceive(appMessage);
-                    }
-                });
-            }
-        }
-    };
-    private WSMessageReplyHandler.OnReplyArriveListener onReplyListener = new WSMessageReplyHandler.OnReplyArriveListener() {
-        @Override
-        public void onReplyArrive(ReplyMessage pack) {
-            sendAck(pack.getMsgId(),pack.getFromId());//发送ACK 给服务端
-            if (onReplyReceiveListener!=null){
-                mHandler.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        onReplyReceiveListener.onReplyReceive(pack);
-                    }
-                });
-            }
-        }
-    };
+   private UdpMessageReceiveHandler.onMessageArriveListener onMessageArriveListener = new UdpMessageReceiveHandler.onMessageArriveListener() {
+       @Override
+       public void onMessageArrive(DatagramPacket pack) {
+           Log.i("WSClientDemo1", pack.content().toString(StandardCharsets.UTF_8));
+           final AppMessage appMessage= new Gson().fromJson( pack.content().toString(StandardCharsets.UTF_8),AppMessage.class);
+           sendAck(appMessage.getHead().getMsgId(),appMessage.getHead().getFromId());//发送ACK 给服务端
+           if (onMessageReceiveListener!=null){
+               mHandler.post(new Runnable() {
+                   @Override
+                   public void run() {
+                       onMessageReceiveListener.onMessageReceive(appMessage);
+                   }
+               });
+           }
+       }
+   };
+ private UdpMessageReplyHandler.OnReplyArriveListener onReplyListener = new UdpMessageReplyHandler.OnReplyArriveListener() {
+     @Override
+     public void onReplyArrive(ReplyMessage pack) {
+         sendAck(pack.getMsgId(),pack.getFromId());//发送ACK 给服务端
+         if (onReplyReceiveListener!=null){
+             mHandler.post(new Runnable() {
+                 @Override
+                 public void run() {
+                     onReplyReceiveListener.onReplyReceive(pack);
+                 }
+             });
+         }
+     }
+ };
 
 
-    public void registerMessageReceive(WSClientDemo2.OnMessageReceiveListener onMessageReceiveListener){
+    public void registerMessageReceive(OnMessageReceiveListener onMessageReceiveListener){
         this.onMessageReceiveListener=onMessageReceiveListener;
     }
     public void unregisterMessageReceive(){
         this.onMessageReceiveListener=null;
     }
 
-    public void registerReplyReceive(WSClientDemo2.OnReplyReceiveListener onReplyReceiveListener){
+    public void registerReplyReceive(OnReplyReceiveListener onReplyReceiveListener){
         this.onReplyReceiveListener=onReplyReceiveListener;
     }
     public void unregisterReplyReceive(){
@@ -96,36 +104,43 @@ public class WSClientDemo2 {
      * IMCient
      * @param  //主要消息接受监听，
      */
-    private WSClientDemo2(){
+    private UdpClientDemo1(){
 
         mHandler=new Handler(Looper.getMainLooper());
         imClient=new IMClient.Builder()
                 .setCodec(new DefaultCodec()) //默认的编解码，开发者可以使用自己的protobuf编解码
-               // .setShakeHands(new DefaultMessageShakeHandsHandler(getDefaultHands())) //设置握手认证，可选
+                .setShakeHands(new UdpMessageShakeHandsHandler(getDefaultHands())) //设置握手认证，可选
                 .setHeartBeatMsg(getDefaultHeart()) //设置心跳,可选
-                .setAckConsumer(new WSAckConsumer()) //设置确认机制
+                .setAckConsumer(new UdpAckConsumer()) //设置确认机制
                 .setConnectTimeout(10, TimeUnit.SECONDS) //设置连接超时
-                .setConnectRetryInterval(1000,TimeUnit.MILLISECONDS)
                 .setResendCount(3)//设置失败重试数
+                .setConnectRetryInterval(1000,TimeUnit.MILLISECONDS)
                 .setConnectionRetryEnabled(true)//是否连接重试
                 .setSendTimeout(6,TimeUnit.SECONDS)//设置发送超时
                 .setHeartIntervalBackground(30,TimeUnit.SECONDS)//后台心跳间隔
-                .registerMessageHandler(new WSMessageReceiveHandler(onMessageArriveListener)) //消息接收处理器
-                .registerMessageHandler(new WSMessageReplyHandler(onReplyListener)) //消息状态接收处理器
-                .registerMessageHandler(new WsHeartbeatRespHandler())
-                .setEventListener(new DefaultEventListener(userId2)) //事件监听，可选
+                .registerMessageHandler(new UdpMessageReceiveHandler(onMessageArriveListener)) //消息接收处理器
+                .registerMessageHandler(new UdpMessageReplyHandler(onReplyListener)) //消息状态接收处理器
+                .registerMessageHandler(new UdpHeartbeatRespHandler()) //心跳接收处理器
+                .setEventListener(new DefaultEventListener(userId1)) //事件监听，可选
                 // .addAddress(new Address("192.168.31.212",9081,Address.Type.SOCKS))
-                .addAddress(new Address("ws://192.168.31.223:8804/ws",8804,Address.Type.WS))
-                .addWsHeader("user",userId2)
-                .setProtocol(IMProtocol.WEB_SOCKET)
+                .addAddress(new Address("192.168.0.104",8804,Address.Type.UDP))
+                .setProtocol(IMProtocol.UDP)
                 .build();
     }
 
-    public static WSClientDemo2 getInstance(){
+    private DatagramPacket getDefaultHands() {
+        ShakeHandsMessage shakeHandsMessage = new ShakeHandsMessage();
+        shakeHandsMessage.setUserId(userId1);
+        shakeHandsMessage.setToken("token"+userId1);
+        DatagramPacket datagramPacket = new DatagramPacket(Unpooled.copiedBuffer(new Gson().toJson(shakeHandsMessage),StandardCharsets.UTF_8),new InetSocketAddress("192.168.0.104",8804));
+        return datagramPacket;
+    }
+
+    public static UdpClientDemo1 getInstance(){
         if (instance==null){
-            synchronized (WSClientDemo2.class){
+            synchronized (UdpClientDemo1.class){
                 if (instance==null){
-                    instance=new WSClientDemo2();
+                    instance=new UdpClientDemo1();
                 }
             }
             return instance;
@@ -175,7 +190,7 @@ public class WSClientDemo2 {
      * @param msgId
      */
     public void sendAck(String msgId,String toId){
-        imClient.newCall(createAckRequest(msgId,userId2,toId)).enqueue(new Callback() {
+        imClient.newCall(createAckRequest(msgId,userId1,toId)).enqueue(new Callback() {
             @Override
             public void onFailure(Call call, IOException e) {
 
@@ -225,11 +240,12 @@ public class WSClientDemo2 {
      * 构建默认心跳，开发者可自行定制自己的心跳包
      * @return
      */
-    private TextWebSocketFrame getDefaultHeart() {
+    private String getDefaultHeart() {
         HeartbeatMessage heartbeatMessage  = new HeartbeatMessage();
         String heart = new Gson().toJson(heartbeatMessage);
-        return new TextWebSocketFrame(heart);
+        return heart;
     }
+
 
 
     /**
@@ -237,11 +253,11 @@ public class WSClientDemo2 {
      * @param msgId
      * @return
      */
-    private TextWebSocketFrame getDefaultAck(String msgId,String fromId,String toId){
+    private String getDefaultAck(String msgId,String fromId,String toId){
         AckMessage ackMessage = new AckMessage();
         ackMessage.setMsgId(msgId);
         ackMessage.setAckType(MSG_ACK_TYPE);
-        return   new TextWebSocketFrame(new Gson().toJson(ackMessage));
+      return   new Gson().toJson(ackMessage);
     }
     public interface OnMessageReceiveListener{
         void onMessageReceive(AppMessage appMessage);

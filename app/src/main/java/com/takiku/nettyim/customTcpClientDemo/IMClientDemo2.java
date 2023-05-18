@@ -1,4 +1,4 @@
-package com.takiku.nettyim.customTcpClientdemo;
+package com.takiku.nettyim.customTcpClientDemo;
 
 import android.os.Handler;
 import android.os.Looper;
@@ -12,14 +12,13 @@ import com.takiku.im_lib.defaultImpl.DefaultAckConsumer;
 import com.takiku.im_lib.defaultImpl.DefaultReplyReceiveHandler;
 import com.takiku.im_lib.entity.AppMessage;
 import com.takiku.im_lib.entity.ReplyMessage;
-import com.takiku.im_lib.entity.base.Response;
-import com.takiku.im_lib.protocol.IMProtocol;
 import com.takiku.nettyim.callbcak.UICallback;
 import com.takiku.im_lib.client.IMClient;
 import com.takiku.im_lib.defaultImpl.DefaultCodec;
 import com.takiku.im_lib.entity.ShakeHandsMessage;
 import com.takiku.im_lib.entity.base.Address;
 import com.takiku.im_lib.entity.base.Request;
+import com.takiku.im_lib.entity.base.Response;
 import com.takiku.im_lib.defaultImpl.DefaultHeartbeatRespHandler;
 import com.takiku.im_lib.defaultImpl.DefaultMessageReceiveHandler;
 import com.takiku.im_lib.defaultImpl.DefaultMessageShakeHandsHandler;
@@ -35,25 +34,21 @@ import java.util.concurrent.TimeUnit;
 
 import static com.takiku.nettyim.Constants.MSG_ACK_TYPE;
 
-/**
- * author:chengwl
- * Description: IMClient使用demo， 所有的默认实现都可替换成开发者的实现
- * Date:2020/4/18
- */
-public class IMClientDemo {
-
-    private static IMClientDemo instance;
+public class IMClientDemo2 {
+    private static IMClientDemo2 instance;
     private IMClient imClient;
     private Handler mHandler;
-    private OnMessageReceiveListener onMessageReceiveListener;
-    private OnReplyReceiveListener onReplyReceiveListener;
-    public static final String userId1 = "userid1";
+    private IMClientDemo2.OnMessageReceiveListener onMessageReceiveListener;
+    private IMClientDemo2.OnReplyReceiveListener onReplyReceiveListener;
+
+
+    public static final String userId2 = "userid2";
 
     private DefaultMessageReceiveHandler.onMessageArriveListener onMessageArriveListener=new DefaultMessageReceiveHandler.onMessageArriveListener() {
         @Override
         public void onMessageArrive(PackProtobuf.Pack pack) {
             final AppMessage appMessage=AppMessage.buildAppMessage(pack.getMsg());
-             sendAck(appMessage.getHead().getMsgId(),pack.getMsg().getSerial(),pack.getMsg().getHead().getFromId());//发送ACK 给服务端
+            sendAck(appMessage.getHead().getMsgId(),pack.getMsg().getSerial(),pack.getMsg().getHead().getFromId());//发送ACK 给服务端
             if (onMessageReceiveListener!=null){
                 mHandler.post(new Runnable() {
                     @Override
@@ -69,26 +64,26 @@ public class IMClientDemo {
         public void onReplyArrive(PackProtobuf.Pack pack) {
             sendAck(pack.getReply().getMsgId(),pack.getReply().getSerial(),pack.getReply().getFromId());//发送ACK 给服务端
             final ReplyMessage replyMessage=ReplyMessage.buildReplyMessage(pack.getReply());
-             if (onReplyReceiveListener!=null){
-                 mHandler.post(new Runnable() {
-                     @Override
-                     public void run() {
-                         onReplyReceiveListener.onReplyReceive(replyMessage);
-                     }
-                 });
-             }
+            if (onReplyReceiveListener!=null){
+                mHandler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        onReplyReceiveListener.onReplyReceive(replyMessage);
+                    }
+                });
+            }
         }
     };
 
 
-    public void registerMessageReceive(OnMessageReceiveListener onMessageReceiveListener){
+    public void registerMessageReceive(IMClientDemo2.OnMessageReceiveListener onMessageReceiveListener){
         this.onMessageReceiveListener=onMessageReceiveListener;
     }
     public void unregisterMessageReceive(){
         this.onMessageReceiveListener=null;
     }
 
-    public void registerReplyReceive(OnReplyReceiveListener onReplyReceiveListener){
+    public void registerReplyReceive(IMClientDemo2.OnReplyReceiveListener onReplyReceiveListener){
         this.onReplyReceiveListener=onReplyReceiveListener;
     }
     public void unregisterReplyReceive(){
@@ -99,40 +94,32 @@ public class IMClientDemo {
      * IMCient
      * @param  //主要消息接受监听，
      */
-    private IMClientDemo(){
-
-
-
+    private IMClientDemo2(){
 
         mHandler=new Handler(Looper.getMainLooper());
         imClient=new IMClient.Builder()
                 .setCodec(new DefaultCodec()) //默认的编解码，开发者可以使用自己的protobuf编解码
                 .setShakeHands(new DefaultMessageShakeHandsHandler(getDefaultHands())) //设置握手认证，可选
                 .setHeartBeatMsg(getDefaultHeart()) //设置心跳,可选
-                .setAckConsumer(new DefaultAckConsumer()) //设置心跳机制
-                .setConnectTimeout(10, TimeUnit.SECONDS) //设置连接超时
+                .setAckConsumer(new DefaultAckConsumer())
+                .setConnectTimeout(10, TimeUnit.SECONDS)
                 .setResendCount(3)//设置失败重试数
                 .setConnectionRetryEnabled(true)//是否连接重试
                 .setSendTimeout(6,TimeUnit.SECONDS)//设置发送超时
                 .setHeartIntervalBackground(30,TimeUnit.SECONDS)//后台心跳间隔
-                .registerMessageHandler(new DefaultMessageReceiveHandler(onMessageArriveListener)) //消息接收处理器
+                .registerMessageHandler(new DefaultMessageReceiveHandler(onMessageArriveListener)) //客户端消息接收处理器
                 .registerMessageHandler(new DefaultReplyReceiveHandler(onReplyListener)) //消息状态接收处理器
                 .registerMessageHandler(new DefaultHeartbeatRespHandler()) //心跳接收处理器
-                .setEventListener(new DefaultEventListener(userId1)) //事件监听，可选
+                .setEventListener(new DefaultEventListener(userId2)) //事件监听，可选
                 .addAddress(new Address("192.168.31.223",9081,Address.Type.SOCKS))
-                .setProtocol(IMProtocol.PRIVATE)
-                .setMaxFrameLength(65535*100)
-                .setMsgTriggerReconnectEnabled(true)
-                .setConnectRetryInterval(500,TimeUnit.MILLISECONDS)
-                .setOpenLog(true)
                 .build();
     }
 
-    public static IMClientDemo getInstance(){
+    public static IMClientDemo2 getInstance(){
         if (instance==null){
-            synchronized (IMClientDemo.class){
+            synchronized (IMClientDemo2.class){
                 if (instance==null){
-                    instance=new IMClientDemo();
+                    instance=new IMClientDemo2();
                 }
             }
             return instance;
@@ -176,13 +163,12 @@ public class IMClientDemo {
     public long getMsgSerialID(){
         return imClient.getMsgSerialId();
     }
-
     /**
-     * 收到服务端消息后马上发送ACK
+     * 发送ACK
      * @param msgId
      */
-    public void sendAck(String msgId,long serial,String toId){
-        imClient.newCall(createAckRequest(msgId,serial,userId1,toId)).enqueue(new Callback() {
+    public void sendAck(String msgId,long serial,String fromId){
+        imClient.newCall(createAckRequest(msgId,serial,userId2,fromId)).enqueue(new Callback() {
             @Override
             public void onFailure(Call call, IOException e) {
 
@@ -211,10 +197,10 @@ public class IMClientDemo {
     }
 
     /**
-     * 发送消息，会订阅特定的消息
+     * 发送消息，会订阅特定的消息，
      * @param request
      * @param callback
-     * @return Disposable 不需要订阅了 一定要调用 Disposable.disposable()
+     * @return
      */
     public Disposable sendMsgAndConsumer(Request request, Callback callback,Consumer ...consumers){
         List<Consumer> consumersList= Arrays.asList(consumers);
@@ -222,8 +208,8 @@ public class IMClientDemo {
         for (Consumer consumer:consumersList){
             uiConsumerCallback.add(new UIConsumerCallback(consumer,mHandler));
         }
-     Disposable disposable=   imClient.newCall(request).enqueue(new UICallback(callback,mHandler)).subscribe(uiConsumerCallback);
-     return disposable;
+        Disposable disposable=   imClient.newCall(request).enqueue(new UICallback(callback,mHandler)).subscribe(uiConsumerCallback);
+        return disposable;
     }
 
 
@@ -234,7 +220,7 @@ public class IMClientDemo {
     private GeneratedMessageV3 getDefaultHeart() {
         return PackProtobuf.Pack.newBuilder()
                 .setPackType(PackProtobuf.Pack.PackType.HEART)
-                .setHeart(PackProtobuf.Heart.newBuilder().setUserId(userId1).build())
+                .setHeart(PackProtobuf.Heart.newBuilder().setUserId(userId2).build())
                 .build();
     }
 
@@ -244,9 +230,9 @@ public class IMClientDemo {
      */
     private  PackProtobuf.Pack getDefaultHands() {
         ShakeHandsMessage shakeHandsMessage =new ShakeHandsMessage();
-        shakeHandsMessage.setToken("token1");
-        shakeHandsMessage.setUserId(userId1);
-        shakeHandsMessage.setMsgId("1111");
+        shakeHandsMessage.setToken("token2");
+        shakeHandsMessage.setUserId(userId2);
+        shakeHandsMessage.setMsgId("2222");
         return PackProtobuf.Pack.newBuilder()
                 .setPackType(PackProtobuf.Pack.PackType.SHAKEHANDS)
                 .setShakeHands(shakeHandsMessage.buildProto())

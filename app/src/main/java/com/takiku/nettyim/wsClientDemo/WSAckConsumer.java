@@ -1,4 +1,4 @@
-package com.takiku.nettyim.wsClientdemo;
+package com.takiku.nettyim.wsClientDemo;
 
 import android.util.Log;
 
@@ -8,7 +8,6 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.takiku.im_lib.call.Consumer;
 import com.takiku.im_lib.entity.AckMessage;
-import com.takiku.im_lib.entity.AppMessage;
 import com.takiku.im_lib.entity.base.Request;
 import com.takiku.nettyim.Constants;
 
@@ -29,8 +28,8 @@ public class WSAckConsumer implements Consumer<TextWebSocketFrame> {
         JsonElement type =   jsonObject.get("packType");
         Log.i("WSAckConsumer","type "+type.getAsInt());
         if (type.getAsInt() == Request.PACK_ACK_TYPE){
-            AckMessage appMessage = new Gson().fromJson(textWebSocketFrame.text(),AckMessage.class);
-            return appMessage.getMsgId().equals(requestTag)&&appMessage.getAckType()== Constants.MSG_ACK_TYPE;
+            AckMessage ackMessage = new Gson().fromJson(textWebSocketFrame.text(),AckMessage.class);
+            return ackMessage.getMsgId().equals(requestTag)&&ackMessage.getAckType()== Constants.MSG_ACK_TYPE;
         }
         return false;
     }
