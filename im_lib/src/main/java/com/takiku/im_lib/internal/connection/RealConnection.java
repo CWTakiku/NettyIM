@@ -1,5 +1,7 @@
 package com.takiku.im_lib.internal.connection;
 
+import android.graphics.ImageFormat;
+
 import com.takiku.im_lib.call.Consumer;
 import com.takiku.im_lib.call.OnResponseListener;
 import com.takiku.im_lib.codec.Codec;
@@ -86,12 +88,11 @@ public class RealConnection  implements Connection {
             bootstrap.group(loopGroup).channel(NioDatagramChannel.class);
         }else {
             bootstrap.group(loopGroup).channel(NioSocketChannel.class);
+            // 设置该选项以后，如果在两小时内没有数据的通信时，TCP会自动发送一个活动探测数据报文
+            bootstrap.option(ChannelOption.SO_KEEPALIVE, true);
+            // 设置禁用nagle算法
+            bootstrap.option(ChannelOption.TCP_NODELAY, true);
         }
-
-        // 设置该选项以后，如果在两小时内没有数据的通信时，TCP会自动发送一个活动探测数据报文
-        bootstrap.option(ChannelOption.SO_KEEPALIVE, true);
-        // 设置禁用nagle算法
-        bootstrap.option(ChannelOption.TCP_NODELAY, true);
         reConnect=true;
         responseLRUMap=new LRUMap<>(30);
         netId = NETID_GENERATOR.getAndIncrement();
@@ -230,13 +231,29 @@ public class RealConnection  implements Connection {
                     }
 
                 }else if (protocol == IMProtocol.UDP){
+                    messageParser.addShakeResultListener(new MessageParser.onShakeHandsResultListener() {
+                        @Override
+                        public void shakeHandsResult(boolean isSuccess) {
+                            if (isSuccess){
+                                addHeartbeatHandler(connectionPool,heartbeatInterval);
+                            }else {
+                                release(false);
+                            }
+                        }
+                    });
                     if (codec !=null){
                         pipeline.addLast(codec.EnCoder());
                         pipeline.addLast(codec.DeCoder());
                     }
+                    if (messageParser.getMessageShakeHandsHandler() == null){ //如果没有握手消息且设置了心跳包，则直接添加心跳机制，否则等握手成功后添加心跳机制
+                        if (heartBeatMsg!=null){
+//                        // 3次心跳没响应，代表连接已断开
+                            addHeartbeatHandler(connectionPool,heartbeatInterval);
+
+                        }
+                    }
                     pipeline.addLast(StatusChannelHandler.class.getSimpleName(),new StatusChannelHandler(eventListener,connectionBrokenListener));
-                    UdpChannelHandler udpChannelHandler = new UdpChannelHandler(messageParser);
-                    pipeline.addLast(UdpChannelHandler.class.getSimpleName(),udpChannelHandler);
+                    pipeline.addLast(UdpChannelHandler.class.getSimpleName(), new UdpChannelHandler(messageParser));
                 }
 
                 if (handlers!=null){
@@ -267,7 +284,7 @@ public class RealConnection  implements Connection {
             }
             if (channel.pipeline().get(IdleStateHandler.class.getSimpleName()) != null) {
                 channel.pipeline().addLast(HeartbeatChannelHandler.class.getSimpleName(),
-                        new HeartbeatChannelHandler(connectionPool,heartBeatMsg,connectionBrokenListener));
+                        new HeartbeatChannelHandler(protocol,connectionPool,heartBeatMsg,connectionBrokenListener));
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -292,7 +309,7 @@ public class RealConnection  implements Connection {
             }
             if (pipeline.get(IdleStateHandler.class.getSimpleName()) != null) {
                 pipeline.addLast(HeartbeatChannelHandler.class.getSimpleName(),
-                        new HeartbeatChannelHandler(connectionPool,heartBeatMsg,connectionBrokenListener));
+                        new HeartbeatChannelHandler(protocol,connectionPool,heartBeatMsg,connectionBrokenListener));
             }
         } catch (Exception e) {
             e.printStackTrace();

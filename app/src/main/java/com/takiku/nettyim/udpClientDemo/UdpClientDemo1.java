@@ -10,7 +10,7 @@ import com.takiku.im_lib.call.Callback;
 import com.takiku.im_lib.call.Consumer;
 import com.takiku.im_lib.call.Disposable;
 import com.takiku.im_lib.client.IMClient;
-import com.takiku.im_lib.defaultImpl.DefaultCodec;
+import com.takiku.im_lib.codec.DefaultCodec;
 import com.takiku.im_lib.defaultImpl.DefaultEventListener;
 import com.takiku.im_lib.entity.AckMessage;
 import com.takiku.im_lib.entity.AppMessage;
@@ -34,9 +34,8 @@ import java.util.concurrent.TimeUnit;
 
 import io.netty.buffer.Unpooled;
 import io.netty.channel.socket.DatagramPacket;
-import io.netty.handler.codec.DatagramPacketDecoder;
-import io.netty.handler.codec.DatagramPacketEncoder;
-import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
+import io.netty.util.internal.logging.InternalLoggerFactory;
+import io.netty.util.internal.logging.JdkLoggerFactory;
 
 import static com.takiku.nettyim.Constants.MSG_ACK_TYPE;
 
@@ -53,6 +52,7 @@ public class UdpClientDemo1 {
     private OnMessageReceiveListener onMessageReceiveListener;
     private OnReplyReceiveListener onReplyReceiveListener;
     public static final String userId1 = "userid1";
+    private static final String ip = "192.168.31.212";
 
    private UdpMessageReceiveHandler.onMessageArriveListener onMessageArriveListener = new UdpMessageReceiveHandler.onMessageArriveListener() {
        @Override
@@ -105,7 +105,7 @@ public class UdpClientDemo1 {
      * @param  //主要消息接受监听，
      */
     private UdpClientDemo1(){
-
+        InternalLoggerFactory.setDefaultFactory(JdkLoggerFactory.INSTANCE);
         mHandler=new Handler(Looper.getMainLooper());
         imClient=new IMClient.Builder()
                 .setCodec(new DefaultCodec()) //默认的编解码，开发者可以使用自己的protobuf编解码
@@ -123,7 +123,8 @@ public class UdpClientDemo1 {
                 .registerMessageHandler(new UdpHeartbeatRespHandler()) //心跳接收处理器
                 .setEventListener(new DefaultEventListener(userId1)) //事件监听，可选
                 // .addAddress(new Address("192.168.31.212",9081,Address.Type.SOCKS))
-                .addAddress(new Address("192.168.0.104",8804,Address.Type.UDP))
+                .addAddress(new Address(ip,8804,Address.Type.UDP))
+                .setOpenLog(true)
                 .setProtocol(IMProtocol.UDP)
                 .build();
     }
@@ -132,7 +133,7 @@ public class UdpClientDemo1 {
         ShakeHandsMessage shakeHandsMessage = new ShakeHandsMessage();
         shakeHandsMessage.setUserId(userId1);
         shakeHandsMessage.setToken("token"+userId1);
-        DatagramPacket datagramPacket = new DatagramPacket(Unpooled.copiedBuffer(new Gson().toJson(shakeHandsMessage),StandardCharsets.UTF_8),new InetSocketAddress("192.168.0.104",8804));
+        DatagramPacket datagramPacket = new DatagramPacket(Unpooled.copiedBuffer(new Gson().toJson(shakeHandsMessage),StandardCharsets.UTF_8),new InetSocketAddress(ip,8804));
         return datagramPacket;
     }
 
@@ -240,10 +241,11 @@ public class UdpClientDemo1 {
      * 构建默认心跳，开发者可自行定制自己的心跳包
      * @return
      */
-    private String getDefaultHeart() {
+    private DatagramPacket getDefaultHeart() {
         HeartbeatMessage heartbeatMessage  = new HeartbeatMessage();
         String heart = new Gson().toJson(heartbeatMessage);
-        return heart;
+        DatagramPacket datagramPacket = new DatagramPacket(Unpooled.copiedBuffer(heart,StandardCharsets.UTF_8),new InetSocketAddress(ip,8804));
+        return datagramPacket;
     }
 
 

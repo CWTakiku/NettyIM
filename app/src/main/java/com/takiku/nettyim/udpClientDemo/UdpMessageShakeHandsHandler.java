@@ -58,11 +58,13 @@ class UdpMessageShakeHandsHandler implements MessageShakeHandsHandler {
         if (pack instanceof DatagramPacket) {
             String data = ((DatagramPacket) pack).content().toString(StandardCharsets.UTF_8);
             JsonObject jsonObject = (JsonObject) new JsonParser().parse(data);
-            AckMessage ackMessage = new Gson().fromJson(data, AckMessage.class);
-            if (ackMessage.getAckType() == SHAKE_HANDS_ACK_TYPE) {
-                return true;
-            } else {
-                return false;
+            if (jsonObject.get("packType").getAsInt() == Request.PACK_ACK_TYPE){
+                AckMessage ackMessage = new Gson().fromJson(data, AckMessage.class);
+                if (ackMessage.getAckType() == SHAKE_HANDS_ACK_TYPE) {
+                    return true;
+                } else {
+                    return false;
+                }
             }
         }
         return false;

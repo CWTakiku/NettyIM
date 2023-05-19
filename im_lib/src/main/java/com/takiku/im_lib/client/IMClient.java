@@ -39,6 +39,8 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import io.netty.channel.ChannelHandler;
+import io.netty.util.internal.logging.InternalLoggerFactory;
+import io.netty.util.internal.logging.JdkLoggerFactory;
 
 /**
  * IMClient IM客户端SDK
@@ -47,6 +49,8 @@ public class IMClient {
 
 
     static {
+
+
         Internal.instance = new Internal() {
 
             @Override

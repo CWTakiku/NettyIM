@@ -22,7 +22,7 @@ public class StatusChannelHandler extends ChannelInboundHandlerAdapter {
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
         super.channelActive(ctx);
         eventListener.connectSuccess();
-        LogUtil.i("StatusChannelHandler","tcp  connect!");
+        LogUtil.i("StatusChannelHandler","  connect!");
     }
 
     @Override
@@ -38,7 +38,7 @@ public class StatusChannelHandler extends ChannelInboundHandlerAdapter {
         super.channelInactive(ctx);
         connectionBrokenListener.connectionBroken();
         eventListener.connectionBroken();
-        LogUtil.i("StatusChannelHandler","tcp  disconnect!");
+        LogUtil.i("StatusChannelHandler","  disconnect!");
 
     }
 }

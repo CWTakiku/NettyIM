@@ -35,7 +35,7 @@ public class UdpChannelHandler extends SimpleChannelInboundHandler<DatagramPacke
     }
 
     @Override
-    public void channelActive(ChannelHandlerContext ctx) throws Exception {
+    public void channelActive(ChannelHandlerContext ctx) throws Exception {//DatagramChannel被创建后，会自动触发channelActive
         super.channelActive(ctx);
         if (messageParser.getMessageShakeHandsHandler()!=null){
             if (messageParser.getMessageShakeHandsHandler().ShakeHands() instanceof DatagramPacket){

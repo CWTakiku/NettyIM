@@ -12,7 +12,7 @@ import com.takiku.im_lib.call.Callback;
 import com.takiku.im_lib.call.Consumer;
 import com.takiku.im_lib.call.Disposable;
 import com.takiku.im_lib.client.IMClient;
-import com.takiku.im_lib.defaultImpl.DefaultCodec;
+import com.takiku.im_lib.codec.DefaultCodec;
 import com.takiku.im_lib.defaultImpl.DefaultEventListener;
 import com.takiku.im_lib.entity.AckMessage;
 import com.takiku.im_lib.entity.AppMessage;
