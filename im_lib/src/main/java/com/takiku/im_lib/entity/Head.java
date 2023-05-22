@@ -8,8 +8,18 @@ public class Head {
     private int msgContentType;
     private String fromId;
     private String toId;
+    private long serial;
     private long timestamp;
     private String extend;
+
+
+    public long getSerial() {
+        return serial;
+    }
+
+    public void setSerial(long serial) {
+        this.serial = serial;
+    }
 
     public String getMsgId() {
         return msgId;

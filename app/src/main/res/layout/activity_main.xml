@@ -12,11 +12,7 @@
     android:layout_weight="1"
     android:layout_height="match_parent"
     android:orientation="vertical">
-    <Button
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:id="@+id/btn_line1"
-        android:text="下线"/>
+
     <androidx.recyclerview.widget.RecyclerView
         android:layout_width="match_parent"
         android:layout_weight="1"
@@ -46,11 +42,6 @@
         android:layout_weight="1"
         android:layout_height="match_parent"
         android:orientation="vertical">
-        <Button
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:id="@+id/btn_line2"
-            android:text="下线"/>
         <androidx.recyclerview.widget.RecyclerView
             android:layout_width="match_parent"
             android:id="@+id/recycler2"

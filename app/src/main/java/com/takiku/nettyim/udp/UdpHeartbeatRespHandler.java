@@ -1,7 +1,6 @@
-package com.takiku.nettyim.udpClientDemo;
+package com.takiku.nettyim.udp;
 
 import com.google.gson.Gson;
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.takiku.im_lib.entity.AckMessage;
@@ -13,9 +12,6 @@ import com.takiku.im_lib.util.LogUtil;
 import java.nio.charset.StandardCharsets;
 
 import io.netty.channel.socket.DatagramPacket;
-import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
-
-import static com.takiku.nettyim.Constants.MSG_ACK_TYPE;
 
 /**
  * @author chengwl
@@ -27,10 +23,9 @@ public class UdpHeartbeatRespHandler implements MessageHandler<DatagramPacket> {
     @Override
     public boolean isFocusMsg(Object msg) {
 
-        String data =((DatagramPacket)(msg)).content().toString(StandardCharsets.UTF_8);
-        JsonObject jsonObject  =(JsonObject) new JsonParser().parse(data);
+        JsonObject jsonObject  =(JsonObject) new JsonParser().parse((String) msg);
         if (jsonObject.get("packType").getAsInt() == Request.PACK_ACK_TYPE){
-            AckMessage ackMessage = new Gson().fromJson(data,AckMessage.class);
+            AckMessage ackMessage = new Gson().fromJson((String)msg,AckMessage.class);
             return ackMessage.getAckType()==HEART_ACK_TYPE;
         }
         return false;

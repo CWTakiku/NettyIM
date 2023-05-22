@@ -1,4 +1,4 @@
-package com.takiku.nettyim.wsClientDemo;
+package com.takiku.nettyim.webSocket;
 
 import android.util.Log;
 
@@ -9,7 +9,7 @@ import com.google.gson.JsonParser;
 import com.takiku.im_lib.call.Consumer;
 import com.takiku.im_lib.entity.AckMessage;
 import com.takiku.im_lib.entity.base.Request;
-import com.takiku.nettyim.Constants;
+import com.takiku.nettyim.util.Constants;
 
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 

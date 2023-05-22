@@ -1,4 +1,4 @@
-package com.takiku.nettyim.wsClientDemo;
+package com.takiku.nettyim.webSocket;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;

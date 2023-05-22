@@ -22,7 +22,8 @@ public class Address {
 
     public enum Type{
         WS,
-        SOCKS,
+        WSS,
+        TCP,
         UDP,
     }
 
