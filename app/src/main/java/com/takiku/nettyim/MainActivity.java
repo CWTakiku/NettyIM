@@ -1,8 +1,5 @@
 package com.takiku.nettyim;
 
-import android.content.Context;
-import android.net.wifi.WifiInfo;
-import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -30,23 +27,17 @@ import com.takiku.nettyim.widget.MenuItemPopWindow;
 import com.takiku.nettyim.widget.MessageAdapter;
 
 import java.io.IOException;
-import java.net.Inet4Address;
-import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.net.NetworkInterface;
-import java.net.UnknownHostException;
-import java.util.Collections;
-import java.util.List;
 import java.util.UUID;
 
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 
-import static com.takiku.nettyim.util.Constants.MSG_REPLY_TYPE;
-import static com.takiku.nettyim.util.Constants.MSG_STATUS_FAILED;
-import static com.takiku.nettyim.util.Constants.MSG_STATUS_READ;
-import static com.takiku.nettyim.util.Constants.MSG_STATUS_SEND;
-import static com.takiku.nettyim.util.Constants.MSG_STATUS_SENDING;
-import static com.takiku.nettyim.util.Constants.MSG_STATUS_WITHDRAW;
+import static com.takiku.im_lib.util.Constants.MSG_REPLY_TYPE;
+import static com.takiku.im_lib.util.Constants.MSG_STATUS_FAILED;
+import static com.takiku.im_lib.util.Constants.MSG_STATUS_READ;
+import static com.takiku.im_lib.util.Constants.MSG_STATUS_SEND;
+import static com.takiku.im_lib.util.Constants.MSG_STATUS_SENDING;
+import static com.takiku.im_lib.util.Constants.MSG_STATUS_WITHDRAW;
 
 /**
  * author:chengwl
@@ -73,13 +64,14 @@ public class MainActivity extends AppCompatActivity {
     private static final String TAG = "MainActivity";
 
     private int protocol;
+    private int codecType;
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
         protocol =   getIntent().getIntExtra("protocol",IMProtocol.PRIVATE);
-
+        codecType = getIntent().getIntExtra("codecType",0);
         if (protocol == IMProtocol.PRIVATE||protocol == IMProtocol.UDP){
             localHost = "192.168.12.9";//你电脑的ip地址
         }else if (protocol == IMProtocol.WEB_SOCKET){
@@ -98,8 +90,8 @@ public class MainActivity extends AppCompatActivity {
 
 
     private void initDemo(){
-        demo1 = new Client(localHost,client1UserId,protocol,new MyEventListener(client1UserId,tvStatus1));
-        demo2 = new Client(localHost,client2UserId, protocol,new MyEventListener(client2UserId,tvStatus2));
+        demo1 = new Client(localHost,client1UserId,protocol,codecType,new MyEventListener(client1UserId,tvStatus1));
+        demo2 = new Client(localHost,client2UserId, protocol,codecType,new MyEventListener(client2UserId,tvStatus2));
         demo1.registerMessageReceive(appMessage->{addClient1Message(appMessage);});
         demo1.registerReplyReceive(replyMessage -> {updateClient1MessageStatus(replyMessage);});
 
@@ -282,11 +274,16 @@ public class MainActivity extends AppCompatActivity {
                  setNeedACK(appMessage.getHead().getMsgId())
                 .setSendRetry(false);
         if (protocol == IMProtocol.PRIVATE){
-           builder.setBody(getTcpMsgPack(appMessage.buildProto(clientNum == 1?demo1.getMsgSerialID():demo2.getMsgSerialID())));
+            if (codecType == 0){
+                builder.setBody(getProtobufMsgPack(appMessage.buildProto(clientNum == 1?demo1.getMsgSerialID():demo2.getMsgSerialID())));
+            }else {
+                builder.setBody(getStringMsgPack(appMessage));
+            }
+
         }else if (protocol == IMProtocol.WEB_SOCKET){
             builder.setBody(getWsMsgPack(appMessage));
         }else if (protocol == IMProtocol.UDP){
-            builder.setBody(getUdpMsgPack(appMessage));
+            builder.setBody(getStringMsgPack(appMessage));
         }
         return builder.build();
     }
@@ -297,7 +294,7 @@ public class MainActivity extends AppCompatActivity {
      * @param msg
      * @return
      */
-    public PackProtobuf.Pack getTcpMsgPack(PackProtobuf.Msg  msg){
+    public PackProtobuf.Pack getProtobufMsgPack(PackProtobuf.Msg  msg){
         return PackProtobuf.Pack.newBuilder()
                 .setPackType(PackProtobuf.Pack.PackType.MSG)
                 .setMsg(msg)
@@ -320,7 +317,7 @@ public class MainActivity extends AppCompatActivity {
      * @param msg
      * @return
      */
-    public String getUdpMsgPack(AppMessage  msg){
+    public String getStringMsgPack(AppMessage  msg){
         String json = new Gson().toJson(msg);
         return json;
     }
@@ -342,12 +339,15 @@ public class MainActivity extends AppCompatActivity {
         Request.Builder builder =  new Request.Builder()
                 .setNoNeedACK();//设置为不需要应答
         if (protocol == IMProtocol.PRIVATE){
-            builder.setBody(getTcpReplyPack(replyMessage.buildProto(clientNum == 1?demo1.getMsgSerialID():demo2.getMsgSerialID())));
-
+            if (codecType == 0){
+                builder.setBody(getProtobufReplyPack(replyMessage.buildProto(clientNum == 1?demo1.getMsgSerialID():demo2.getMsgSerialID())));
+            }else {
+                builder.setBody(getStringReplyPack(replyMessage));
+            }
         }else if (protocol == IMProtocol.WEB_SOCKET){
             builder.setBody(getWsReplyPack(replyMessage));
         }else if (protocol == IMProtocol.UDP){
-            builder.setBody(getUdpReplyPack(replyMessage));
+            builder.setBody(getStringReplyPack(replyMessage));
         }
 
         return builder.build();
@@ -360,7 +360,7 @@ public class MainActivity extends AppCompatActivity {
      * @param reply
      * @return
      */
-    public PackProtobuf.Pack getTcpReplyPack(PackProtobuf.Reply  reply){
+    public PackProtobuf.Pack getProtobufReplyPack(PackProtobuf.Reply  reply){
         return PackProtobuf.Pack.newBuilder()
                 .setPackType(PackProtobuf.Pack.PackType.REPLY)
                 .setReply(reply)
@@ -369,10 +369,11 @@ public class MainActivity extends AppCompatActivity {
 
     /**
      * 构建回复包
+     *
      * @param reply
      * @return
      */
-    public String getUdpReplyPack(ReplyMessage  reply){
+    public String getStringReplyPack(ReplyMessage  reply){
         String json = new Gson().toJson(reply);
         return json;
     }

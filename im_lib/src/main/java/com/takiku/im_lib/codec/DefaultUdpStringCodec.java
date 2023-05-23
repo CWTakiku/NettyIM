@@ -15,7 +15,7 @@ import io.netty.util.CharsetUtil;
 
 /**
  * @author chengwl
- * @des
+ * @des udp String 编解码器
  * @date:2023/5/19
  */
 public class DefaultUdpStringCodec implements Codec{

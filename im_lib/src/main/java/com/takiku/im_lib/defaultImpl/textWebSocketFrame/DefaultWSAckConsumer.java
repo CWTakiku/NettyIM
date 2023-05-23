@@ -1,4 +1,4 @@
-package com.takiku.nettyim.webSocket;
+package com.takiku.im_lib.defaultImpl.textWebSocketFrame;
 
 import android.util.Log;
 
@@ -18,7 +18,7 @@ import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
  * @des ws的消息确认
  * @date:2022/11/17
  */
-public class WSAckConsumer implements Consumer<TextWebSocketFrame> {
+public class DefaultWSAckConsumer implements Consumer<TextWebSocketFrame> {
 
     @Override
     public boolean Observable(TextWebSocketFrame textWebSocketFrame, String requestTag) {

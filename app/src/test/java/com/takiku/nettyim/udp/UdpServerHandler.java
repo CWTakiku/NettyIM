@@ -59,7 +59,7 @@ public class UdpServerHandler  extends SimpleChannelInboundHandler<DatagramPacke
                     Session newSession = Session.buildSession(ctx.channel(),shakeHandsMessage.getUserId());
                     sessionManager.put(newSession.getId(),newSession);
 
-                    if (shakeHandsMessage.getToken().equals("token"+"userid1")||shakeHandsMessage.getToken().equals("token"+"userid2")){
+                    if (shakeHandsMessage.getToken().equals("token1")||shakeHandsMessage.getToken().equals("token2")){
                         System.out.println("鉴权成功");//鉴权成功
                         AckMessage ackMessage = new AckMessage();
                         ackMessage.setAckType(SHAKE_HANDS_ACK_TYPE);

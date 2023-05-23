@@ -1,4 +1,4 @@
-package com.takiku.nettyim.udp;
+package com.takiku.im_lib.defaultImpl.string;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
@@ -6,21 +6,22 @@ import com.google.gson.JsonParser;
 import com.takiku.im_lib.entity.AckMessage;
 import com.takiku.im_lib.entity.base.Request;
 import com.takiku.im_lib.internal.handler.listener.MessageShakeHandsHandler;
-import com.takiku.nettyim.util.Constants;
+import com.takiku.im_lib.util.Constants;
 
 
-import static com.takiku.im_lib.defaultImpl.DefaultMessageShakeHandsHandler.SHAKE_HANDS_ACK_TYPE;
+
+import static com.takiku.im_lib.defaultImpl.protobuf.DefaultProtobufMessageShakeHandsHandler.SHAKE_HANDS_ACK_TYPE;
 
 /**
  * author:chengwl
  * Description:
  * Date:2023/5/18
  */
-public class StringMessageShakeHandsHandler implements MessageShakeHandsHandler<String,String> {
+public class DefaultStringMessageShakeHandsHandler implements MessageShakeHandsHandler<String,String> {
 
     private String shake;
 
-    public StringMessageShakeHandsHandler(String shake) {
+    public DefaultStringMessageShakeHandsHandler(String shake) {
         this.shake = shake;
     }
 

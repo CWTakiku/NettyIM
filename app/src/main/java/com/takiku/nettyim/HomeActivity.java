@@ -27,14 +27,14 @@ public class HomeActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     public void onClick(View v) {
         int protocol = IMProtocol.PRIVATE;
-        int codec = 0; //默认的
+        int codecType = 0; //默认的
         switch (v.getId()){
             case R.id.btn_tcp_two:
                 protocol = IMProtocol.PRIVATE;
                 break;
             case R.id.btn_tcp_string_two:
                 protocol = IMProtocol.PRIVATE;
-                codec = 1;
+                codecType = 1;
                 break;
             case R.id.btn_ws_two:
                 protocol = IMProtocol.WEB_SOCKET;
@@ -45,7 +45,7 @@ public class HomeActivity extends AppCompatActivity implements View.OnClickListe
         }
         Intent intent = new Intent(HomeActivity.this, MainActivity.class);
         intent.putExtra("protocol",protocol);
-        intent.putExtra("codec",codec);
+        intent.putExtra("codecType",codecType);
         startActivity(intent);
     }
 }

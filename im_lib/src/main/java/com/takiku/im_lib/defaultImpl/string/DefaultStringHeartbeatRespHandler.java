@@ -1,4 +1,4 @@
-package com.takiku.nettyim.udp;
+package com.takiku.im_lib.defaultImpl.string;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
@@ -18,7 +18,7 @@ import io.netty.channel.socket.DatagramPacket;
  * @des
  * @date:2022/11/17
  */
-public class StringHeartbeatRespHandler implements MessageHandler<String> {
+public class DefaultStringHeartbeatRespHandler implements MessageHandler<String> {
     public static final int HEART_ACK_TYPE=0x11;//与服务端保持类型统一
     @Override
     public boolean isFocusMsg(Object msg) {

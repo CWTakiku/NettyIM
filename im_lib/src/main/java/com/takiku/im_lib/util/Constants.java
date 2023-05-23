@@ -1,4 +1,4 @@
-package com.takiku.nettyim.util;
+package com.takiku.im_lib.util;
 
 public class Constants {
     public static final int MSG_STATUS_SEND = 1;//消息已送达

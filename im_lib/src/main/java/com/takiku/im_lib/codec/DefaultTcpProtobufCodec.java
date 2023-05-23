@@ -8,10 +8,10 @@ import io.netty.handler.codec.protobuf.ProtobufEncoder;
 
 /**
  * @author chengwl
- * @des
+ * @des tcp Protobuf 编解码器
  * @date:2023/5/19
  */
-public class DefaultProtobufCodec implements Codec{
+public class DefaultTcpProtobufCodec implements Codec{
     @Override
     public ChannelHandler EnCoder() {
         return new ProtobufEncoder();

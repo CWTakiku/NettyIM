@@ -1,21 +1,22 @@
-package com.takiku.nettyim.udp;
+package com.takiku.im_lib.defaultImpl.string;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.takiku.im_lib.defaultImpl.callback.OnMessageArriveListener;
 import com.takiku.im_lib.entity.AppMessage;
 import com.takiku.im_lib.entity.base.Request;
 import com.takiku.im_lib.internal.handler.listener.MessageHandler;
-import com.takiku.nettyim.callbcak.OnMessageArriveListener;
+
 
 /**
  * @author chengwl
  * @des
  * @date:2022/11/17
  */
-public class StringMessageReceiveHandler implements MessageHandler<String> {
+public class DefaultStringMessageReceiveHandler implements MessageHandler<String> {
     private OnMessageArriveListener listener;
-    public StringMessageReceiveHandler(OnMessageArriveListener onMessageArriveListener){
+    public DefaultStringMessageReceiveHandler(OnMessageArriveListener onMessageArriveListener){
         this.listener = onMessageArriveListener;
     }
     @Override
@@ -29,9 +30,7 @@ public class StringMessageReceiveHandler implements MessageHandler<String> {
 
     @Override
     public void handleMsg(String msg) {
-      //  LogUtil.i("WSMessageReceiveHandler","type "+textWebSocketFrame.text());
         if (listener!=null){
-         //   LogUtil.i("WSMessageReceiveHandler","type --- "+textWebSocketFrame.text());
             AppMessage appMessage = new Gson().fromJson(msg,AppMessage.class);
             listener.onMessageArrive(appMessage);
         }

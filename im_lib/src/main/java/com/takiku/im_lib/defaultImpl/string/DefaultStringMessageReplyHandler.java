@@ -1,20 +1,21 @@
-package com.takiku.nettyim.udp;
+package com.takiku.im_lib.defaultImpl.string;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.takiku.im_lib.defaultImpl.callback.OnReplyArriveListener;
 import com.takiku.im_lib.entity.ReplyMessage;
 import com.takiku.im_lib.entity.base.Request;
 import com.takiku.im_lib.internal.handler.listener.MessageHandler;
-import com.takiku.nettyim.callbcak.OnReplyArriveListener;
+
 
 /**
  * @author chengwl
  * @des
  * @date:2022/11/17
  */
-public class StringMessageReplyHandler implements MessageHandler<String> {
-    public StringMessageReplyHandler(OnReplyArriveListener onReplyArriveListener){
+public class DefaultStringMessageReplyHandler implements MessageHandler<String> {
+    public DefaultStringMessageReplyHandler(OnReplyArriveListener onReplyArriveListener){
         this.listener = onReplyArriveListener;
     }
     @Override

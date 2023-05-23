@@ -1,10 +1,10 @@
-package com.takiku.im_lib.defaultImpl;
+package com.takiku.im_lib.defaultImpl.protobuf;
 
 import com.google.protobuf.GeneratedMessageV3;
 import com.takiku.im_lib.call.Consumer;
 import com.takiku.im_lib.protobuf.PackProtobuf;
 
-public class DefaultAckConsumer implements Consumer<PackProtobuf.Pack> {
+public class DefaultProtobufAckConsumer implements Consumer<PackProtobuf.Pack> {
     public static final int MSG_ACK_TYPE=0x13;
 
     @Override
