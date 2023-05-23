@@ -71,8 +71,8 @@ dependencies {
 - TCP协议配置
    
 ``` 
-      if (protocol == IMProtocol.PRIVATE){ //以下支持两种数据格式，一种protobuf,一种string格式
-            builder.setCodec(codecType == 0?new DefaultTcpProtobufCodec():new DefaultTcpStringCodec())//默认的编解码，开发者可以使用自己的protobuf或者其他格式的编解码
+        //以下支持两种数据格式，一种protobuf,一种string格式
+         builder.setCodec(codecType == 0?new DefaultTcpProtobufCodec():new DefaultTcpStringCodec())//默认的编解码，开发者可以使用自己的protobuf或者其他格式的编解码
                     .setShakeHands(codecType == 0? new DefaultProtobufMessageShakeHandsHandler(getDefaultTcpHands()):new DefaultStringMessageShakeHandsHandler(getDefaultStringHands())) //设置握手认证，可选
                     .setHeartBeatMsg(codecType == 0? getDefaultProtobufHeart(): getDefaultStringHeart()) //设置心跳,可选
                     .setAckConsumer(codecType == 0?new DefaultProtobufAckConsumer():new DefaultStringAckConsumer()) //设置消息确认机制，如果需要消息回执，必选
@@ -81,8 +81,6 @@ dependencies {
                     .registerMessageHandler(codecType == 0?new DefaultProtobufHeartbeatRespHandler():new DefaultStringHeartbeatRespHandler()) //心跳接收处理器
                     .addAddress(new Address(ip,9081,Address.Type.TCP))
                     .setMaxFrameLength(65535*100); //设置最大帧长 //私有tcp和websocket生效
-
-        }
 ``` 
 - WebSocket协议配置
   
@@ -226,7 +224,16 @@ public  interface  MessageHandler<message extends Object>  {
 ![image](https://github.com/CWTakiku/NettyIM/blob/master/IMPic.png)
 
 ### 六、Demo使用
-APP模块test下含有内置自定义协议和webscoket两种协议的后台代码，开启服务端，再到对应协议的客户端上修改服务端IP，运行客户端
+
+#### 步骤1、 修改服务端地址，运行项目
+在MainActivity类里将localHost改为自己电脑的ip地址，运行项目，将APP跑在手机或者模拟器上
+#### 步骤2、开启服务器
+APP模块test下含有tcp协议的protobuf和string两种数据格式的服务端demo、webscoket协议、udp协议，服务端的demo，运行相对应的服务器demo
+#### 步骤3、使用
+在APP里点击相应的协议进入chat界面
+
+
+
 
 ### 七、项目博客地址
 [简书](https://www.jianshu.com/p/5b01f4d6e4f4)       [CSDN](https://blog.csdn.net/smile__dream/article/details/105681018)  [掘金](https://juejin.im/post/5ea569aaf265da47e34c19ed) 

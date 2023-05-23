@@ -13,7 +13,7 @@ import com.takiku.im_lib.entity.ReplyMessage;
 import com.takiku.im_lib.entity.base.Request;
 import com.takiku.nettyim.Session;
 import com.takiku.nettyim.SessionManager;
-import com.takiku.nettyim.websocket.client.MyWebSocketClientHandler;
+
 
 
 
@@ -111,7 +111,7 @@ public class MyWebSocketServerHandler extends ChannelInboundHandlerAdapter {
             return;
         }
         if (!(frame instanceof TextWebSocketFrame)) {
-            MyWebSocketClientHandler.Print.error("数据帧类型不支持!");
+          Print.error("数据帧类型不支持!");
             throw new UnsupportedOperationException(String.format("%s frame types not supported", frame.getClass().getName()));
         }
         Session session=   sessionManager.getBySessionId(ctx.channel().id().asLongText());
