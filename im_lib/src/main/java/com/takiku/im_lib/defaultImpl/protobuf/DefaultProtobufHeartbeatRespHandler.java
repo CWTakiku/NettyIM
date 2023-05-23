@@ -1,4 +1,4 @@
-package com.takiku.im_lib.defaultImpl;
+package com.takiku.im_lib.defaultImpl.protobuf;
 
 import com.google.protobuf.GeneratedMessageV3;
 import com.takiku.im_lib.internal.handler.listener.MessageHandler;
@@ -7,7 +7,7 @@ import com.takiku.im_lib.protobuf.PackProtobuf;
 /**
  * 默认心跳包响应处理
  */
-public class DefaultHeartbeatRespHandler implements MessageHandler<PackProtobuf.Pack> {
+public class DefaultProtobufHeartbeatRespHandler implements MessageHandler<PackProtobuf.Pack> {
     public static final int HEART_ACK_TYPE=0x11;//与服务端保持类型统一
 
 

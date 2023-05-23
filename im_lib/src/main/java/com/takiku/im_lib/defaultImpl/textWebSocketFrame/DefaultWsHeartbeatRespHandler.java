@@ -1,4 +1,4 @@
-package com.takiku.nettyim.wsClientdemo;
+package com.takiku.im_lib.defaultImpl.textWebSocketFrame;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
@@ -7,7 +7,6 @@ import com.google.gson.JsonParser;
 import com.takiku.im_lib.entity.AckMessage;
 import com.takiku.im_lib.entity.base.Request;
 import com.takiku.im_lib.internal.handler.listener.MessageHandler;
-import com.takiku.im_lib.protobuf.PackProtobuf;
 import com.takiku.im_lib.util.LogUtil;
 
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
@@ -17,7 +16,7 @@ import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
  * @des
  * @date:2023/1/31
  */
-public class WsHeartbeatRespHandler implements MessageHandler<TextWebSocketFrame> {
+public class DefaultWsHeartbeatRespHandler implements MessageHandler<TextWebSocketFrame> {
     public static final int HEART_ACK_TYPE=0x11;//与服务端保持类型统一
     @Override
     public boolean isFocusMsg(Object msg) {

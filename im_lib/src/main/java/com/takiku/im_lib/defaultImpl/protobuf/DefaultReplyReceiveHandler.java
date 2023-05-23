@@ -1,5 +1,7 @@
-package com.takiku.im_lib.defaultImpl;
+package com.takiku.im_lib.defaultImpl.protobuf;
 
+import com.takiku.im_lib.defaultImpl.callback.OnReplyArriveListener;
+import com.takiku.im_lib.entity.ReplyMessage;
 import com.takiku.im_lib.internal.handler.listener.MessageHandler;
 import com.takiku.im_lib.protobuf.PackProtobuf;
 
@@ -15,10 +17,9 @@ public class DefaultReplyReceiveHandler implements MessageHandler<PackProtobuf.P
 
     @Override
     public void handleMsg(PackProtobuf.Pack pack) {
-       listener.onReplyArrive(pack);
+        ReplyMessage replyMessage=ReplyMessage.buildReplyMessage(pack.getReply());
+       listener.onReplyArrive(replyMessage);
     }
-    public interface OnReplyArriveListener{
-       void onReplyArrive(PackProtobuf.Pack pack);
-    }
+
     private OnReplyArriveListener listener;
 }

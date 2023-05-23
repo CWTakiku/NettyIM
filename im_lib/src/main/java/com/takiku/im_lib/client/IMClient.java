@@ -39,6 +39,8 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import io.netty.channel.ChannelHandler;
+import io.netty.util.internal.logging.InternalLoggerFactory;
+import io.netty.util.internal.logging.JdkLoggerFactory;
 
 /**
  * IMClient IM客户端SDK
@@ -47,6 +49,8 @@ public class IMClient {
 
 
     static {
+
+
         Internal.instance = new Internal() {
 
             @Override
@@ -87,6 +91,7 @@ public class IMClient {
     Consumer ackConsumer;//消息ACK机制，开发者需要设置自己的ACKConsumer， Observable返回的是否是该请求的ACK包
     @IMProtocol
     int protocol = IMProtocol.PRIVATE;
+    int port;//本地端口号
     HashMap<String, Object> wsHeaderMap;//WS握手的头
     int maxFrameLength;//最大帧长
     boolean msgTriggerReconnectEnabled; //是否发送消息能触发重连（如果连接已经断的情况
@@ -120,6 +125,7 @@ public class IMClient {
         this.connectRetryInterval = builder.connectRetryInterval;
         this.maxFrameLength = builder.maxFrameLength;
         this.msgTriggerReconnectEnabled = builder.msgTriggerReconnectEnabled;
+        this.port = builder.port;
     }
 
     public void startConnect() {
@@ -180,6 +186,8 @@ public class IMClient {
     public int protocol() {
         return protocol;
     }
+
+    public int port(){return port;}
 
     public int connectTimeout() {
         return connectTimeout;
@@ -296,6 +304,7 @@ public class IMClient {
         int connectRetryCount;
         @IMProtocol
         int protocol = IMProtocol.PRIVATE;
+        int port;
 
         public Builder() {
             dispatcher = new Dispatcher();
@@ -324,6 +333,12 @@ public class IMClient {
 
         public Builder setProtocol(@IMProtocol int protocol) {
             this.protocol = protocol;
+            return this;
+        }
+        public Builder setPort(int port){
+            if (port < 0 || port > 0xFFFF)
+                throw new IllegalArgumentException("port out of range:" + port);
+            this.port = port;
             return this;
         }
         public Builder setOpenLog(boolean isOpen){
@@ -365,7 +380,7 @@ public class IMClient {
         }
 
         public Builder addAddress(Address address) {
-            if (address.type() == Address.Type.WS) {
+            if (address.type() == Address.Type.WS||address.type() == Address.Type.WSS) {
                 URI uri = null;
                 try {
                     uri = new URI(address.getUrl());

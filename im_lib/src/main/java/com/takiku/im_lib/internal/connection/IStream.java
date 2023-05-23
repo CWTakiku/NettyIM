@@ -7,7 +7,7 @@ import com.takiku.im_lib.entity.base.Response;
 import java.io.IOException;
 import java.util.List;
 
-public interface TcpStream {
+public interface IStream {
     void finishRequest() throws IOException;
     void cancel();
     void writeRequest(Request request) throws IOException;

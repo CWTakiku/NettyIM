@@ -1,14 +1,15 @@
-package com.takiku.nettyim.wsClientdemo;
+package com.takiku.im_lib.defaultImpl.textWebSocketFrame;
 
-import android.util.Log;
-
+import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.takiku.im_lib.defaultImpl.callback.OnMessageArriveListener;
+import com.takiku.im_lib.entity.AppMessage;
 import com.takiku.im_lib.entity.base.Request;
 import com.takiku.im_lib.internal.handler.listener.MessageHandler;
-import com.takiku.im_lib.protobuf.PackProtobuf;
 import com.takiku.im_lib.util.LogUtil;
+
 
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 
@@ -17,9 +18,9 @@ import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
  * @des
  * @date:2022/11/17
  */
-public class WSMessageReceiveHandler implements MessageHandler<TextWebSocketFrame> {
-    private onMessageArriveListener listener;
-    public WSMessageReceiveHandler(onMessageArriveListener onMessageArriveListener){
+public class DefaultWSMessageReceiveHandler implements MessageHandler<TextWebSocketFrame> {
+    private OnMessageArriveListener listener;
+    public DefaultWSMessageReceiveHandler(OnMessageArriveListener onMessageArriveListener){
         this.listener = onMessageArriveListener;
     }
     @Override
@@ -36,11 +37,10 @@ public class WSMessageReceiveHandler implements MessageHandler<TextWebSocketFram
         LogUtil.i("WSMessageReceiveHandler","type "+textWebSocketFrame.text());
         if (listener!=null){
             LogUtil.i("WSMessageReceiveHandler","type --- "+textWebSocketFrame.text());
-            listener.onMessageArrive(textWebSocketFrame);
+            AppMessage appMessage= new Gson().fromJson(textWebSocketFrame.text(),AppMessage.class);
+            listener.onMessageArrive(appMessage);
         }
     }
-    public interface onMessageArriveListener{
-        void onMessageArrive(TextWebSocketFrame pack);
-    }
+
 
 }

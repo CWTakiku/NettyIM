@@ -19,18 +19,19 @@ import io.netty.handler.codec.http.websocketx.PongWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.WebSocketClientHandshaker;
 import io.netty.handler.codec.http.websocketx.WebSocketFrame;
+import io.netty.handler.codec.http.websocketx.WebSocketFrameEncoder;
 import io.netty.util.CharsetUtil;
 
-public class WebSocketClientHandler extends ChannelInboundHandlerAdapter {
+public class WebSocketHandler extends ChannelInboundHandlerAdapter {
     private final WebSocketClientHandshaker handshaker;
     private ChannelPromise handshakeFuture;
     private RealConnection.connectionBrokenListener connectionBrokenListener;
     private MessageParser messageParser;
     private EventListener eventListener;
 
-    public WebSocketClientHandler(WebSocketClientHandshaker handshaker,MessageParser messageParser,
-                                  RealConnection.connectionBrokenListener connectionBrokenListener,
-                                  EventListener eventListener) {
+    public WebSocketHandler(WebSocketClientHandshaker handshaker, MessageParser messageParser,
+                            RealConnection.connectionBrokenListener connectionBrokenListener,
+                            EventListener eventListener) {
         this.handshaker = handshaker;
         this.messageParser=messageParser;
         this.eventListener=eventListener;
@@ -63,6 +64,7 @@ public class WebSocketClientHandler extends ChannelInboundHandlerAdapter {
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         Channel ch = ctx.channel();
+
         if (!handshaker.isHandshakeComplete()) {
             handshaker.finishHandshake(ch, (FullHttpResponse) msg);
             LogUtil.i("WebSocketClientHandler","websocket  connect!");

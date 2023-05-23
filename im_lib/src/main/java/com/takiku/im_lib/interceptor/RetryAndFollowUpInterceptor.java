@@ -47,7 +47,6 @@ public class RetryAndFollowUpInterceptor implements Interceptor {
             boolean releaseConnection = true;
             try {
                 response = ((RealInterceptorChain) chain).proceed(request, streamAllocation, null, null);
-                LogUtil.i("RetryAndFoll","response");
                 releaseConnection = false;
             } catch (RouteException e) {
 

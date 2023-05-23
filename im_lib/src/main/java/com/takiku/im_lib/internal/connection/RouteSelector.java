@@ -4,7 +4,6 @@ import com.takiku.im_lib.entity.base.Address;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.net.SocketAddress;
 import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.List;
@@ -28,9 +27,11 @@ public class RouteSelector {
         this.addressList=addressList;
         InetSocketAddress inetSocketAddress=null;
         for (Address address:addressList){
-            if (address.type()==Address.Type.SOCKS){
+            if (address.type()==Address.Type.TCP){
                 inetSocketAddress=InetSocketAddress.createUnresolved(address.getUrl(),address.getPort());
             }else if (address.type()==Address.Type.WS){
+                inetSocketAddress=new InetSocketAddress(address.getUrl(),address.getPort());
+            }else {
                 inetSocketAddress=new InetSocketAddress(address.getUrl(),address.getPort());
             }
             inetSocketAddresses.add(inetSocketAddress);

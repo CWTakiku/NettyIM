@@ -4,16 +4,24 @@ import com.takiku.im_lib.call.Consumer;
 import com.takiku.im_lib.entity.base.Request;
 import com.takiku.im_lib.client.IMClient;
 import com.takiku.im_lib.entity.base.Response;
+import com.takiku.im_lib.protocol.IMProtocol;
 import com.takiku.im_lib.util.LRUMap;
+import com.takiku.im_lib.util.LogUtil;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.nio.charset.Charset;
 import java.util.List;
 
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufHolder;
+import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
+import io.netty.channel.socket.DatagramPacket;
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 
 
-public class Stream implements TcpStream {
+public class Stream implements IStream {
 
     final IMClient imClient;
     final StreamAllocation streamAllocation;
@@ -38,9 +46,9 @@ public class Stream implements TcpStream {
     @Override
     public void writeRequest(Request request) throws IOException {
         if (channel!=null&&channel.isActive()){
-           // System.out.println(" requestTag: "+request.requestTag+" request body: "+request.requestBody.toString());
-            if (request.requestBody instanceof TextWebSocketFrame){
-                channel.writeAndFlush(((TextWebSocketFrame) request.requestBody).retain());
+
+            if (request.requestBody instanceof ByteBufHolder){
+                channel.writeAndFlush(((ByteBufHolder) request.requestBody).retain());
             }else {
                 channel.writeAndFlush(request.requestBody);
             }

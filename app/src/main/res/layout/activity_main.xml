@@ -4,75 +4,82 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".CustomTCPMainActivity"
-    android:orientation="horizontal"
-    >
-<LinearLayout
-    android:layout_width="0dp"
-    android:layout_weight="1"
-    android:layout_height="match_parent"
-    android:orientation="vertical">
-    <Button
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:id="@+id/btn_line1"
-        android:text="下线"/>
-    <androidx.recyclerview.widget.RecyclerView
-        android:layout_width="match_parent"
-        android:layout_weight="1"
-        android:id="@+id/recycler1"
-        android:layout_height="match_parent">
-    </androidx.recyclerview.widget.RecyclerView>
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal">
-        <EditText
-            android:layout_width="0dp"
-            android:layout_weight="1"
-            android:id="@+id/et_content1"
-            android:hint="client1 消息长按可更改消息为撤回、已读"
-            android:background="@null"
-            android:layout_height="wrap_content"/>
-        <Button
-            android:layout_width="70dp"
-            android:id="@+id/btn_1"
-            android:text="发送"
-            android:layout_height="wrap_content"/>
-    </LinearLayout>
-</LinearLayout>
+    android:orientation="horizontal">
+
     <LinearLayout
         android:layout_width="0dp"
-        android:layout_weight="1"
         android:layout_height="match_parent"
+        android:layout_weight="1"
         android:orientation="vertical">
-        <Button
+
+        <TextView
+            android:id="@+id/tv_status1"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:id="@+id/btn_line2"
-            android:text="下线"/>
+            android:layout_height="50dp"
+            android:gravity="center" />
+
         <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/recycler1"
             android:layout_width="match_parent"
-            android:id="@+id/recycler2"
-            android:layout_weight="1"
-            android:layout_height="match_parent">
-        </androidx.recyclerview.widget.RecyclerView>
+            android:layout_height="match_parent"
+            android:layout_weight="1"></androidx.recyclerview.widget.RecyclerView>
+
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal">
+
             <EditText
+                android:id="@+id/et_content1"
                 android:layout_width="0dp"
+                android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:id="@+id/et_content2"
-                android:hint="client2 消息长按可更改消息为撤回、已读"
                 android:background="@null"
-                android:layout_height="wrap_content"/>
+                android:hint="client1 消息长按可更改消息为撤回、已读" />
+
             <Button
+                android:id="@+id/btn_1"
                 android:layout_width="70dp"
+                android:layout_height="wrap_content"
+                android:text="发送" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/tv_status2"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:gravity="center" />
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/recycler2"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_weight="1"></androidx.recyclerview.widget.RecyclerView>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <EditText
+                android:id="@+id/et_content2"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:background="@null"
+                android:hint="client2 消息长按可更改消息为撤回、已读" />
+
+            <Button
                 android:id="@+id/btn_2"
-                android:text="发送"
-                android:layout_height="wrap_content"/>
+                android:layout_width="70dp"
+                android:layout_height="wrap_content"
+                android:text="发送" />
         </LinearLayout>
     </LinearLayout>
 

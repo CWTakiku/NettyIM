@@ -23,6 +23,8 @@ public class ReplyMessage extends AbstractPack {
 
     String toId;
 
+    long serial;
+
 
     public static ReplyMessage buildReplyMessage(PackProtobuf.Reply reply) {
         ReplyMessage replyMessage=new ReplyMessage();
@@ -45,6 +47,10 @@ public class ReplyMessage extends AbstractPack {
                 .setSerial(netId)
                 .build();
 
+    }
+
+    public long getSerial() {
+        return serial;
     }
 
     public String getMsgId() {

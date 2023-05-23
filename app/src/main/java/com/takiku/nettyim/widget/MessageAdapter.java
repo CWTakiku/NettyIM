@@ -16,11 +16,11 @@ import com.takiku.nettyim.R;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.takiku.nettyim.Constants.MSG_STATUS_FAILED;
-import static com.takiku.nettyim.Constants.MSG_STATUS_READ;
-import static com.takiku.nettyim.Constants.MSG_STATUS_SEND;
-import static com.takiku.nettyim.Constants.MSG_STATUS_SENDING;
-import static com.takiku.nettyim.Constants.MSG_STATUS_WITHDRAW;
+import static com.takiku.im_lib.util.Constants.MSG_STATUS_FAILED;
+import static com.takiku.im_lib.util.Constants.MSG_STATUS_READ;
+import static com.takiku.im_lib.util.Constants.MSG_STATUS_SEND;
+import static com.takiku.im_lib.util.Constants.MSG_STATUS_SENDING;
+import static com.takiku.im_lib.util.Constants.MSG_STATUS_WITHDRAW;
 
 
 public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
