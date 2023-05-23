@@ -47,7 +47,9 @@ import static com.takiku.im_lib.util.Constants.MSG_STATUS_WITHDRAW;
 public class MainActivity extends AppCompatActivity {
 
     private Client demo1 ,demo2;
-    private String localHost= "";
+
+
+    private String localHost= "192.168.31.212"; //更改为你电脑的ip地址
 
 
     private Button btnSend1;
@@ -72,10 +74,8 @@ public class MainActivity extends AppCompatActivity {
 
         protocol =   getIntent().getIntExtra("protocol",IMProtocol.PRIVATE);
         codecType = getIntent().getIntExtra("codecType",0);
-        if (protocol == IMProtocol.PRIVATE||protocol == IMProtocol.UDP){
-            localHost = "192.168.12.9";//你电脑的ip地址
-        }else if (protocol == IMProtocol.WEB_SOCKET){
-            localHost = "ws://192.168.12.9:8804/ws";//或者wss地址
+        if (protocol == IMProtocol.WEB_SOCKET){
+           localHost = "ws://"+localHost+":8804/ws";//或者wss地址
         }
         Log.i("MainActivity","protocol:"+protocol+" ip:"+localHost);
         initView();

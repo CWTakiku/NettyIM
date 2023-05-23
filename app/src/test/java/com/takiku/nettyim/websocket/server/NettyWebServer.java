@@ -1,6 +1,6 @@
 package com.takiku.nettyim.websocket.server;
 
-import com.takiku.nettyim.websocket.client.MyWebSocketClientHandler;
+
 
 import org.junit.Test;
 
@@ -22,7 +22,7 @@ public class NettyWebServer {
     }
 
     private void runServer(int port) {
-        MyWebSocketClientHandler.Print.info("===============WebSocket服务端启动===============");
+        Print.info("===============WebSocket服务端启动===============");
         EventLoopGroup bossGroup = new NioEventLoopGroup();
         EventLoopGroup workerGroup = new NioEventLoopGroup();
         try {
@@ -38,15 +38,23 @@ public class NettyWebServer {
                 }
             });
             Channel ch = b.bind(port).sync().channel();
-            MyWebSocketClientHandler.Print.info("Message服务器启动成功：" + ch.toString());
+            Print.info("Message服务器启动成功：" + ch.toString());
             ch.closeFuture().sync();
         } catch (Exception e) {
-            MyWebSocketClientHandler.Print.info("Message服务运行异常：" + e.getMessage());
+          Print.info("Message服务运行异常：" + e.getMessage());
             e.printStackTrace();
         } finally {
             bossGroup.shutdownGracefully();
             workerGroup.shutdownGracefully();
-            MyWebSocketClientHandler.Print.info("Message服务已关闭");
+         Print.info("Message服务已关闭");
+        }
+    }
+    public static class Print{
+        public static void info(String msg){
+            System.out.println(msg);
+        }
+        public static void error(String msg){
+            System.out.println(msg);
         }
     }
 }
