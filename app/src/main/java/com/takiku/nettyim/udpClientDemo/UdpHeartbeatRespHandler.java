@@ -22,22 +22,21 @@ import static com.takiku.nettyim.Constants.MSG_ACK_TYPE;
  * @des
  * @date:2022/11/17
  */
-public class UdpHeartbeatRespHandler implements MessageHandler<DatagramPacket> {
+public class UdpHeartbeatRespHandler implements MessageHandler<String> {
     public static final int HEART_ACK_TYPE=0x11;//与服务端保持类型统一
     @Override
     public boolean isFocusMsg(Object msg) {
 
-        String data =((DatagramPacket)(msg)).content().toString(StandardCharsets.UTF_8);
-        JsonObject jsonObject  =(JsonObject) new JsonParser().parse(data);
+        JsonObject jsonObject  =(JsonObject) new JsonParser().parse((String) msg);
         if (jsonObject.get("packType").getAsInt() == Request.PACK_ACK_TYPE){
-            AckMessage ackMessage = new Gson().fromJson(data,AckMessage.class);
+            AckMessage ackMessage = new Gson().fromJson((String) msg,AckMessage.class);
             return ackMessage.getAckType()==HEART_ACK_TYPE;
         }
         return false;
     }
 
     @Override
-    public void handleMsg(DatagramPacket textWebSocketFrame) {
+    public void handleMsg(String textWebSocketFrame) {
         LogUtil.i("WsHeartbeatRespHandler","收到心跳包的响应");
     }
 }

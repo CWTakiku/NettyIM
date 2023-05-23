@@ -52,20 +52,13 @@ public class Stream implements IStream {
                     channel.writeAndFlush(((TextWebSocketFrame) request.requestBody).retain());
                 }
             } else if (IMProtocol.UDP == imClient.protocol()){
-                InetSocketAddress targetAddress = null;
-                if (request.address!=null){
-                    targetAddress = new InetSocketAddress(request.address.getUrl(),request.address.getPort());
-                }else {
-                    targetAddress = streamAllocation.currentInetSocketAddress();
-                }
-             if (request.requestBody instanceof String){
-                 ByteBuf dataBuf = Unpooled.copiedBuffer((String)request.requestBody, Charset.forName("UTF-8"));
-                 DatagramPacket datagramPacket = new DatagramPacket(dataBuf, targetAddress);
-                 channel.writeAndFlush(datagramPacket);
-             }else if (request.requestBody instanceof ByteBuf){
-                 DatagramPacket datagramPacket = new DatagramPacket((ByteBuf) request.requestBody, targetAddress);
-                 channel.writeAndFlush(datagramPacket);
-             }
+//                InetSocketAddress targetAddress = null;
+//                if (request.address!=null){
+//                    targetAddress = new InetSocketAddress(request.address.getUrl(),request.address.getPort());
+//                }else {
+//                    targetAddress = streamAllocation.currentInetSocketAddress();
+//                }
+                channel.writeAndFlush(request.requestBody);
             }else {
                 channel.writeAndFlush(request.requestBody);
             }

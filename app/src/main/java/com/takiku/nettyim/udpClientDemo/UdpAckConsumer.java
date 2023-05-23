@@ -23,12 +23,11 @@ import static com.takiku.nettyim.Constants.MSG_ACK_TYPE;
  * @des udp的消息确认
  * @Date:2023/5/16
  */
-public class UdpAckConsumer implements Consumer<DatagramPacket> {
+public class UdpAckConsumer implements Consumer<String> {
 
     @Override
-    public boolean Observable(DatagramPacket datagramPacket, String requestTag) {
+    public boolean Observable(String data, String requestTag) {
 
-        String data =(datagramPacket).content().toString(StandardCharsets.UTF_8);
         JsonObject jsonObject  =(JsonObject) new JsonParser().parse(data);
         if (jsonObject.get("packType").getAsInt() == Request.PACK_ACK_TYPE){
             AckMessage ackMessage = new Gson().fromJson(data,AckMessage.class);
@@ -39,7 +38,7 @@ public class UdpAckConsumer implements Consumer<DatagramPacket> {
     }
 
     @Override
-    public void accept(DatagramPacket datagramPacket) {
+    public void accept(String datagramPacket) {
 
     }
 }

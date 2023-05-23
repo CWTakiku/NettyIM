@@ -10,6 +10,7 @@ import com.takiku.im_lib.call.Consumer;
 import com.takiku.im_lib.call.Disposable;
 import com.takiku.im_lib.client.IMClient;
 import com.takiku.im_lib.codec.DefaultCodec;
+import com.takiku.im_lib.codec.DefaultUdpStringCodec;
 import com.takiku.im_lib.defaultImpl.DefaultEventListener;
 import com.takiku.im_lib.entity.AckMessage;
 import com.takiku.im_lib.entity.AppMessage;
@@ -32,8 +33,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import io.netty.buffer.Unpooled;
-import io.netty.channel.socket.DatagramPacket;
+
+import io.netty.util.CharsetUtil;
 
 import static com.takiku.nettyim.Constants.MSG_ACK_TYPE;
 
@@ -53,9 +54,8 @@ public class UdpClientDemo2 {
 
     private UdpMessageReceiveHandler.onMessageArriveListener onMessageArriveListener = new UdpMessageReceiveHandler.onMessageArriveListener() {
         @Override
-        public void onMessageArrive(DatagramPacket pack) {
-            LogUtil.i("WSClientDemo2",pack.content().toString(StandardCharsets.UTF_8));
-            final AppMessage appMessage= new Gson().fromJson(pack.content().toString(StandardCharsets.UTF_8),AppMessage.class);
+        public void onMessageArrive(String pack) {
+            final AppMessage appMessage= new Gson().fromJson(pack,AppMessage.class);
             sendAck(appMessage.getHead().getMsgId(),appMessage.getHead().getFromId());//发送ACK 给服务端
             if (onMessageReceiveListener!=null){
                 mHandler.post(new Runnable() {
@@ -105,8 +105,8 @@ public class UdpClientDemo2 {
 
         mHandler=new Handler(Looper.getMainLooper());
         imClient=new IMClient.Builder()
-                .setCodec(new DefaultCodec()) //默认的编解码，开发者可以使用自己的protobuf编解码
                 .setShakeHands(new UdpMessageShakeHandsHandler(getDefaultHands())) //设置握手认证，可选
+                .setCodec(new DefaultUdpStringCodec(new InetSocketAddress(ip,8804), CharsetUtil.UTF_8))
                 .setHeartBeatMsg(getDefaultHeart()) //设置心跳,可选
                 .setAckConsumer(new UdpAckConsumer()) //设置确认机制
                 .setConnectTimeout(10, TimeUnit.SECONDS) //设置连接超时
@@ -138,12 +138,11 @@ public class UdpClientDemo2 {
         }
         return instance;
     }
-    private DatagramPacket getDefaultHands() {
+    private String getDefaultHands() {
         ShakeHandsMessage shakeHandsMessage = new ShakeHandsMessage();
         shakeHandsMessage.setUserId(userId2);
         shakeHandsMessage.setToken("token"+userId2);
-        DatagramPacket datagramPacket = new DatagramPacket(Unpooled.copiedBuffer(new Gson().toJson(shakeHandsMessage),StandardCharsets.UTF_8),new InetSocketAddress(ip,8804));
-        return datagramPacket;
+        return new Gson().toJson(shakeHandsMessage);
     }
 
 
@@ -238,11 +237,10 @@ public class UdpClientDemo2 {
      * 构建默认心跳，开发者可自行定制自己的心跳包
      * @return
      */
-    private DatagramPacket getDefaultHeart() {
+    private String getDefaultHeart() {
         HeartbeatMessage heartbeatMessage  = new HeartbeatMessage();
         String heart = new Gson().toJson(heartbeatMessage);
-        DatagramPacket datagramPacket = new DatagramPacket(Unpooled.copiedBuffer(heart,StandardCharsets.UTF_8),new InetSocketAddress(ip,8804));
-        return datagramPacket;
+        return heart;
     }
 
 

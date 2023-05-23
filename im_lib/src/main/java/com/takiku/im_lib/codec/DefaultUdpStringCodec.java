@@ -21,13 +21,16 @@ import io.netty.util.CharsetUtil;
 public class DefaultUdpStringCodec implements Codec{
 
     private Charset charset;
-    public void DefaultProtobufCodec(Charset charset){
+    private InetSocketAddress inetSocketAddress;
+    public  DefaultUdpStringCodec(InetSocketAddress inetSocketAddress,Charset charset){
         this.charset = charset;
+        this.inetSocketAddress = inetSocketAddress;
     }
+
 
     @Override
     public ChannelHandler EnCoder() {
-        return new MyEncoder(null);
+        return new MyEncoder(inetSocketAddress);
     }
 
     @Override
@@ -48,7 +51,7 @@ public class DefaultUdpStringCodec implements Codec{
             out.add(str);
         }
     }
-    public  class MyEncoder extends MessageToMessageEncoder<Object> {
+    public  class MyEncoder extends MessageToMessageEncoder<String> {
         private InetSocketAddress remoteAddress;
 
         public MyEncoder(InetSocketAddress remoteAddress) {
@@ -57,19 +60,14 @@ public class DefaultUdpStringCodec implements Codec{
 
 
         @Override
-        protected void encode(ChannelHandlerContext ctx, Object msg, List<Object> out) throws Exception {
+        protected void encode(ChannelHandlerContext ctx, String msg, List<Object> out) throws Exception {
             // 将字符串转换为字节数组
-            if (msg instanceof String){
-                byte[] bytes = ((String)msg).getBytes(charset);
-                // 创建DatagramPacket对象
-                DatagramPacket packet = new DatagramPacket(Unpooled.copiedBuffer(bytes), remoteAddress);
+            byte[] bytes = ((String)msg).getBytes(charset);
+            // 创建DatagramPacket对象
+            DatagramPacket packet = new DatagramPacket(Unpooled.copiedBuffer(bytes), remoteAddress);
 
-                // 将编码后的DatagramPacket添加到输出列表中
-                out.add(packet);
-            }
-
-
-
+            // 将编码后的DatagramPacket添加到输出列表中
+            out.add(packet);
         }
     }
 }

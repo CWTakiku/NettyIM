@@ -13,7 +13,7 @@ import com.takiku.nettyim.Constants;
 
 import java.nio.charset.StandardCharsets;
 
-import io.netty.channel.socket.DatagramPacket;
+
 
 import static com.takiku.im_lib.defaultImpl.DefaultMessageShakeHandsHandler.SHAKE_HANDS_ACK_TYPE;
 
@@ -24,9 +24,9 @@ import static com.takiku.im_lib.defaultImpl.DefaultMessageShakeHandsHandler.SHAK
  */
 class UdpMessageShakeHandsHandler implements MessageShakeHandsHandler {
 
-    private DatagramPacket datagramPacket;
+    private String datagramPacket;
 
-    public UdpMessageShakeHandsHandler(DatagramPacket datagramPacket) {
+    public UdpMessageShakeHandsHandler(String datagramPacket) {
         this.datagramPacket = datagramPacket;
     }
 
@@ -37,34 +37,28 @@ class UdpMessageShakeHandsHandler implements MessageShakeHandsHandler {
 
     @Override
     public boolean isShakeHands(Object msg) {
-        if (msg instanceof DatagramPacket) {
-            String data = ((DatagramPacket) msg).content().toString(StandardCharsets.UTF_8);
-            JsonObject jsonObject = (JsonObject) new JsonParser().parse(data);
-            if (jsonObject.get("packType").getAsInt() == Request.PACK_ACK_TYPE) {
-                AckMessage ackMessage = new Gson().fromJson(data, AckMessage.class);
+        JsonObject jsonObject = (JsonObject) new JsonParser().parse((String) msg);
+        if (jsonObject.get("packType").getAsInt() == Request.PACK_ACK_TYPE) {
+            AckMessage ackMessage = new Gson().fromJson((String)msg, AckMessage.class);
 
-                if (ackMessage.getAckType() == Constants.SHAKE_HANDS_ACK_TYPE) {
-                    return true;
-                }
-
-                return false;
+            if (ackMessage.getAckType() == Constants.SHAKE_HANDS_ACK_TYPE) {
+                return true;
             }
+
+            return false;
         }
         return false;
     }
 
     @Override
     public boolean isShakeHandsOk(Object pack) {
-        if (pack instanceof DatagramPacket) {
-            String data = ((DatagramPacket) pack).content().toString(StandardCharsets.UTF_8);
-            JsonObject jsonObject = (JsonObject) new JsonParser().parse(data);
-            if (jsonObject.get("packType").getAsInt() == Request.PACK_ACK_TYPE){
-                AckMessage ackMessage = new Gson().fromJson(data, AckMessage.class);
-                if (ackMessage.getAckType() == SHAKE_HANDS_ACK_TYPE) {
-                    return true;
-                } else {
-                    return false;
-                }
+        JsonObject jsonObject = (JsonObject) new JsonParser().parse((String) pack);
+        if (jsonObject.get("packType").getAsInt() == Request.PACK_ACK_TYPE){
+            AckMessage ackMessage = new Gson().fromJson((String)pack, AckMessage.class);
+            if (ackMessage.getAckType() == SHAKE_HANDS_ACK_TYPE) {
+                return true;
+            } else {
+                return false;
             }
         }
         return false;

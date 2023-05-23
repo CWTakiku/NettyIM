@@ -13,7 +13,7 @@ import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.channel.socket.DatagramChannel;
 import io.netty.channel.socket.DatagramPacket;
 
-public class UdpChannelHandler extends SimpleChannelInboundHandler<DatagramPacket> {
+public class UdpChannelHandler extends SimpleChannelInboundHandler<String> {
 
     private MessageParser messageParser;
 
@@ -23,12 +23,10 @@ public class UdpChannelHandler extends SimpleChannelInboundHandler<DatagramPacke
 
     }
     @Override
-    protected void channelRead0(ChannelHandlerContext ctx, DatagramPacket msg) throws Exception {
+    protected void channelRead0(ChannelHandlerContext ctx, String msg) throws Exception {
          if (msg== null){
              return;
          }
-         String data = msg.content().toString(StandardCharsets.UTF_8);
-        System.out.println("收到服务端来信:"+data);
         if (!messageParser.parseMsg(msg)){
             ctx.fireChannelRead(msg);
         }

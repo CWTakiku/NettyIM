@@ -101,7 +101,6 @@ public class WSClientDemo1 {
 
         mHandler=new Handler(Looper.getMainLooper());
         imClient=new IMClient.Builder()
-                .setCodec(new DefaultCodec()) //默认的编解码，开发者可以使用自己的protobuf编解码
                // .setShakeHands(new DefaultMessageShakeHandsHandler(getDefaultHands())) //设置握手认证，可选
                 .setHeartBeatMsg(getDefaultHeart()) //设置心跳,可选
                 .setAckConsumer(new WSAckConsumer()) //设置确认机制
