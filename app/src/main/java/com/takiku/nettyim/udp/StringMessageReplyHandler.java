@@ -1,23 +1,20 @@
-package com.takiku.nettyim.udpClientDemo;
+package com.takiku.nettyim.udp;
 
 import com.google.gson.Gson;
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.takiku.im_lib.entity.ReplyMessage;
 import com.takiku.im_lib.entity.base.Request;
 import com.takiku.im_lib.internal.handler.listener.MessageHandler;
-
-
-
+import com.takiku.nettyim.callbcak.OnReplyArriveListener;
 
 /**
  * @author chengwl
  * @des
  * @date:2022/11/17
  */
-public class UdpMessageReplyHandler implements MessageHandler<String> {
-    public UdpMessageReplyHandler(OnReplyArriveListener onReplyArriveListener){
+public class StringMessageReplyHandler implements MessageHandler<String> {
+    public StringMessageReplyHandler(OnReplyArriveListener onReplyArriveListener){
         this.listener = onReplyArriveListener;
     }
     @Override
@@ -30,13 +27,11 @@ public class UdpMessageReplyHandler implements MessageHandler<String> {
     }
 
     @Override
-    public void handleMsg(String datagramPacket) {
-          ReplyMessage replyMessage = new Gson().fromJson(datagramPacket,ReplyMessage.class);
+    public void handleMsg(String msg) {
+          ReplyMessage replyMessage = new Gson().fromJson(msg,ReplyMessage.class);
           listener.onReplyArrive(replyMessage);
 
     }
-    public interface OnReplyArriveListener{
-        void onReplyArrive(ReplyMessage pack);
-    }
+
     private OnReplyArriveListener listener;
 }

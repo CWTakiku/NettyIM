@@ -1,29 +1,24 @@
-package com.takiku.nettyim.udpClientDemo;
-
-import android.util.Log;
+package com.takiku.nettyim.udp;
 
 import com.google.gson.Gson;
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.takiku.im_lib.call.Consumer;
 import com.takiku.im_lib.entity.AckMessage;
 import com.takiku.im_lib.entity.base.Request;
-import com.takiku.nettyim.Constants;
 
 import java.nio.charset.StandardCharsets;
 
 import io.netty.channel.socket.DatagramPacket;
-import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 
-import static com.takiku.nettyim.Constants.MSG_ACK_TYPE;
+import static com.takiku.nettyim.util.Constants.MSG_ACK_TYPE;
 
 /**
  * @author chengwl
  * @des udp的消息确认
  * @Date:2023/5/16
  */
-public class UdpAckConsumer implements Consumer<String> {
+public class StringAckConsumer implements Consumer<String> {
 
     @Override
     public boolean Observable(String data, String requestTag) {

@@ -23,7 +23,7 @@ public class NettyUdpServer {
     }
 
     private void runServer(int port) {
-       Print.info("===============Message服务端启动===============");
+       Print.info("==============UDP服务端启动===============");
         Bootstrap bootstrap = new Bootstrap();
         EventLoopGroup group = new NioEventLoopGroup();
 

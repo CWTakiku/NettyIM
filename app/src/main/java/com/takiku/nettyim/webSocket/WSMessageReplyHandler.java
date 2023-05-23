@@ -1,4 +1,4 @@
-package com.takiku.nettyim.wsClientDemo;
+package com.takiku.nettyim.webSocket;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
@@ -7,6 +7,7 @@ import com.google.gson.JsonParser;
 import com.takiku.im_lib.entity.ReplyMessage;
 import com.takiku.im_lib.entity.base.Request;
 import com.takiku.im_lib.internal.handler.listener.MessageHandler;
+import com.takiku.nettyim.callbcak.OnReplyArriveListener;
 
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 
@@ -16,6 +17,7 @@ import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
  * @date:2022/11/17
  */
 public class WSMessageReplyHandler implements MessageHandler<TextWebSocketFrame> {
+    private OnReplyArriveListener listener;
     public WSMessageReplyHandler(OnReplyArriveListener onReplyArriveListener){
         this.listener = onReplyArriveListener;
     }
@@ -34,8 +36,5 @@ public class WSMessageReplyHandler implements MessageHandler<TextWebSocketFrame>
           listener.onReplyArrive(replyMessage);
 
     }
-    public interface OnReplyArriveListener{
-        void onReplyArrive(ReplyMessage pack);
-    }
-    private OnReplyArriveListener listener;
+
 }

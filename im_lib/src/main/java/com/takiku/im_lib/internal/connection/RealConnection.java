@@ -84,7 +84,7 @@ public class RealConnection  implements Connection {
         this.protocol = protocol;
         EventLoopGroup loopGroup = new NioEventLoopGroup(4);
         bootstrap = new Bootstrap();
-        if (protocol==IMProtocol.UDP){
+        if (protocol == IMProtocol.UDP){
             bootstrap.group(loopGroup).channel(NioDatagramChannel.class);
         }else {
             bootstrap.group(loopGroup).channel(NioSocketChannel.class);
@@ -337,8 +337,7 @@ public class RealConnection  implements Connection {
 
           eventListener.connectStart(inetSocketAddress);
         // 设置连接超时时长
-          bootstrap.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, connectTimeout)
-                  .bind(localPort);
+          bootstrap.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, connectTimeout);
            String ip;
           if (inetSocketAddress.getAddress()!=null){
               ip= inetSocketAddress.getAddress().getHostAddress();

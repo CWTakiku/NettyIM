@@ -1,11 +1,14 @@
-package com.takiku.nettyim.wsClientDemo;
+package com.takiku.nettyim.webSocket;
 
+import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.takiku.im_lib.entity.AppMessage;
 import com.takiku.im_lib.entity.base.Request;
 import com.takiku.im_lib.internal.handler.listener.MessageHandler;
 import com.takiku.im_lib.util.LogUtil;
+import com.takiku.nettyim.callbcak.OnMessageArriveListener;
 
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 
@@ -15,8 +18,8 @@ import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
  * @date:2022/11/17
  */
 public class WSMessageReceiveHandler implements MessageHandler<TextWebSocketFrame> {
-    private onMessageArriveListener listener;
-    public WSMessageReceiveHandler(onMessageArriveListener onMessageArriveListener){
+    private OnMessageArriveListener listener;
+    public WSMessageReceiveHandler(OnMessageArriveListener onMessageArriveListener){
         this.listener = onMessageArriveListener;
     }
     @Override
@@ -33,11 +36,10 @@ public class WSMessageReceiveHandler implements MessageHandler<TextWebSocketFram
         LogUtil.i("WSMessageReceiveHandler","type "+textWebSocketFrame.text());
         if (listener!=null){
             LogUtil.i("WSMessageReceiveHandler","type --- "+textWebSocketFrame.text());
-            listener.onMessageArrive(textWebSocketFrame);
+            AppMessage appMessage= new Gson().fromJson(textWebSocketFrame.text(),AppMessage.class);
+            listener.onMessageArrive(appMessage);
         }
     }
-    public interface onMessageArriveListener{
-        void onMessageArrive(TextWebSocketFrame pack);
-    }
+
 
 }

@@ -32,7 +32,6 @@ public class HeartbeatChannelHandler extends ChannelInboundHandlerAdapter {
     @Override
     public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
         super.userEventTriggered(ctx, evt);
-        LogUtil.i("HeartbeatChannelHandler","userEventTriggered");
         if (evt instanceof IdleStateEvent) {
             IdleState state = ((IdleStateEvent) evt).state();
             switch (state) {

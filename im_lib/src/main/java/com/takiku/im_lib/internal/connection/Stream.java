@@ -14,6 +14,7 @@ import java.nio.charset.Charset;
 import java.util.List;
 
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufHolder;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
 import io.netty.channel.socket.DatagramPacket;
@@ -44,21 +45,10 @@ public class Stream implements IStream {
 
     @Override
     public void writeRequest(Request request) throws IOException {
-        LogUtil.i("test","asdasd");
         if (channel!=null&&channel.isActive()){
-            LogUtil.i("test","asdas1111d");
-            if (IMProtocol.WEB_SOCKET == imClient.protocol()){
-                if (request.requestBody instanceof TextWebSocketFrame){
-                    channel.writeAndFlush(((TextWebSocketFrame) request.requestBody).retain());
-                }
-            } else if (IMProtocol.UDP == imClient.protocol()){
-//                InetSocketAddress targetAddress = null;
-//                if (request.address!=null){
-//                    targetAddress = new InetSocketAddress(request.address.getUrl(),request.address.getPort());
-//                }else {
-//                    targetAddress = streamAllocation.currentInetSocketAddress();
-//                }
-                channel.writeAndFlush(request.requestBody);
+
+            if (request.requestBody instanceof ByteBufHolder){
+                channel.writeAndFlush(((ByteBufHolder) request.requestBody).retain());
             }else {
                 channel.writeAndFlush(request.requestBody);
             }

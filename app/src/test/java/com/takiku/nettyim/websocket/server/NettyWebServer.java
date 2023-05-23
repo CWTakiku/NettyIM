@@ -22,7 +22,7 @@ public class NettyWebServer {
     }
 
     private void runServer(int port) {
-        MyWebSocketClientHandler.Print.info("===============Message服务端启动===============");
+        MyWebSocketClientHandler.Print.info("===============WebSocket服务端启动===============");
         EventLoopGroup bossGroup = new NioEventLoopGroup();
         EventLoopGroup workerGroup = new NioEventLoopGroup();
         try {

@@ -4,6 +4,7 @@ package com.takiku.nettyim.tcp;
 import com.takiku.im_lib.protobuf.PackProtobuf;
 import com.takiku.nettyim.Session;
 import com.takiku.nettyim.SessionManager;
+import com.takiku.nettyim.udp.NettyUdpServer;
 
 import org.junit.Test;
 
@@ -102,7 +103,7 @@ public class NettyServerDemo {
 
             //绑定端口
             ChannelFuture future = bootstrap.bind(9081).sync();
-            System.out.println("server start ...... ");
+            NettyUdpServer.Print.info("==============TCP服务端启动===============");
 
             //等待服务端监听端口关闭
             future.channel().closeFuture().sync();

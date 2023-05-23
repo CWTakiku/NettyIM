@@ -380,7 +380,7 @@ public class IMClient {
         }
 
         public Builder addAddress(Address address) {
-            if (address.type() == Address.Type.WS) {
+            if (address.type() == Address.Type.WS||address.type() == Address.Type.WSS) {
                 URI uri = null;
                 try {
                     uri = new URI(address.getUrl());
