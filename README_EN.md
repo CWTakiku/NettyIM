@@ -65,7 +65,7 @@ So default can be replaced by the developer's implementation, as long as the cor
                 .setHeartIntervalBackground(30,TimeUnit.SECONDS)//heartbeat interval  the background
                 .setEventListener(eventListener!=null?eventListener:new DefaultEventListener(userId)) // Event listener, optional
                 .setMsgTriggerReconnectEnabled(true)  //Whether message sending triggers reconnection if the connection has been disconnected
-                .setProtocol(protocol) //What kind of protocol
+                .setProtocol(protocol) //What kind of protocol，IMProtocol.PRIVATE、IMProtocol.WEB_SOCKET、IMProtocol.UDP
                 .setOpenLog(true);//Whether to enable logs
  ```
 - TCP configuration
@@ -108,16 +108,20 @@ So default can be replaced by the developer's implementation, as long as the cor
                     .addAddress(new Address(ip, 8804, Address.Type.UDP));                
   ```
 
+#### 2. Construct the IMClient client
+ ```
+ IMClient imClient = builder.build();
+  ```
 
-#### 2. Establish a connection
+#### 3. Establish a connection
  ```
 imClient.startConnect(); // Establish a connection
  ```
-#### 3. Disconnect the connection
+#### 4. Disconnect the connection
  ```
 imClient.disConnect(); // The connection is disconnected actively and will not be reconnected automatically
  ```
-#### 4. Send a message
+#### 5. Send a message
  ```
  Request request=new Request.Builder(). //Create a message sending request       
               setNeedACK(true).//If an ACK is required, true triggers the message acknowledgement mechanism
@@ -131,7 +135,7 @@ imClient.newCall(request).enqueue(callback); // Send the message, the message in
  ```
 Disposable disposable=   imClient.newCall(request).enqueue(callback).subscribe(consumer);  // Sending messages subscribes to specific message processing. For example: I send a particular message and then want to subscribe to subsequent responses for that particular message
  ```
-#### 5. Receive message
+#### 6. Receive message
 All message reception is registered in registerMessageHandler() in the above configuration. Developers can implement the MessageHandler interface themselves
 
 ```
@@ -140,7 +144,7 @@ public  interface  MessageHandler<message extends Object>  {
     void handleMsg(message message);//Receive processing message
 }
  ```
-#### 6.Status monitoring
+#### 7.Status monitoring
 Status Listener In the setEventListener() configuration above, developers can inherit the EventListener class to listen for callbacks
 ```
 
@@ -214,19 +218,22 @@ Status Listener In the setEventListener() configuration above, developers can in
 ```
 
 
-#### 7. Other apis
+#### 8. Other apis
  ```
 imClient.setBackground(background); // Set the front/background switch, and different heartbeat intervals will be automatically switched
 imClient.isConnected(); // Check whether the connection is established
-.
  ```
 
 ### V. Project structure design drawing
 ![image](https://github.com/CWTakiku/NettyIM/blob/master/IMPic.png)
 
 #### VI. Demo use
-APP module test contains the background code of the built-in custom protocol and webscoket protocol. Start the server, modify the server IP on the client of the corresponding protocol, and run the client
-
+#### Step 1. Change the server address and run the project
+Change localHost to the ip address of your computer in the MainActivity class, run the project, and run the APP on the mobile phone or simulator
+#### Step 2 Start the server
+APP module test contains the server demo, webscoket protocol, udp protocol and server demo of tcp protocol and string data formats. Run the corresponding server demo
+#### Step 3 Use
+Click the corresponding protocol in the APP to enter the chat interface
 ### VII. Project blog address
 [Jane books](https://www.jianshu.com/p/5b01f4d6e4f4) 
 [CSDN](https://blog.csdn.net/smile__dream/article/details/105681018) 

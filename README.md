@@ -49,7 +49,7 @@ dependencies {
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.INTERNET" />
 ```
-#### 1.  客户端的配置说明
+#### 1.  客户端的配置
 说明：所有以Default开头的类都是可以被替代的，只要开发者实现相应的接口
  - 多种协议的公共配置
   
@@ -64,7 +64,7 @@ dependencies {
                 .setHeartIntervalBackground(30,TimeUnit.SECONDS)//后台心跳间隔
                 .setEventListener(eventListener!=null?eventListener:new DefaultEventListener(userId)) //事件监听，可选
                 .setMsgTriggerReconnectEnabled(true)  //如果连接已经断开，消息发送是否触发重连
-                .setProtocol(protocol) //哪种协议
+                .setProtocol(protocol) //哪种协议 IMProtocol.PRIVATE、IMProtocol.WEB_SOCKET、IMProtocol.UDP
                 .setOpenLog(true);//是否开启日志
 ```
 
@@ -96,6 +96,7 @@ dependencies {
                     .addWsHeader("user",userId); //webSocket特有的，可以用来鉴权使用
 ``` 
 
+
 - UDP协议配置
                  
 ``` 
@@ -108,15 +109,20 @@ dependencies {
                     .registerMessageHandler(new DefaultStringHeartbeatRespHandler()) //心跳接收处理器
                     .addAddress(new Address(ip, 8804, Address.Type.UDP));                
 ``` 
-#### 2. 建立连接
+
+#### 2 构造IMClient
+``` 
+  IMClient imClient = builder.build();
+``` 
+#### 3. 建立连接
 ```
 imClient.startConnect();//建立连接
 ```
-#### 3. 断开连接
+#### 4. 断开连接
 ```
 imClient.disConnect();//主动断开连接，不会自动重连
 ```
-#### 4. 发送消息
+#### 5. 发送消息
 ```
   Request request=new Request.Builder(). //创建一个消息发送request           
               setNeedACK(true).//需要ACK，true就会触发消息确认机制
@@ -131,7 +137,7 @@ imClient.disConnect();//主动断开连接，不会自动重连
 ```
 Disposable disposable=   imClient.newCall(request).enqueue(callback).subscribe(consumer); //发送消息，会订阅特定的消息处理，例如：我发送了一个特别的消息，然后想订阅该特定消息的后续响应
 ```
-#### 5、接收消息
+#### 6、接收消息
 所有的消息接收都在上述配置中注册的registerMessageHandler()里,开发者可以自行实现MessageHandler接口
 ```
 public  interface  MessageHandler<message extends Object>  {
@@ -140,7 +146,7 @@ public  interface  MessageHandler<message extends Object>  {
 }
 ```
 
-#### 6.状态监听
+#### 7.状态监听
 状态监听在上述配置中的setEventListener()里，开发者可以自行继承EventListener类监听回调
 ```
 
@@ -213,7 +219,7 @@ public  interface  MessageHandler<message extends Object>  {
 
 ```
 
-#### 7. 其他一些API
+#### 8. 其他一些API
 ```
  imClient.setBackground(background);//设置前后台切换，将会自动切换不同的心跳间隔
  imClient.isConnected();//判断是否连接中
