@@ -1,5 +1,5 @@
 # NettyIM SDK
-### 一款基于Netty高度定制化的长连接SDK,它支持私有协议和Websocket协议的通信。
+### 一款基于Netty高度定制化的通讯SDK,它支持TCP、UDP和WebSocket协议的通信。
 
 
 
@@ -62,8 +62,10 @@ dependencies {
                 .setConnectionRetryEnabled(true)//是否连接重试
                 .setSendTimeout(6,TimeUnit.SECONDS)//设置发送超时
                 .setHeartIntervalBackground(30,TimeUnit.SECONDS)//后台心跳间隔
+                .setReaderIdleTimeBackground(90,TimeUnit.SECONDS)//后台读空闲触发时间 ，搭配心跳机制使用（指在一定的时间内没收到服务器的任何消息，则认为网络异常或者服务器异常，如果setReaderIdleReconnectEnabled(true)触发重连）
                 .setEventListener(eventListener!=null?eventListener:new DefaultEventListener(userId)) //事件监听，可选
                 .setMsgTriggerReconnectEnabled(true)  //如果连接已经断开，消息发送是否触发重连
+                .setReaderIdleReconnectEnabled(true) //读空闲是否会触发重连
                 .setProtocol(protocol) //哪种协议 IMProtocol.PRIVATE、IMProtocol.WEB_SOCKET、IMProtocol.UDP
                 .setOpenLog(true);//是否开启日志
 ```
@@ -79,6 +81,7 @@ dependencies {
                     .registerMessageHandler(codecType == 0?new DefaultProtobufMessageReceiveHandler(onMessageArriveListener):new DefaultStringMessageReceiveHandler(onMessageArriveListener)) //消息接收处理器
                     .registerMessageHandler(codecType == 0?new DefaultReplyReceiveHandler(onReplyListener):new DefaultStringMessageReplyHandler(onReplyListener)) //消息状态接收处理器
                     .registerMessageHandler(codecType == 0?new DefaultProtobufHeartbeatRespHandler():new DefaultStringHeartbeatRespHandler()) //心跳接收处理器
+                    .setTCPLengthFieldLength(2)//本库拆包采用消息头包含消息长度的协议，装包拆包的长度字段的占用字节数，默认值为2
                     .addAddress(new Address(ip,9081,Address.Type.TCP))
                     .setMaxFrameLength(65535*100); //设置最大帧长 //私有tcp和websocket生效
 ``` 
