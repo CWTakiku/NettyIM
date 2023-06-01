@@ -1,5 +1,5 @@
 # NettyIM SDK
-### 一款基于Netty高度定制化的长连接SDK,它支持私有协议和Websocket协议的通信。
+### 一款基于Netty高度定制化的通讯SDK,它支持TCP、UDP和WebSocket协议的通信。
 
 
 
@@ -62,8 +62,10 @@ dependencies {
                 .setConnectionRetryEnabled(true)//是否连接重试
                 .setSendTimeout(6,TimeUnit.SECONDS)//设置发送超时
                 .setHeartIntervalBackground(30,TimeUnit.SECONDS)//后台心跳间隔
+                .setReaderIdleTimeBackground(90,TimeUnit.SECONDS)//后台读空闲触发时间 ，搭配心跳机制使用（指在一定的时间内没收到服务器的任何消息，则认为网络异常或者服务器异常，如果setReaderIdleReconnectEnabled(true)触发重连）
                 .setEventListener(eventListener!=null?eventListener:new DefaultEventListener(userId)) //事件监听，可选
                 .setMsgTriggerReconnectEnabled(true)  //如果连接已经断开，消息发送是否触发重连
+                .setReaderIdleReconnectEnabled(true) //读空闲是否会触发重连
                 .setProtocol(protocol) //哪种协议 IMProtocol.PRIVATE、IMProtocol.WEB_SOCKET、IMProtocol.UDP
                 .setOpenLog(true);//是否开启日志
 ```

@@ -272,7 +272,7 @@ public class MainActivity extends AppCompatActivity {
     private Request createRequest(AppMessage appMessage,int clientNum){
         Request.Builder builder = new Request.Builder().
                  setNeedACK(appMessage.getHead().getMsgId())
-                .setSendRetry(false);
+                .setSendRetry(true);
         if (protocol == IMProtocol.PRIVATE){
             if (codecType == 0){
                 builder.setBody(getProtobufMsgPack(appMessage.buildProto(clientNum == 1?demo1.getMsgSerialID():demo2.getMsgSerialID())));

@@ -1,5 +1,5 @@
 # NettyIM SDK
-### A highly customized long-connect SDK based on Netty that supports communication between proprietary and Websocket protocols.
+### A highly customized communication SDK based on Netty, which supports communication of TCP, UDP and WebSocket protocols.
 
 
 
@@ -63,8 +63,10 @@ So default can be replaced by the developer's implementation, as long as the cor
                 .setConnectionRetryEnabled(true)// connection retry
                 .setSendTimeout(6,TimeUnit.SECONDS)// Sets the sending timeout
                 .setHeartIntervalBackground(30,TimeUnit.SECONDS)//heartbeat interval  the background
+                .setReaderIdleTimeBackground(90,TimeUnit.SECONDS)//Background read idle trigger time，(Referring to not receiving any message from the server within a certain period of time, it is considered that the network is abnormal or the server is abnormal, if setReaderIdleReconnectEnabled(true) triggers reconnection)
                 .setEventListener(eventListener!=null?eventListener:new DefaultEventListener(userId)) // Event listener, optional
                 .setMsgTriggerReconnectEnabled(true)  //Whether message sending triggers reconnection if the connection has been disconnected
+                .setReaderIdleReconnectEnabled(true) //Whether reading idle will trigger reconnection
                 .setProtocol(protocol) //What kind of protocol，IMProtocol.PRIVATE、IMProtocol.WEB_SOCKET、IMProtocol.UDP
                 .setOpenLog(true);//Whether to enable logs
  ```
