@@ -238,8 +238,6 @@ APP module test contains the server demo, webscoket protocol, udp protocol and s
 #### Step 3 Use
 Click the corresponding protocol in the APP to enter the chat interface
 ### VII. Project blog address
-[Jane books](https://www.jianshu.com/p/5b01f4d6e4f4) 
-[CSDN](https://blog.csdn.net/smile__dream/article/details/105681018) 
 [Denver](https://juejin.im/post/5ea569aaf265da47e34c19ed)
 
 

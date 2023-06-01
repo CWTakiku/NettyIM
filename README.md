@@ -245,7 +245,7 @@ APP模块test下含有tcp协议的protobuf和string两种数据格式的服务�
 
 
 ### 七、项目博客地址
-[简书](https://www.jianshu.com/p/5b01f4d6e4f4)       [CSDN](https://blog.csdn.net/smile__dream/article/details/105681018)  [掘金](https://juejin.im/post/5ea569aaf265da47e34c19ed) 
+[掘金](https://juejin.im/post/5ea569aaf265da47e34c19ed) 
 
 
 如果使用过程遇到什么问题或者疑问欢迎提交issue,也欢迎star!
