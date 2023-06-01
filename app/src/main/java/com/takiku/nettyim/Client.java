@@ -156,6 +156,7 @@ public class Client {
                     .registerMessageHandler(codecType == 0?new DefaultProtobufMessageReceiveHandler(onMessageArriveListener):new DefaultStringMessageReceiveHandler(onMessageArriveListener)) //消息接收处理器
                     .registerMessageHandler(codecType == 0?new DefaultReplyReceiveHandler(onReplyListener):new DefaultStringMessageReplyHandler(onReplyListener)) //消息状态接收处理器
                     .registerMessageHandler(codecType == 0?new DefaultProtobufHeartbeatRespHandler():new DefaultStringHeartbeatRespHandler()) //心跳接收处理器
+                    .setTCPLengthFieldLength(2)
                     .addAddress(new Address(ip,9081,Address.Type.TCP))
                     .setMaxFrameLength(65535*100); //设置最大帧长 //私有tcp和websocket生效
 

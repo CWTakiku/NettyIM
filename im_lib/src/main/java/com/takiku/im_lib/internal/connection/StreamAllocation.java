@@ -102,7 +102,7 @@ public class StreamAllocation {
                                         }
 
                                     }
-                                },client.maxFrameLength());
+                                },client.lengthFieldLength(),client.maxFrameLength());
                         connection.connect(connectTimeout,client.port());
                         Internal.instance.put(connectionPool,connection);
                         IStream iStream =connection.newStream(client,this);

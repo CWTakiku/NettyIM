@@ -155,6 +155,7 @@ public class RealConnection  implements Connection {
                                           final boolean readerIdleReconnectEnabled,
                                           final MessageParser messageParser,
                                           final connectionBrokenListener connectionBrokenListener,
+                                          final int lengthFieldLength,
                                           final int maxFrameLength
                                          ) throws AuthException {
         if (hasInit){
@@ -171,9 +172,9 @@ public class RealConnection  implements Connection {
                 ChannelPipeline pipeline = channel.pipeline();
                 //解决tcp拆包、粘包
                 if (protocol == IMProtocol.PRIVATE){
-                    pipeline.addLast("frameEncoder", new LengthFieldPrepender(2));
+                    pipeline.addLast("frameEncoder", new LengthFieldPrepender(lengthFieldLength));
                     pipeline.addLast("frameDecoder", new LengthFieldBasedFrameDecoder(maxFrameLength,
-                            0, 2, 0, 2));
+                            0, lengthFieldLength, 0, lengthFieldLength));
                     //编解码支持
                     if (codec==null){
                         throw new  IllegalArgumentException("codec is null");

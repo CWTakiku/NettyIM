@@ -80,6 +80,7 @@ So default can be replaced by the developer's implementation, as long as the cor
                     .registerMessageHandler(codecType == 0?new DefaultProtobufMessageReceiveHandler(onMessageArriveListener):new DefaultStringMessageReceiveHandler(onMessageArriveListener)) //Message receiving processor
                     .registerMessageHandler(codecType == 0?new DefaultReplyReceiveHandler(onReplyListener):new DefaultStringMessageReplyHandler(onReplyListener)) //Message status receiving processor
                     .registerMessageHandler(codecType == 0?new DefaultProtobufHeartbeatRespHandler():new DefaultStringHeartbeatRespHandler()) //Heartbeat receiving processor
+                    .setTCPLengthFieldLength(2)//the length of the prepended length field. Only 1, 2, 3, 4, and 8 are allowed.
                     .addAddress(new Address(ip,9081,Address.Type.TCP))
                     .setMaxFrameLength(65535*100); //The maximum frame length is set for tcp and websocket
 

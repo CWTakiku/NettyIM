@@ -94,6 +94,7 @@ public class IMClient {
     int port;//本地端口号
     HashMap<String, Object> wsHeaderMap;//WS握手的头
     int maxFrameLength;//最大帧长
+    int lengthFieldLength; //TCP 装包拆包的长度字段的占用字节数
 
 
 
@@ -129,6 +130,7 @@ public class IMClient {
         this.readerIdleTimeForeground = builder.readerIdleTimeForeground;
         this.readerIdleTimeBackground = builder.readerIdleTimeBackground;
         this.readerIdleReconnectEnabled = builder.readerIdleReconnectEnabled;
+        this.lengthFieldLength = builder.lengthFieldLength;
     }
 
     public void startConnect() {
@@ -206,6 +208,8 @@ public class IMClient {
     public int sendTimeout() {
         return sendTimeout;
     }
+
+    public int lengthFieldLength(){return lengthFieldLength;}
 
 
     public List<Address> addressList() {
@@ -302,6 +306,7 @@ public class IMClient {
         boolean msgTriggerReconnectEnabled;
         boolean readerIdleReconnectEnabled;
         boolean isBackground;
+        int lengthFieldLength;
         EventListener.Factory eventListenerFactory;
         ConnectionPool connectionPool;
         Cache cache;
@@ -334,6 +339,7 @@ public class IMClient {
             connectRetryInterval = 500;
             maxFrameLength = 65535;
             connectRetryCount = 3;
+            lengthFieldLength = 2;
             connectionRetryEnabled = true;
             msgTriggerReconnectEnabled = true;
             readerIdleReconnectEnabled = true;
@@ -371,6 +377,10 @@ public class IMClient {
 
         public Builder setReaderIdleTimeBackground(long interval, TimeUnit unit){
             this.readerIdleTimeBackground = checkDuration("interval", interval, unit);
+            return this;
+        }
+        public Builder setTCPLengthFieldLength(int lengthFieldLength){
+            this.lengthFieldLength = lengthFieldLength;
             return this;
         }
 
