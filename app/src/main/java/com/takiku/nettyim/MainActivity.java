@@ -49,7 +49,7 @@ public class MainActivity extends AppCompatActivity {
     private Client demo1 ,demo2;
 
 
-    private String localHost= "192.168.31.212"; //更改为你电脑的ip地址
+    private String localHost= "192.168.12.11"; //更改为你电脑的ip地址
 
 
     private Button btnSend1;

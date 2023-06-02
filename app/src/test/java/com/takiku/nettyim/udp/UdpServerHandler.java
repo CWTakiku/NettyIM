@@ -44,8 +44,9 @@ public class UdpServerHandler  extends SimpleChannelInboundHandler<DatagramPacke
         String data =msg.content().toString(StandardCharsets.UTF_8);
 
 
-        System.out.println(data);
-
+        System.out.println(data+" "+msg.sender().getPort()+" ");
+//        DatagramPacket tee = new DatagramPacket(Unpooled.copiedBuffer("sss".getBytes(StandardCharsets.UTF_8)),new InetSocketAddress(msg.sender().getHostName(),61811));
+//        ctx.writeAndFlush(tee);//服务端发送Ack给发送端
         Session session=   sessionManager.getBySessionId(ctx.channel().id().asLongText());
         JsonObject jsonObject =(JsonObject) new JsonParser().parse(data);
         int type =   jsonObject.get("packType").getAsInt();

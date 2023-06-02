@@ -77,7 +77,7 @@ public class RealConnection  implements Connection {
     private WebSocketHandler webSocketHandler;
 
 
-    public RealConnection(ConnectionPool connectionPool, InetSocketAddress inetSocketAddress,@IMProtocol int protocol, EventListener eventListener){
+    public RealConnection(ConnectionPool connectionPool, InetSocketAddress inetSocketAddress,@IMProtocol int protocol,int localPort, EventListener eventListener){
         this.inetSocketAddress=inetSocketAddress;
         this.connectionPool=connectionPool;
         this.eventListener=eventListener;
@@ -169,9 +169,9 @@ public class RealConnection  implements Connection {
                 ChannelPipeline pipeline = channel.pipeline();
                 //解决tcp拆包、粘包
                 if (protocol == IMProtocol.PRIVATE){
-                    pipeline.addLast("frameEncoder", new LengthFieldPrepender(2));
+                    pipeline.addLast("frameEncoder", new LengthFieldPrepender(4));
                     pipeline.addLast("frameDecoder", new LengthFieldBasedFrameDecoder(maxFrameLength,
-                            0, 2, 0, 2));
+                            0, 4, 0, 4));
                     //编解码支持
                     if (codec==null){
                         throw new  IllegalArgumentException("codec is null");
@@ -359,7 +359,7 @@ public class RealConnection  implements Connection {
                           .option(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT)
 //                          .option(ChannelOption.SO_RCVBUF,1024)
 //                          .option(ChannelOption.SO_SNDBUF,1024)
-                          .bind(localPort) //绑定一个随机可用端口
+                          .bind(localPort) //
                           .sync().channel();
             }
         } catch (URISyntaxException e) {

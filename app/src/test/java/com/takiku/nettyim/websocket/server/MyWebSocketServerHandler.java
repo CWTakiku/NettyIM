@@ -15,7 +15,7 @@ import com.takiku.nettyim.Session;
 import com.takiku.nettyim.SessionManager;
 
 
-
+import java.net.InetSocketAddress;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
@@ -117,7 +117,7 @@ public class MyWebSocketServerHandler extends ChannelInboundHandlerAdapter {
         Session session=   sessionManager.getBySessionId(ctx.channel().id().asLongText());
         // Send the uppercase string back.
         String data = ((TextWebSocketFrame) frame).text();
-        System.out.println(data);
+        System.out.println(data+" "+((InetSocketAddress)ctx.channel().remoteAddress()).getPort());
         TextWebSocketFrame textWebSocketFrame = (TextWebSocketFrame) frame;
 
         JsonObject jsonObject =(JsonObject) new JsonParser().parse(data);

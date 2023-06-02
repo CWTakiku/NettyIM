@@ -84,7 +84,7 @@ public class StreamAllocation {
                         if (!client.msgTriggerReconnectEnabled()&&!(chain.request() instanceof ConnectRequest)){
                             throw new ConnectionShutdownException();
                         }
-                        connection= new RealConnection(connectionPool, routeSelector.lastInetSocketAddress(),client.protocol(), eventListener);
+                        connection= new RealConnection(connectionPool, routeSelector.lastInetSocketAddress(),client.protocol(),client.port(), eventListener);
                         connection.ChannelInitializerHandler(client.codec(),client.wsHeaderMap(),client.heartBeatMsg(),
                                 client.customChannelHandlerLinkedHashMap(),heartbeatInterval,client.messageParser()
                                 ,new RealConnection.connectionBrokenListener() {
