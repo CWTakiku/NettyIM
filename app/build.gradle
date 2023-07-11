@@ -41,7 +41,7 @@ dependencies {
     if (isImplementationLocal.toBoolean()){
         implementation project(path: ':im_lib')
     }else {
-        implementation 'com.github.CWTakiku:NettyIM:1.0.7'
+        implementation 'com.github.CWTakiku:NettyIM:1.0.8'
     }
 
    // implementation 'com.github.CWTakiku:NettyIM:1.0.2'

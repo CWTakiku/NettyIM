@@ -140,6 +140,8 @@ public class Client {
                 .setConnectionRetryEnabled(true)//是否连接重试
                 .setSendTimeout(6,TimeUnit.SECONDS)//设置发送超时
                 .setHeartIntervalBackground(30,TimeUnit.SECONDS)//后台心跳间隔
+                .setReaderIdleReconnectEnabled(true)
+                .setReaderIdleTimeBackground(18,TimeUnit.SECONDS)
                 .setEventListener(eventListener!=null?eventListener:new DefaultEventListener(userId)) //事件监听，可选
                 .setMsgTriggerReconnectEnabled(true)
                 .setProtocol(protocol)
