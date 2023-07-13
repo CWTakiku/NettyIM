@@ -18,13 +18,16 @@ import io.netty.handler.timeout.IdleStateEvent;
 public class HeartbeatChannelHandler extends ChannelInboundHandlerAdapter {
     ConnectionPool connectionPool;
     Object heartbeatMsg;
+    boolean readerIdleReconnectEnabled;
     RealConnection.connectionBrokenListener connectionBrokenListener;
     @IMProtocol int protocol;
-    public HeartbeatChannelHandler(@IMProtocol int protocol, ConnectionPool connectionPool, Object hearBeatMsg, RealConnection.connectionBrokenListener connectionBrokenListener){
+    public HeartbeatChannelHandler(@IMProtocol int protocol, ConnectionPool connectionPool, Object hearBeatMsg, boolean readerIdleReconnectEnabled,
+                                   RealConnection.connectionBrokenListener connectionBrokenListener){
        this.connectionPool=connectionPool;
        this.heartbeatMsg=hearBeatMsg;
        this.connectionBrokenListener=connectionBrokenListener;
        this.protocol = protocol;
+       this.readerIdleReconnectEnabled = readerIdleReconnectEnabled;
     }
 
 
@@ -37,7 +40,9 @@ public class HeartbeatChannelHandler extends ChannelInboundHandlerAdapter {
             switch (state) {
                 case READER_IDLE: {
                     LogUtil.i("HeartbeatChannelHandler", "userEventTriggered:READER_IDLE ");
-                   // connectionBrokenListener.connectionBroken();
+                    if (readerIdleReconnectEnabled){
+                        connectionBrokenListener.connectionBroken();
+                    }
                     break;
                 }
                 case WRITER_IDLE: {

@@ -1,9 +1,9 @@
 # NettyIM SDK
-### 一款基于Netty高度定制化的长连接SDK,它支持私有协议和Websocket协议的通信。
+### 一款基于Netty高度定制化的通讯SDK,它支持TCP、UDP和WebSocket协议的通信。
 
 
 
-[英文文档](https://github.com/CWTakiku/NettyIM/blob/master/README_EN.md)
+[English Document](https://github.com/CWTakiku/NettyIM/blob/master/README_EN.md)
 
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/CWTakiku/NettyIM/pulls)      [![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/CWTakiku/NettyIM/blob/master/LICENSE) [![](https://www.jitpack.io/v/CWTakiku/NettyIM.svg)](https://www.jitpack.io/#CWTakiku/NettyIM)
 
@@ -19,10 +19,11 @@
 8. 支持心跳机制
 9. tcp协议、udp协议、websocket都支持握手鉴权
 10. 提供Netty消息处理器注册
-11. 支持自定义编解码器
-12. 连接状态、消息状态监听
-13. 支持单个消息设置是否需要确认包
-14. 支持各种参数配置
+11. 支持自定义内容编解码器
+12. 支持自定义的TCP装包拆包编解码器
+13. 连接状态、消息状态监听
+14. 支持单个消息设置是否需要确认包
+15. 支持各种参数配置
 
 ### 二、典型应用
 1. 应用IM通讯
@@ -62,8 +63,10 @@ dependencies {
                 .setConnectionRetryEnabled(true)//是否连接重试
                 .setSendTimeout(6,TimeUnit.SECONDS)//设置发送超时
                 .setHeartIntervalBackground(30,TimeUnit.SECONDS)//后台心跳间隔
+                .setReaderIdleTimeBackground(90,TimeUnit.SECONDS)//后台读空闲触发时间 ，搭配心跳机制使用（指在一定的时间内没收到服务器的任何消息，则认为网络异常或者服务器异常，如果setReaderIdleReconnectEnabled(true)触发重连）
                 .setEventListener(eventListener!=null?eventListener:new DefaultEventListener(userId)) //事件监听，可选
                 .setMsgTriggerReconnectEnabled(true)  //如果连接已经断开，消息发送是否触发重连
+                .setReaderIdleReconnectEnabled(true) //读空闲是否会触发重连
                 .setProtocol(protocol) //哪种协议 IMProtocol.PRIVATE、IMProtocol.WEB_SOCKET、IMProtocol.UDP
                 .setOpenLog(true);//是否开启日志
 ```
@@ -71,7 +74,7 @@ dependencies {
 - TCP协议配置
    
 ``` 
-        //以下支持两种数据格式，一种protobuf,一种string格式
+        //以下默认提供两种数据格式，一种protobuf,一种string格式
          builder.setCodec(codecType == 0?new DefaultTcpProtobufCodec():new DefaultTcpStringCodec())//默认的编解码，开发者可以使用自己的protobuf或者其他格式的编解码
                     .setShakeHands(codecType == 0? new DefaultProtobufMessageShakeHandsHandler(getDefaultTcpHands()):new DefaultStringMessageShakeHandsHandler(getDefaultStringHands())) //设置握手认证，可选
                     .setHeartBeatMsg(codecType == 0? getDefaultProtobufHeart(): getDefaultStringHeart()) //设置心跳,可选
@@ -79,8 +82,10 @@ dependencies {
                     .registerMessageHandler(codecType == 0?new DefaultProtobufMessageReceiveHandler(onMessageArriveListener):new DefaultStringMessageReceiveHandler(onMessageArriveListener)) //消息接收处理器
                     .registerMessageHandler(codecType == 0?new DefaultReplyReceiveHandler(onReplyListener):new DefaultStringMessageReplyHandler(onReplyListener)) //消息状态接收处理器
                     .registerMessageHandler(codecType == 0?new DefaultProtobufHeartbeatRespHandler():new DefaultStringHeartbeatRespHandler()) //心跳接收处理器
+                    .setTCPLengthFieldLength(2)//本库拆包采用消息头包含消息长度的协议，装包拆包的长度字段的占用字节数，默认值为2
                     .addAddress(new Address(ip,9081,Address.Type.TCP))
-                    .setMaxFrameLength(65535*100); //设置最大帧长 //私有tcp和websocket生效
+                    .setFrameCodec(new DefaultLengthFieldBasedFrameCodec(2,65535));//设置TCP装包拆包编解码器，也可以使用自定义的装包拆包编解码器
+                 
 ``` 
 - WebSocket协议配置
   
@@ -225,6 +230,19 @@ public  interface  MessageHandler<message extends Object>  {
  imClient.isConnected();//判断是否连接中
  ...
 ```
+#### 9. 说明
+在TCP协议中，FrameCodec为TCP的协议的装包拆包。FrameCodec为TCP特有的，
+Codec为内容的编解码。在TCP、UDP协议里都支持。
+```
+   pipeline.addLast("frameEncoder", frameCodec.Encoder()); // out2
+   pipeline.addLast("frameDecoder", frameCodec.Decoder()); //in1
+
+   pipeline.addLast(codec.EnCoder().getClass().getSimpleName(),codec.EnCoder()); //out 1
+   pipeline.addLast(codec.DeCoder().getClass().getSimpleName(),codec.DeCoder()); //in2
+ ...
+ ```
+ 1、数据的接收处理是按照上述 in1-->in2顺序，先对数据进行拆包，然后再将真实数据解码。
+ 2、数据的发送处理是按照上述 out1-->out2顺序，先对真实数据进行编码，再进行装包。
 
 ### 五、项目结构设计图
 ![image](https://github.com/CWTakiku/NettyIM/blob/master/IMPic.png)
@@ -232,7 +250,7 @@ public  interface  MessageHandler<message extends Object>  {
 ### 六、Demo使用
 
 #### 步骤1、 修改服务端地址，运行项目
-在MainActivity类里将localHost改为自己电脑的ip地址，运行项目，将APP跑在手机或者模拟器上
+在IPConfig类里将SERVER_ADDRESS改为自己电脑的ip地址，运行项目，将APP跑在手机或者模拟器上
 #### 步骤2、开启服务器
 APP模块test下含有tcp协议的protobuf和string两种数据格式的服务端demo、webscoket协议、udp协议，服务端的demo，运行相对应的服务器demo
 #### 步骤3、使用
@@ -242,7 +260,7 @@ APP模块test下含有tcp协议的protobuf和string两种数据格式的服务�
 
 
 ### 七、项目博客地址
-[简书](https://www.jianshu.com/p/5b01f4d6e4f4)       [CSDN](https://blog.csdn.net/smile__dream/article/details/105681018)  [掘金](https://juejin.im/post/5ea569aaf265da47e34c19ed) 
+[掘金](https://juejin.im/post/5ea569aaf265da47e34c19ed) 
 
 
 如果使用过程遇到什么问题或者疑问欢迎提交issue,也欢迎star!

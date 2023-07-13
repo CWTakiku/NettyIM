@@ -6,6 +6,17 @@ package com.takiku.im_lib.call;
  */
 public interface Consumer<T extends Object> {
 
+    /**
+     *
+     * @param t 接收的消息
+     * @param requestTag 消息的唯一标识
+     * @return
+     */
     boolean Observable(T t,String requestTag);
+
+    /**
+     * 处理该消息
+     * @param t
+     */
     void accept(T t);
 }

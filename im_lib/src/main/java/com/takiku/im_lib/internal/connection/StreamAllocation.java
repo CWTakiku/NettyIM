@@ -74,6 +74,8 @@ public class StreamAllocation {
     public IStream newStream(IMClient client, Interceptor.Chain chain, EventListener eventListener) throws IOException, InterruptedException,AuthException  {
         int connectTimeout = chain.connectTimeoutMillis();
         int heartbeatInterval= client.heartInterval();
+        int readerIdleTime = client.readerIdleTime();
+        boolean readerIdleReconnectEnabled = client.readerIdleReconnectEnabled();
         Address address=chain.request().address;
         synchronized (connectionPool) {
             if (released){  throw new IllegalStateException("released");}
@@ -85,11 +87,13 @@ public class StreamAllocation {
                             throw new ConnectionShutdownException();
                         }
                         connection= new RealConnection(connectionPool, routeSelector.lastInetSocketAddress(),client.protocol(),client.port(), eventListener);
-                        connection.ChannelInitializerHandler(client.codec(),client.wsHeaderMap(),client.heartBeatMsg(),
-                                client.customChannelHandlerLinkedHashMap(),heartbeatInterval,client.messageParser()
+                        connection.ChannelInitializerHandler(client.codec(),client.frameCodec(),client.wsHeaderMap(),client.heartBeatMsg(),
+                                client.customChannelHandlerLinkedHashMap(),heartbeatInterval,readerIdleTime,
+                                readerIdleReconnectEnabled,client.messageParser()
                                 ,new RealConnection.connectionBrokenListener() {
                                     @Override
                                     public void connectionBroken() {
+
                                         if (connection.isReConnect()){
                                             closeQuietly(connection);
                                             client.startConnect();
@@ -98,7 +102,7 @@ public class StreamAllocation {
                                         }
 
                                     }
-                                },client.maxFrameLength());
+                                },client.lengthFieldLength(),client.maxFrameLength());
                         connection.connect(connectTimeout,client.port());
                         Internal.instance.put(connectionPool,connection);
                         IStream iStream =connection.newStream(client,this);

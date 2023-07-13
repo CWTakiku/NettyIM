@@ -1,7 +1,5 @@
 package com.takiku.im_lib.client;
 
-import android.util.Log;
-
 import androidx.annotation.Nullable;
 
 import com.takiku.im_lib.call.Consumer;
@@ -11,6 +9,8 @@ import com.takiku.im_lib.cache.Cache;
 import com.takiku.im_lib.call.Call;
 import com.takiku.im_lib.call.Callback;
 import com.takiku.im_lib.call.RealCall;
+import com.takiku.im_lib.frameCodec.DefaultLengthFieldBasedFrameCodec;
+import com.takiku.im_lib.frameCodec.FrameCodec;
 import com.takiku.im_lib.entity.base.ConnectRequest;
 import com.takiku.im_lib.entity.base.Request;
 import com.takiku.im_lib.dispatcher.Dispatcher;
@@ -39,8 +39,6 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import io.netty.channel.ChannelHandler;
-import io.netty.util.internal.logging.InternalLoggerFactory;
-import io.netty.util.internal.logging.JdkLoggerFactory;
 
 /**
  * IMClient IM客户端SDK
@@ -76,14 +74,19 @@ public class IMClient {
     int connectTimeout;//连接超时
     int sendTimeout;//发送超时，该时间段没收到ACK即认定为超时，会触发超时重发（如果设置为超时重发）
     boolean connectionRetryEnabled;//能否连接重试
+    boolean msgTriggerReconnectEnabled; //是否发送消息能触发重连（如果连接已经断的情况
+    boolean readerIdleReconnectEnabled; //读空闲是否触发重连
     long connectRetryInterval;//连接重试间隔
     int connectRetryCount;//最大重连次数
     int heartIntervalForeground;//前台心跳间隔
     int heartIntervalBackground;//后台心跳间隔
+    int readerIdleTimeForeground;//前台读空闲时间，读空闲超时会触发重连机制
+    int readerIdleTimeBackground;//后台读空闲时间
     boolean isBackground;//是否处于后台
     EventListener.Factory eventListenerFactory;
     ConnectionPool connectionPool;
     Codec codec;//编解码器
+    FrameCodec frameCodec;// 自定义tcp协议中的装包拆包
     LinkedHashMap<String, ChannelHandler> channelHandlerLinkedHashMap;//channelhandler，开发者可以添加自己的channelhandler
     Object heartBeatMsg;//心跳包
     List<Address> addressList;//连接地址列表，连接失败会自动切换
@@ -94,7 +97,8 @@ public class IMClient {
     int port;//本地端口号
     HashMap<String, Object> wsHeaderMap;//WS握手的头
     int maxFrameLength;//最大帧长
-    boolean msgTriggerReconnectEnabled; //是否发送消息能触发重连（如果连接已经断的情况
+    int lengthFieldLength; //TCP 装包拆包的长度字段的占用字节数
+
 
 
     public IMClient() {
@@ -126,6 +130,11 @@ public class IMClient {
         this.maxFrameLength = builder.maxFrameLength;
         this.msgTriggerReconnectEnabled = builder.msgTriggerReconnectEnabled;
         this.port = builder.port;
+        this.readerIdleTimeForeground = builder.readerIdleTimeForeground;
+        this.readerIdleTimeBackground = builder.readerIdleTimeBackground;
+        this.readerIdleReconnectEnabled = builder.readerIdleReconnectEnabled;
+        this.lengthFieldLength = builder.lengthFieldLength;
+        this.frameCodec = builder.frameCodec;
     }
 
     public void startConnect() {
@@ -204,6 +213,8 @@ public class IMClient {
         return sendTimeout;
     }
 
+    public int lengthFieldLength(){return lengthFieldLength;}
+
 
     public List<Address> addressList() {
         return addressList;
@@ -216,6 +227,8 @@ public class IMClient {
     public HashMap<String, Object> wsHeaderMap() {
         return wsHeaderMap;
     }
+
+    public FrameCodec frameCodec(){return frameCodec;}
 
 
     /**
@@ -244,6 +257,12 @@ public class IMClient {
             return heartIntervalForeground;
         }
     }
+    public int readerIdleTime(){
+        if (isBackground){
+            return readerIdleTimeBackground;
+        }
+        return readerIdleTimeForeground;
+    }
 
     public LinkedHashMap<String, ChannelHandler> customChannelHandlerLinkedHashMap() {
         return channelHandlerLinkedHashMap;
@@ -257,6 +276,7 @@ public class IMClient {
     public boolean connectionRetryEnabled() {
         return connectionRetryEnabled;
     }
+    public boolean readerIdleReconnectEnabled(){return readerIdleReconnectEnabled;}
 
     public long connectRetryInterval(){
         return connectRetryInterval;
@@ -273,7 +293,7 @@ public class IMClient {
      */
     public void setBackground(boolean isBackground) {
         this.isBackground = isBackground;
-        connectionPool().changeHeartbeatInterval(heartInterval());
+        connectionPool().changeHeartbeatInterval(heartInterval(),readerIdleTime(),readerIdleReconnectEnabled());
     }
 
     public static final class Builder {
@@ -285,14 +305,20 @@ public class IMClient {
         boolean connectionRetryEnabled;
         int heartIntervalForeground;
         int heartIntervalBackground;
+        int readerIdleTimeForeground;
+        int readerIdleTimeBackground;
         long connectRetryInterval;
         int maxFrameLength;
         boolean msgTriggerReconnectEnabled;
+        boolean readerIdleReconnectEnabled;
         boolean isBackground;
+        int lengthFieldLength;
+        FrameCodec frameCodec;
         EventListener.Factory eventListenerFactory;
         ConnectionPool connectionPool;
         Cache cache;
         Authenticator authenticator;
+
         List<Address> addressList;
         @Nullable
         Codec codec;
@@ -304,12 +330,15 @@ public class IMClient {
         int connectRetryCount;
         @IMProtocol
         int protocol = IMProtocol.PRIVATE;
+        @Deprecated
         int port;
 
         public Builder() {
             dispatcher = new Dispatcher();
-            heartIntervalForeground = 3 * 1000;
-            heartIntervalBackground = 30 * 1000;
+            heartIntervalForeground = 30 * 1000;
+            heartIntervalBackground = 50 * 1000;
+            readerIdleTimeForeground = heartIntervalForeground * 3;
+            readerIdleTimeBackground = heartIntervalBackground * 3;
             isBackground = true;
             resendCount = 3;
             sendTimeout = 5 * 1000;
@@ -317,13 +346,16 @@ public class IMClient {
             connectRetryInterval = 500;
             maxFrameLength = 65535;
             connectRetryCount = 3;
-            msgTriggerReconnectEnabled = true;
+            lengthFieldLength = 2;
             connectionRetryEnabled = true;
+            msgTriggerReconnectEnabled = true;
+            readerIdleReconnectEnabled = true;
             wsHeaderMap = new HashMap<>();
             addressList = new ArrayList<>();
             this.connectionPool = new ConnectionPool();
             eventListenerFactory = EventListener.factory(EventListener.NONE);
             messageParser = new MessageParser();
+            frameCodec = new DefaultLengthFieldBasedFrameCodec(lengthFieldLength,maxFrameLength);
         }
 
         public Builder setCodec(@Nullable Codec codec) {
@@ -331,10 +363,16 @@ public class IMClient {
             return this;
         }
 
+        public Builder setFrameCodec(FrameCodec frameCodec){
+            this.frameCodec = frameCodec;
+            return this;
+        }
+
         public Builder setProtocol(@IMProtocol int protocol) {
             this.protocol = protocol;
             return this;
         }
+        @Deprecated
         public Builder setPort(int port){
             if (port < 0 || port > 0xFFFF)
                 throw new IllegalArgumentException("port out of range:" + port);
@@ -345,8 +383,26 @@ public class IMClient {
             LogUtil.setOpen(isOpen);
             return this;
         }
+        public Builder setReaderIdleTimeForeground(long interval, TimeUnit unit){
+            this.readerIdleTimeForeground = checkDuration("interval", interval, unit);
+            return this;
+        }
 
+        public Builder setReaderIdleTimeBackground(long interval, TimeUnit unit){
+            this.readerIdleTimeBackground = checkDuration("interval", interval, unit);
+            return this;
+        }
 
+        /**
+         * 请改用setFrameCodec(FrameCodec frameCodec)方法，设置具体的装包拆包器
+         * @param lengthFieldLength
+         * @return
+         */
+        @Deprecated
+        public Builder setTCPLengthFieldLength(int lengthFieldLength){
+            this.lengthFieldLength = lengthFieldLength;
+            return this;
+        }
 
 
         public Builder setConnectTimeout(long timeout, TimeUnit unit) {
@@ -446,6 +502,10 @@ public class IMClient {
         }
         public Builder setMsgTriggerReconnectEnabled(boolean msgTriggerReconnectEnabled) {
             this.msgTriggerReconnectEnabled = msgTriggerReconnectEnabled;
+            return this;
+        }
+        public Builder setReaderIdleReconnectEnabled(boolean readerIdleReconnectEnabled){
+            this.readerIdleReconnectEnabled = readerIdleReconnectEnabled;
             return this;
         }
 

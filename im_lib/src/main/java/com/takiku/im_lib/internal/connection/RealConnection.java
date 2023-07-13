@@ -1,11 +1,10 @@
 package com.takiku.im_lib.internal.connection;
 
-import android.graphics.ImageFormat;
-
 import com.takiku.im_lib.call.Consumer;
 import com.takiku.im_lib.call.OnResponseListener;
 import com.takiku.im_lib.codec.Codec;
 import com.takiku.im_lib.client.IMClient;
+import com.takiku.im_lib.frameCodec.FrameCodec;
 import com.takiku.im_lib.dispatcher.Connection;
 import com.takiku.im_lib.entity.base.Request;
 import com.takiku.im_lib.entity.base.Response;
@@ -42,8 +41,6 @@ import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioDatagramChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
-import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
-import io.netty.handler.codec.LengthFieldPrepender;
 import io.netty.handler.codec.http.DefaultHttpHeaders;
 import io.netty.handler.codec.http.HttpClientCodec;
 import io.netty.handler.codec.http.HttpHeaders;
@@ -147,12 +144,15 @@ public class RealConnection  implements Connection {
         }
     }
 
-    public void ChannelInitializerHandler(final Codec codec, HashMap<String,Object> wsHeaderMap,
+    public void ChannelInitializerHandler(final Codec codec, final FrameCodec frameCodec, HashMap<String,Object> wsHeaderMap,
                                           final Object heartBeatMsg,
                                           final LinkedHashMap<String, ChannelHandler> handlers,
                                           final int heartbeatInterval,
+                                          final int readerIdleTime,
+                                          final boolean readerIdleReconnectEnabled,
                                           final MessageParser messageParser,
                                           final connectionBrokenListener connectionBrokenListener,
+                                          final int lengthFieldLength,
                                           final int maxFrameLength
                                          ) throws AuthException {
         if (hasInit){
@@ -169,19 +169,22 @@ public class RealConnection  implements Connection {
                 ChannelPipeline pipeline = channel.pipeline();
                 //解决tcp拆包、粘包
                 if (protocol == IMProtocol.PRIVATE){
-                    pipeline.addLast("frameEncoder", new LengthFieldPrepender(4));
-                    pipeline.addLast("frameDecoder", new LengthFieldBasedFrameDecoder(maxFrameLength,
-                            0, 4, 0, 4));
-                    //编解码支持
-                    if (codec==null){
+
+                    pipeline.addLast("frameEncoder", frameCodec.Encoder()); // out2
+                    pipeline.addLast("frameDecoder", frameCodec.Decoder()); //in1
+
+                    if (codec==null){ //编解码支持
                         throw new  IllegalArgumentException("codec is null");
                     }
+                    pipeline.addLast(codec.EnCoder().getClass().getSimpleName(),codec.EnCoder()); //out 1
+                    pipeline.addLast(codec.DeCoder().getClass().getSimpleName(),codec.DeCoder()); //in2
+
                     messageParser.addShakeResultListener(new MessageParser.onShakeHandsResultListener() {
                         @Override
                         public void shakeHandsResult(boolean isSuccess) {
                             if (isSuccess){
                                 if (heartBeatMsg!=null){ //握手成功且设置了心跳包，则里面启动心跳机制
-                                    addHeartbeatHandler(connectionPool,heartbeatInterval);
+                                    addHeartbeatHandler(connectionPool,heartbeatInterval,readerIdleTime,readerIdleReconnectEnabled);
                                 }
                             }else {
                                 release(false);
@@ -189,13 +192,11 @@ public class RealConnection  implements Connection {
                         }
                     });
 
-                    pipeline.addLast(codec.EnCoder().getClass().getSimpleName(),codec.EnCoder());
-                    pipeline.addLast(codec.DeCoder().getClass().getSimpleName(),codec.DeCoder());
 
                     if (messageParser.getMessageShakeHandsHandler() == null){ //如果没有握手消息且设置了心跳包，则直接添加心跳机制，否则等握手成功后添加心跳机制
                         if (heartBeatMsg!=null){
 //                        // 3次心跳没响应，代表连接已断开
-                            addHeartbeatHandler(connectionPool,heartbeatInterval);
+                            addHeartbeatHandler(connectionPool,heartbeatInterval,readerIdleTime,readerIdleReconnectEnabled);
 
                         }
                     }
@@ -227,7 +228,7 @@ public class RealConnection  implements Connection {
                     pipeline.addLast(HttpObjectAggregator.class.getSimpleName(), new HttpObjectAggregator(65535));
                     pipeline.addLast(WebSocketHandler.class.getSimpleName(), webSocketHandler);
                     if (heartBeatMsg!=null){ //设置了心跳包，则里面启动心跳机制
-                        addHeartbeatHandler(pipeline,connectionPool,heartbeatInterval);
+                        addHeartbeatHandler(pipeline,connectionPool,heartbeatInterval,readerIdleTime,readerIdleReconnectEnabled);
                     }
 
                 }else if (protocol == IMProtocol.UDP){
@@ -235,7 +236,7 @@ public class RealConnection  implements Connection {
                         @Override
                         public void shakeHandsResult(boolean isSuccess) {
                             if (isSuccess){
-                                addHeartbeatHandler(connectionPool,heartbeatInterval);
+                                addHeartbeatHandler(connectionPool,heartbeatInterval,readerIdleTime,readerIdleReconnectEnabled);
                             }else {
                                 release(false);
                             }
@@ -248,7 +249,7 @@ public class RealConnection  implements Connection {
                     if (messageParser.getMessageShakeHandsHandler() == null){ //如果没有握手消息且设置了心跳包，则直接添加心跳机制，否则等握手成功后添加心跳机制
                         if (heartBeatMsg!=null){
 //                        // 3次心跳没响应，代表连接已断开
-                            addHeartbeatHandler(connectionPool,heartbeatInterval);
+                            addHeartbeatHandler(connectionPool,heartbeatInterval,readerIdleTime,readerIdleReconnectEnabled);
 
                         }
                     }
@@ -265,7 +266,7 @@ public class RealConnection  implements Connection {
             }
         });
     }
-    public void addHeartbeatHandler(ConnectionPool connectionPool,int heartbeatInterval) {
+    public void addHeartbeatHandler(ConnectionPool connectionPool,int heartbeatInterval,int readerIdleTime,boolean readerIdleReconnectEnabled) {
         if (channel == null || channel.pipeline() == null) {
             return;
         }
@@ -276,7 +277,7 @@ public class RealConnection  implements Connection {
             }
             // 3次心跳时间内没得到服务端响应，即可代表连接已断开
             channel.pipeline().addFirst(IdleStateHandler.class.getSimpleName(), new IdleStateHandler(
-                    heartbeatInterval * 3, heartbeatInterval, 0, TimeUnit.MILLISECONDS));
+                    readerIdleTime, heartbeatInterval, 0, TimeUnit.MILLISECONDS));
 
             // 重新添加HeartbeatHandler
             if (channel.pipeline().get(HeartbeatChannelHandler.class.getSimpleName()) != null) {
@@ -284,13 +285,13 @@ public class RealConnection  implements Connection {
             }
             if (channel.pipeline().get(IdleStateHandler.class.getSimpleName()) != null) {
                 channel.pipeline().addLast(HeartbeatChannelHandler.class.getSimpleName(),
-                        new HeartbeatChannelHandler(protocol,connectionPool,heartBeatMsg,connectionBrokenListener));
+                        new HeartbeatChannelHandler(protocol,connectionPool,heartBeatMsg,readerIdleReconnectEnabled,connectionBrokenListener));
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
-    public void addHeartbeatHandler(ChannelPipeline pipeline,ConnectionPool connectionPool,int heartbeatInterval) {
+    public void addHeartbeatHandler(ChannelPipeline pipeline,ConnectionPool connectionPool,int heartbeatInterval,int readerIdleTime,boolean readerIdleReconnectEnabled) {
         if (pipeline  == null) {
             return;
         }
@@ -301,7 +302,7 @@ public class RealConnection  implements Connection {
             }
             // 3次心跳时间内没得到服务端响应，即可代表连接已断开
             pipeline.addFirst(IdleStateHandler.class.getSimpleName(), new IdleStateHandler(
-                    heartbeatInterval * 3, heartbeatInterval, 0, TimeUnit.MILLISECONDS));
+                    readerIdleTime, heartbeatInterval, 0, TimeUnit.MILLISECONDS));
 
             // 重新添加HeartbeatHandler
             if (pipeline.get(HeartbeatChannelHandler.class.getSimpleName()) != null) {
@@ -309,7 +310,7 @@ public class RealConnection  implements Connection {
             }
             if (pipeline.get(IdleStateHandler.class.getSimpleName()) != null) {
                 pipeline.addLast(HeartbeatChannelHandler.class.getSimpleName(),
-                        new HeartbeatChannelHandler(protocol,connectionPool,heartBeatMsg,connectionBrokenListener));
+                        new HeartbeatChannelHandler(protocol,connectionPool,heartBeatMsg,readerIdleReconnectEnabled,connectionBrokenListener));
             }
         } catch (Exception e) {
             e.printStackTrace();

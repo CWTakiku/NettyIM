@@ -27,6 +27,7 @@ import com.takiku.im_lib.entity.ShakeHandsMessage;
 import com.takiku.im_lib.entity.base.Address;
 import com.takiku.im_lib.entity.base.Request;
 import com.takiku.im_lib.entity.base.Response;
+import com.takiku.im_lib.frameCodec.DefaultLengthFieldBasedFrameCodec;
 import com.takiku.im_lib.listener.EventListener;
 import com.takiku.im_lib.protobuf.PackProtobuf;
 import com.takiku.im_lib.protocol.IMProtocol;
@@ -45,6 +46,7 @@ import com.takiku.im_lib.defaultImpl.textWebSocketFrame.DefaultWSAckConsumer;
 import com.takiku.im_lib.defaultImpl.textWebSocketFrame.DefaultWSMessageReceiveHandler;
 import com.takiku.im_lib.defaultImpl.textWebSocketFrame.DefaultWSMessageReplyHandler;
 import com.takiku.im_lib.defaultImpl.textWebSocketFrame.DefaultWsHeartbeatRespHandler;
+import com.takiku.nettyim.framecodec.CustomContentFrameCodec;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -133,6 +135,7 @@ public class Client {
         this.protocol = protocol;
 
 
+
         IMClient.Builder builder = new IMClient.Builder()
                 .setConnectTimeout(10, TimeUnit.SECONDS) //设置连接超时
                 .setResendCount(3)//设置失败重试数
@@ -141,9 +144,10 @@ public class Client {
                 .setSendTimeout(6,TimeUnit.SECONDS)//设置发送超时
                 .setHeartIntervalBackground(30,TimeUnit.SECONDS)//后台心跳间隔
                 .setReaderIdleReconnectEnabled(true)
-                .setReaderIdleTimeBackground(18,TimeUnit.SECONDS)
+                .setReaderIdleTimeBackground(61,TimeUnit.SECONDS)
                 .setEventListener(eventListener!=null?eventListener:new DefaultEventListener(userId)) //事件监听，可选
                 .setMsgTriggerReconnectEnabled(true)
+                .setReaderIdleReconnectEnabled(true) //读空闲是否会触发重连
                 .setProtocol(protocol)
                 .setOpenLog(true);
 
@@ -155,8 +159,8 @@ public class Client {
                     .registerMessageHandler(codecType == 0?new DefaultProtobufMessageReceiveHandler(onMessageArriveListener):new DefaultStringMessageReceiveHandler(onMessageArriveListener)) //消息接收处理器
                     .registerMessageHandler(codecType == 0?new DefaultReplyReceiveHandler(onReplyListener):new DefaultStringMessageReplyHandler(onReplyListener)) //消息状态接收处理器
                     .registerMessageHandler(codecType == 0?new DefaultProtobufHeartbeatRespHandler():new DefaultStringHeartbeatRespHandler()) //心跳接收处理器
-                    .addAddress(new Address(ip,9081,Address.Type.TCP))
-                    .setMaxFrameLength(65535*100); //设置最大帧长 //私有tcp和websocket生效
+                    .setFrameCodec(new DefaultLengthFieldBasedFrameCodec(2,65535))
+                    .addAddress(new Address(ip,IPConfig.TCP_SERVER_PORT,Address.Type.TCP));
 
         } else if (protocol == IMProtocol.WEB_SOCKET) {  //websocket比较特殊，不需要设置编解码和自定义握手消息，在内置的WebSocketClientHandshaker已经帮我们做了
             builder.setHeartBeatMsg(getDefaultWsHeart())
@@ -164,7 +168,7 @@ public class Client {
                     .registerMessageHandler(new DefaultWSMessageReceiveHandler(onMessageArriveListener))
                     .registerMessageHandler(new DefaultWSMessageReplyHandler(onReplyListener))
                     .registerMessageHandler(new DefaultWsHeartbeatRespHandler())
-                    .addAddress(new Address(ip,8804,Address.Type.WS))
+                    .addAddress(new Address(ip,IPConfig.WEB_SOCKET_SERVER_PORT,Address.Type.WS))
                     .setMaxFrameLength(65535*100)
                   //  .addAddress(new Address(ip,8804,Address.Type.WSS))//支持WSS协议，请在scheme带上wss标识
                     .addWsHeader("user",userId); //webSocket特有的
@@ -177,7 +181,7 @@ public class Client {
                     .registerMessageHandler(new DefaultStringMessageReceiveHandler(onMessageArriveListener)) //消息接收处理器
                     .registerMessageHandler(new DefaultStringMessageReplyHandler(onReplyListener)) //消息状态接收处理器
                     .registerMessageHandler(new DefaultStringHeartbeatRespHandler()) //心跳接收处理器
-                    .addAddress(new Address(ip, 8804, Address.Type.UDP));
+                    .addAddress(new Address(ip, IPConfig.UDP_SERVER_PORT, Address.Type.UDP));
         }
 
         imClient = builder.build();
@@ -239,7 +243,7 @@ public class Client {
     }
 
     /**
-     * 发送消息，回调在子线程 ,不需要回执
+     * 发送消息，回调在子线程
      * @param request
      * @param callback
      */

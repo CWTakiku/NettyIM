@@ -1,5 +1,5 @@
 # NettyIM SDK
-### A highly customized long-connect SDK based on Netty that supports communication between proprietary and Websocket protocols.
+### A highly customized communication SDK based on Netty, which supports communication of TCP, UDP and WebSocket protocols.
 
 
 
@@ -17,12 +17,13 @@
 6. Automatic address switching
 7. Supports message resending and message confirmation mechanisms
 8. Support the heartbeat mechanism
-9.  protocols support handshake authentication
+9. protocols support handshake authentication
 10. Provide Netty message processor registration
 11. Support custom codecs
-12. Monitor connection status and message status
-13. You can set whether a confirmation packet is required for a single message
-14. Various parameter Settings are supported
+12. Support custom TCP packet and packet unpacking codecs
+13. Monitor connection status and message status
+14. You can set whether a confirmation packet is required for a single message
+15. Various parameter Settings are supported
 
 ### II.  Classic Case
 1. Use IM communication
@@ -63,8 +64,10 @@ So default can be replaced by the developer's implementation, as long as the cor
                 .setConnectionRetryEnabled(true)// connection retry
                 .setSendTimeout(6,TimeUnit.SECONDS)// Sets the sending timeout
                 .setHeartIntervalBackground(30,TimeUnit.SECONDS)//heartbeat interval  the background
+                .setReaderIdleTimeBackground(90,TimeUnit.SECONDS)//Background read idle trigger time，(Referring to not receiving any message from the server within a certain period of time, it is considered that the network is abnormal or the server is abnormal, if setReaderIdleReconnectEnabled(true) triggers reconnection)
                 .setEventListener(eventListener!=null?eventListener:new DefaultEventListener(userId)) // Event listener, optional
                 .setMsgTriggerReconnectEnabled(true)  //Whether message sending triggers reconnection if the connection has been disconnected
+                .setReaderIdleReconnectEnabled(true) //Whether reading idle will trigger reconnection
                 .setProtocol(protocol) //What kind of protocol，IMProtocol.PRIVATE、IMProtocol.WEB_SOCKET、IMProtocol.UDP
                 .setOpenLog(true);//Whether to enable logs
  ```
@@ -78,8 +81,10 @@ So default can be replaced by the developer's implementation, as long as the cor
                     .registerMessageHandler(codecType == 0?new DefaultProtobufMessageReceiveHandler(onMessageArriveListener):new DefaultStringMessageReceiveHandler(onMessageArriveListener)) //Message receiving processor
                     .registerMessageHandler(codecType == 0?new DefaultReplyReceiveHandler(onReplyListener):new DefaultStringMessageReplyHandler(onReplyListener)) //Message status receiving processor
                     .registerMessageHandler(codecType == 0?new DefaultProtobufHeartbeatRespHandler():new DefaultStringHeartbeatRespHandler()) //Heartbeat receiving processor
+                    .setTCPLengthFieldLength(2)//the length of the prepended length field. Only 1, 2, 3, 4, and 8 are allowed.
                     .addAddress(new Address(ip,9081,Address.Type.TCP))
-                    .setMaxFrameLength(65535*100); //The maximum frame length is set for tcp and websocket
+                    .setFrameCodec(new DefaultLengthFieldBasedFrameCodec(2,65535));//Set up TCP packet loading and unpacking codecs
+                  
 
         }
  ```
@@ -223,20 +228,30 @@ Status Listener In the setEventListener() configuration above, developers can in
 imClient.setBackground(background); // Set the front/background switch, and different heartbeat intervals will be automatically switched
 imClient.isConnected(); // Check whether the connection is established
  ```
+#### 9. Note
+In TCP, FrameCodec packages and unpackages the TCP protocol. FrameCodec is unique to TCP,
+Codec is the encoding and decoding of the content. It supports both TCP and UDP protocols.
+ ```
+pipeline.addLast("frameEncoder", frameCodec.Encoder());  // out2
+pipeline.addLast("frameDecoder", frameCodec.Decoder());  //in1
 
+pipeline.addLast(codec.EnCoder().getClass().getSimpleName(),codec.EnCoder());  //out 1
+pipeline.addLast(codec.DeCoder().getClass().getSimpleName(),codec.DeCoder());  //in2
+...
+ ```
+1, the reception and processing of the data is in accordance with the above in1-->in2 sequence, the data is first unpacked, and then the real data is decoded.
+2, the data is sent and processed according to the above out1-->out2 sequence, the real data is coded first, and then packaged.
 ### V. Project structure design drawing
 ![image](https://github.com/CWTakiku/NettyIM/blob/master/IMPic.png)
 
 #### VI. Demo use
 #### Step 1. Change the server address and run the project
-Change localHost to the ip address of your computer in the MainActivity class, run the project, and run the APP on the mobile phone or simulator
+Change localHost to the ip address of your computer in the IPConfig class, run the project, and run the APP on the mobile phone or simulator
 #### Step 2 Start the server
 APP module test contains the server demo, webscoket protocol, udp protocol and server demo of tcp protocol and string data formats. Run the corresponding server demo
 #### Step 3 Use
 Click the corresponding protocol in the APP to enter the chat interface
 ### VII. Project blog address
-[Jane books](https://www.jianshu.com/p/5b01f4d6e4f4) 
-[CSDN](https://blog.csdn.net/smile__dream/article/details/105681018) 
 [Denver](https://juejin.im/post/5ea569aaf265da47e34c19ed)
 
 

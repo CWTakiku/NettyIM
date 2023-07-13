@@ -38,6 +38,7 @@ import static com.takiku.im_lib.util.Constants.MSG_STATUS_READ;
 import static com.takiku.im_lib.util.Constants.MSG_STATUS_SEND;
 import static com.takiku.im_lib.util.Constants.MSG_STATUS_SENDING;
 import static com.takiku.im_lib.util.Constants.MSG_STATUS_WITHDRAW;
+import static com.takiku.nettyim.IPConfig.SERVER_ADDRESS;
 
 /**
  * author:chengwl
@@ -49,7 +50,7 @@ public class MainActivity extends AppCompatActivity {
     private Client demo1 ,demo2;
 
 
-    private String localHost= "192.168.31.212"; //更改为你电脑的ip地址
+    private String localHost= SERVER_ADDRESS; //更改为你电脑的ip地址
 
 
     private Button btnSend1;
@@ -272,7 +273,7 @@ public class MainActivity extends AppCompatActivity {
     private Request createRequest(AppMessage appMessage,int clientNum){
         Request.Builder builder = new Request.Builder().
                  setNeedACK(appMessage.getHead().getMsgId())
-                .setSendRetry(false);
+                .setSendRetry(true);
         if (protocol == IMProtocol.PRIVATE){
             if (codecType == 0){
                 builder.setBody(getProtobufMsgPack(appMessage.buildProto(clientNum == 1?demo1.getMsgSerialID():demo2.getMsgSerialID())));
