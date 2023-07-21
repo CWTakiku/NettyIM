@@ -71,12 +71,13 @@ public class RealCall implements Call {
 
     @Override
     public Disposable subscribe(Consumer... consumers) {
-        this.consumers= Arrays.asList(consumers);
+        this.consumers= new ArrayList<>(Arrays.asList(consumers));
         return new MessageSubscriber(this);
     }
 
     @Override
     public Disposable subscribe(List<Consumer> consumerList) {
+        this.consumers= consumerList;
         return new MessageSubscriber(this);
     }
 
