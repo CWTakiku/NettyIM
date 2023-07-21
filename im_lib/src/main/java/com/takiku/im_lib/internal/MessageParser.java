@@ -136,7 +136,7 @@ public class MessageParser {
                List<Consumer> consumers=entry.getValue();
                if (consumers.size()>0){
                    if (consumers.get(0).Observable(msg,entry.getKey())){ //是被观察的消息，则将该消息返回给所有的订阅者们
-                       if (onResponseListenerLRUMap.containsKey(entry.getKey())){
+                       if (onResponseListenerLRUMap!=null&&onResponseListenerLRUMap.containsKey(entry.getKey())){
                            onResponseListenerLRUMap.get(entry.getKey()).onResponseArrive( new Response.Builder().setCode(Response.SUCCESS).build());
                        }
                        transferToSubscribers(consumers,  msg);
