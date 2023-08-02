@@ -195,9 +195,8 @@ public class RealConnection  implements Connection {
 
                     if (messageParser.getMessageShakeHandsHandler() == null){ //如果没有握手消息且设置了心跳包，则直接添加心跳机制，否则等握手成功后添加心跳机制
                         if (heartBeatMsg!=null){
-//                        // 3次心跳没响应，代表连接已断开
-                            addHeartbeatHandler(connectionPool,heartbeatInterval,readerIdleTime,readerIdleReconnectEnabled);
-
+//                        // 在读空闲触发心跳没响应，代表连接已断开
+                            addHeartbeatHandler(pipeline,connectionPool,heartbeatInterval,readerIdleTime,readerIdleReconnectEnabled);
                         }
                     }
                     pipeline.addLast(StatusChannelHandler.class.getSimpleName(),new StatusChannelHandler(eventListener,connectionBrokenListener));
@@ -248,8 +247,8 @@ public class RealConnection  implements Connection {
                     }
                     if (messageParser.getMessageShakeHandsHandler() == null){ //如果没有握手消息且设置了心跳包，则直接添加心跳机制，否则等握手成功后添加心跳机制
                         if (heartBeatMsg!=null){
-//                        // 3次心跳没响应，代表连接已断开
-                            addHeartbeatHandler(connectionPool,heartbeatInterval,readerIdleTime,readerIdleReconnectEnabled);
+//                        // 在读空闲触发心跳没响应，代表连接已断开
+                            addHeartbeatHandler(pipeline,connectionPool,heartbeatInterval,readerIdleTime,readerIdleReconnectEnabled);
 
                         }
                     }
