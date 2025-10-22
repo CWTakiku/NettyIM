@@ -33,6 +33,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
@@ -226,9 +227,19 @@ public class RealConnection  implements Connection {
                     pipeline.addLast(HttpClientCodec.class.getSimpleName(), new HttpClientCodec());
                     pipeline.addLast(HttpObjectAggregator.class.getSimpleName(), new HttpObjectAggregator(65535));
                     pipeline.addLast(WebSocketHandler.class.getSimpleName(), webSocketHandler);
-                    if (heartBeatMsg!=null){ //设置了心跳包，则里面启动心跳机制
-                        addHeartbeatHandler(pipeline,connectionPool,heartbeatInterval,readerIdleTime,readerIdleReconnectEnabled);
-                    }
+
+                    webSocketHandler.handshakeFuture().addListener((ChannelFutureListener) future -> {
+                                if (future.isSuccess()) {
+                                    // 连接成功，启动心跳机制
+                                    if (heartBeatMsg!=null){ //设置了心跳包，则里面启动心跳机制
+                                        addHeartbeatHandler(pipeline,connectionPool,heartbeatInterval,readerIdleTime,readerIdleReconnectEnabled);
+                                    }
+                                } else {
+                                    // 连接失败处理
+                                    release(false);
+                                }
+                            }
+                    );
 
                 }else if (protocol == IMProtocol.UDP){
                     messageParser.addShakeResultListener(new MessageParser.onShakeHandsResultListener() {
